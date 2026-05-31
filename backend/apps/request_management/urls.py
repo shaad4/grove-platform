@@ -10,6 +10,7 @@ from .views import (
     DeliveryView,
     PresignedUploadView,
     ConfirmUploadView,
+    RequestFilesView,
 
 )
 
@@ -30,5 +31,6 @@ urlpatterns = [
     path("files/upload/presign/",PresignedUploadView.as_view(), name="file-presign"),
     path("files/upload/confirm/", ConfirmUploadView.as_view(), name="file-confirm"),
 
-
+    path("<uuid:request_id>/files/", RequestFilesView.as_view(), name="request-files"),
+ 
 ]
