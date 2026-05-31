@@ -425,5 +425,110 @@ class DeliveryView(APIView):
         
 
 
+# File Upload - presigned URL Flow
+
+class PresignedUploadView(APIView):
+    """
+    Step 1 of file upload.
+    Returns a presigned S3 POST URL. Frontend uploads directly to S3.
+    Then calls ConfirmUploadView to register the file in the DB.
+    """
+
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        if not(_is_provider(request) or _is_client(request)):
+            return Response({"success": False, "message": "Forbidden."}, status=403)
+        
+        serializer = PresignedUploadSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        request_id = serializer.validated_data["request_id"]
+
+        tenant = request.tenant
+
+        if _is_client(request):
+            client = _get_client_profile(request)
+            if not client:
+                return Response({"success": False, "message": "Client profile not found."}, status=404)
+            req = RequestRepository.get_by_id_for_client(request_id, tenant.id, client.id)
+        else:
+            req = RequestRepository.get_by_id(request_id, tenant.id)
+
+        if not req:
+            return Response({"success": False, "message": "Request not found."}, status=404)
+        
+        try:
+            result = FileService.generate_presigned_upload_url(
+                tenant_id=str(tenant.id),
+                request_id=str(request_id),
+                file_name=serializer.validated_data["file_name"],
+                file_type=serializer.validated_data["file_type"],
+                uploaded_by_id=str(request.user.id),
+            )
+        except S3PresignError as e:
+            return Response({"success": False, "message": str(e)}, status=500)
+        
+        return Response({"success": True, "data": result})
+    
+
+
+class ConfirmUploadView(APIView):
+    """
+    Step 2 of file upload.
+    After the frontend successfully uploads to S3, call this to register the File record.
+    """
+
+    permission_classes = [IsAuthenticated]
+    
+    def post(self, request):
+        if not (_is_provider(request) or _is_client(request)):
+            return Response({"success": False, "message": "Forbidden."}, status=403)
+        
+        serializer = ConfirmUploadSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        request_id = serializer.validated_data["request_id"]
+
+        tenant = request.tenant
+
+        if _is_client(request):
+            client = _get_client_profile(request)
+            if not client:
+                return Response({"success": False, "message": "Client profile not found."}, status=404)
+            
+            req = RequestRepository.get_by_id_for_client(request_id, tenant.id, client.id)
+        else:
+            req = RequestRepository.get_by_id(request_id, tenant.id)
+
+        if not req:
+            return Response({"success": False, "message": "Request not found."}, status=404)
+        
+
+        try:
+            file_obj = FileService.confirm_upload(
+                tenant=tenant,
+                request_id=request_id,
+                uploaded_by=request.user,
+                file_name=serializer.validated_data["file_name"],
+                s3_key=serializer.validated_data["s3_key"],
+                file_size_bytes=serializer.validated_data["file_size_bytes"],
+                file_type=serializer.validated_data["file_type"],
+            )
+        except RequestNotFound as e:
+            return Response({"success": False, "message": str(e)}, status=404) 
+        
+
+        return Response({
+            "success": True,
+            "message": "File registered.",
+            "data": FileSerializer(file_obj).data,
+        }, status=status.HTTP_201_CREATED)
+    
+        
+
+
+
+
 
 

@@ -8,6 +8,8 @@ from .views import (
     RequestActivityView,
     InternalNoteView,
     DeliveryView,
+    PresignedUploadView,
+    ConfirmUploadView,
 
 )
 
@@ -24,5 +26,9 @@ urlpatterns = [
     path("<uuid:request_id>/notes/", InternalNoteView.as_view(), name="request-notes"),
 
     path("<uuid:request_id>/deliveries/", DeliveryView.as_view(), name="request-deliveries"),
+
+    path("files/upload/presign/",PresignedUploadView.as_view(), name="file-presign"),
+    path("files/upload/confirm/", ConfirmUploadView.as_view(), name="file-confirm"),
+
 
 ]
