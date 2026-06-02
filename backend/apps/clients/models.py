@@ -49,6 +49,8 @@ class Client(models.Model):
         TenantMembership,
         on_delete=models.CASCADE,
         related_name="client_profile",
+        null=True,
+        blank=True,
     )
 
     provider = models.ForeignKey(

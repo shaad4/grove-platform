@@ -98,6 +98,7 @@ class ClientRepository:
             provider=invite.provider,
             status=Client.Status.PENDING,
             user__isnull=True,
+            client_email=invite.client_email,
         ).first()
     
     @staticmethod

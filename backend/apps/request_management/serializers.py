@@ -70,13 +70,14 @@ class RequestListSerializer(serializers.ModelSerializer):
     client_name = serializers.SerializerMethodField()
     client_email = serializers.SerializerMethodField()
     file_count = serializers.SerializerMethodField()
+    client_id = serializers.UUIDField(source="client.id", read_only=True)
  
     class Meta:
         model = Request
         fields = [
             "id", "title", "status", "is_urgent", "due_date",
             "ai_category", "client_name", "client_email",
-            "file_count", "created_at", "updated_at",
+            "file_count", "created_at", "updated_at", "client_id",
         ]
  
     def get_client_name(self, obj):
@@ -179,4 +180,3 @@ class ConfirmUploadSerializer(serializers.Serializer):
 class DeliveryReviewSerializer(serializers.Serializer):
     action = serializers.ChoiceField(choices=['approve', 'rework'])
     message = serializers.CharField(required=False, allow_blank=True, allow_null=True)
-    

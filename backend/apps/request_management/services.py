@@ -312,7 +312,7 @@ class RequestService:
 
         if new_status == Request.Status.CLOSED:
             usage = TenantUsage.objects.get(tenant=tenant)
-            updates = {"total_deliverd_lifetime" : usage.total_delivered_lifetime + 1}
+            updates = {"total_delivered_lifetime" : usage.total_delivered_lifetime + 1}
             if usage.active_request_count > 0:
                 updates["active_request_count"] = usage.active_request_count - 1
             TenantUsage.objects.filter(tenant=tenant).update(**updates)

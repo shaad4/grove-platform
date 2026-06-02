@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from django.contrib.auth.password_validation import validate_password
+from apps.request_management.models import Request
 from .models import Client
 
 
@@ -40,15 +41,19 @@ class ClientListSerializer(serializers.ModelSerializer):
     last_login = serializers.SerializerMethodField()
     tags = serializers.SerializerMethodField()
 
+    open_request_count = serializers.SerializerMethodField()
+    delivered_count = serializers.SerializerMethodField()
+
     class Meta:
         model  = Client
-        fields = [
-            "id", "email", "display_name", "status",
-            "is_deactivated", "last_login", "joined_at",
-            "created_at", "business_type", "private_note",
-            "tags", "client_name", "client_email",
-        ]
-
+        fields = [ "id", "email", "display_name",
+                   "status", "is_deactivated", "last_login",
+                     "joined_at", "created_at", "business_type", 
+                     "private_note", "tags", "client_name",
+                       "client_email", "open_request_count",
+                         "delivered_count", 
+                ]
+        
     def get_email(self, obj):
         return obj.user.email if obj.user else obj.client_email
     
@@ -64,6 +69,20 @@ class ClientListSerializer(serializers.ModelSerializer):
             {"name": tm.tag.name, "color": tm.tag.color}
             for tm in obj.tag_maps.all()
         ]
+    
+    def get_open_request_count(self, obj): 
+        return Request.objects.filter( 
+            client=obj, is_deleted=False 
+        ).exclude( 
+            status__in=["delivered", "closed"] 
+        ).count()
+    
+    def get_delivered_count(self, obj):
+        return Request.objects.filter(
+            client=obj,
+            is_deleted=False, 
+            status__in=["delivered", "closed"] 
+        ).count()
 
 
 class ClientForgotPasswordSerializer(serializers.Serializer):
@@ -91,8 +110,40 @@ class UpdateClientSerializer(serializers.Serializer):
         allow_empty=True,
     )
 
+class RequestSummarySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Request
+        fields = ['id', 'title', 'description', 'status', 'is_urgent', 'due_date', 'created_at', 'updated_at']
+
+
 class ClientDetailSerializer(ClientListSerializer):
+    requests = serializers.SerializerMethodField()
+    open_request_count = serializers.SerializerMethodField()
+    total_request_count = serializers.SerializerMethodField()
+    delivered_count = serializers.SerializerMethodField()
+
     class Meta(ClientListSerializer.Meta):
-        fields = ClientListSerializer.Meta.fields
+        fields = ClientListSerializer.Meta.fields + [
+            'requests', 'open_request_count', 'total_request_count', 'delivered_count'
+        ]
+
+    def get_requests(self, obj):
+        qs = Request.objects.filter(client=obj, is_deleted=False).order_by('-created_at')
+        return RequestSummarySerializer(qs, many=True).data
+
+    def get_open_request_count(self, obj):
+        return Request.objects.filter(
+            client=obj, is_deleted=False
+        ).exclude(status__in=['delivered', 'closed']).count()
+
+    def get_total_request_count(self, obj):
+        return Request.objects.filter(client=obj, is_deleted=False).count()
+
+    def get_delivered_count(self, obj):
+        return Request.objects.filter(
+            client=obj,
+            is_deleted=False,
+            status__in=["delivered", "closed"]
+        ).count()
 
         

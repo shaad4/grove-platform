@@ -48,6 +48,7 @@ INSTALLED_APPS = [
     "rest_framework_simplejwt",
     "rest_framework_simplejwt.token_blacklist",
     "corsheaders",
+    "storages",
 
     # Grove apps
     "apps.users",
@@ -214,3 +215,11 @@ FRONTEND_URL = config("FRONTEND_URL")
 
 
 GOOGLE_CLIENT_ID = config("GOOGLE_CLIENT_ID")
+
+# S3 Setup
+AWS_ACCESS_KEY_ID = config("AWS_ACCESS_KEY_ID")
+AWS_SECRET_ACCESS_KEY = config("AWS_SECRET_ACCESS_KEY")
+AWS_STORAGE_BUCKET_NAME = config("AWS_STORAGE_BUCKET_NAME")
+AWS_S3_REGION_NAME = config("AWS_S3_REGION_NAME", default="ap-south-1")
+AWS_S3_FILE_OVERWRITE = False
+AWS_DEFAULT_ACL = None   # bucket policy controls access, not object ACL

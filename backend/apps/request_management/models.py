@@ -156,7 +156,8 @@ class File(models.Model):
     uploaded_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name="uploaded_files")
  
     file_name = models.CharField(max_length=500)
-    file_url = models.TextField()           # S3 permanent URL
+    file_url = models.TextField()           
+    s3_key = models.TextField()
     file_size_bytes = models.BigIntegerField()
     file_type = models.CharField(max_length=100)   # MIME type
     file_extension = models.CharField(max_length=20)
