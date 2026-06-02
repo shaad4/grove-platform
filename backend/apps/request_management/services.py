@@ -34,6 +34,12 @@ class FileNotFound(Exception):
 class S3PresignError(Exception):
     pass
 
+class DeliveryNotFound(Exception):
+    pass
+
+class InvalidReviewAction(Exception):
+    pass
+
 
 VALID_TRANSITIONS = {
     Request.Status.RECEIVED:    [Request.Status.IN_REVIEW,   Request.Status.CLOSED],
@@ -255,8 +261,71 @@ class RequestService:
         )
  
         return delivery
+    
+    def review_delivery(request_id, delivery_id, tenant, client, action, message=None):
+        """
+        Client approves or requests rework on a delivered request.
+        approve  → status becomes closed
+        rework   → status becomes in_progress
+        """
 
+        request_obj = RequestRepository.get_by_id_for_client(request_id, tenant.id, client.id)
+        if not request_obj:
+            raise RequestNotFound("Request not found.")
+        
+        if request_obj.status != Request.Status.DELIVERED:
+            raise ForbiddenStatusTransition("Only delivered requests can be reviewed.")
+        
+        delivery = DeliveryRepository.get_by_id(delivery_id, request_id, tenant.id)
+        if not delivery:
+            raise DeliveryNotFound("Delivery not found")
+        
+        if action == "approve":
+            new_status = Request.Status.CLOSED
+            event_type = RequestActivity.EventType.STATUS_CHANGE
+            activity_description = "Client approved the delivery. Request closed."
+        else:
+            new_status = Request.Status.IN_PROGRESS
+            event_type = RequestActivity.EventType.STATUS_CHANGE
+            activity_description = (
+                 f"Client requested rework. Message: {message}"
+                if message else "Client requested rework."
+            )
 
+        old_status = request_obj.status
+        RequestRepository.update_status(request_obj, new_status)
+
+        RequestActivityRepository.log(
+            request_obj=request_obj,
+            event_type=event_type,
+            description=activity_description,
+            actor=client.user,
+            actor_source=RequestActivity.ActorSource.USER,
+            metadata={
+                "from": old_status,
+                "to": new_status,
+                "delivery_id": str(delivery_id),
+                "action": action,
+                **({"rework_message": message} if message else {}),
+            },
+        )
+
+        if new_status == Request.Status.CLOSED:
+            usage = TenantUsage.objects.get(tenant=tenant)
+            updates = {"total_deliverd_lifetime" : usage.total_delivered_lifetime + 1}
+            if usage.active_request_count > 0:
+                updates["active_request_count"] = usage.active_request_count - 1
+            TenantUsage.objects.filter(tenant=tenant).update(**updates)
+
+        if new_status == Request.Status.IN_PROGRESS:
+            usage = TenantUsage.objects.get(tenant=tenant)
+            TenantUsage.objects.filter(tenant=tenant).update(
+                active_request_count=usage.active_request_count + 1
+            ) 
+
+        return request_obj
+
+    
 class FileService:
  
     @staticmethod
@@ -316,6 +385,7 @@ class FileService:
             request_obj=request_obj,
             uploaded_by=uploaded_by,
             file_name=file_name,
+            s3_key=s3_key,
             file_url=file_url,
             file_size_bytes=file_size_bytes,
             file_type=file_type,
@@ -332,4 +402,28 @@ class FileService:
         )
  
         return file_obj
+    
+
+    @staticmethod
+    def generate_download_url(s3_key):
+
+        if not s3_key:
+            return None
+        
+        s3 = boto3.client(
+            "s3",
+            region_name = settings.AWS_S3_REGION_NAME,
+            aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
+            aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
+        )
+
+        return s3.generate_presigned_url(
+            "get_object",
+            Params={
+                "Bucket": settings.AWS_STORAGE_BUCKET_NAME,
+                "Key": s3_key,
+            },
+            ExpiresIn=300,
+        )
  
+

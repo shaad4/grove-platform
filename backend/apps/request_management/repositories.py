@@ -37,7 +37,7 @@ class RequestRepository:
             qs = qs.filter(ai_category=filter["ai_category"])
 
         if filter.get("date_from"):
-            qs = qs.filter(created_at__date__gte=filter["date_form"])
+            qs = qs.filter(created_at__date__gte=filter["date_from"])
 
         if filter.get("date_to"):
             qs = qs.filter(created_at__date__lte=filter["date_to"])
@@ -70,7 +70,7 @@ class RequestRepository:
         if filter.get("status"):
             qs = qs.filter(status=filter["status"])
 
-        sort = filter.get("sort", "newset")
+        sort = filter.get("sort", "newest")
         if sort == "oldest":
             qs = qs.order_by("created_at")
         else:
@@ -251,11 +251,20 @@ class DeliveryRepository:
             .order_by("delivery_number")
         )
     
+    @staticmethod
+    def get_by_id(delivery_id, request_id, tenant_id):
+        return (
+            Delivery.objects
+            .filter(id=delivery_id, request_id=request_id, tenant_id=tenant_id)
+            .prefetch_related("files")
+            .first()
+        )
+    
 
 class FileRepository:
 
     @staticmethod
-    def create(tenant, request_obj, uploaded_by, file_name, file_url,
+    def create(tenant, request_obj, uploaded_by, file_name, file_url, s3_key,
                file_size_bytes, file_type, file_extension,
                delivery=None, is_delivery_file=False):
         
@@ -265,6 +274,7 @@ class FileRepository:
             uploaded_by=uploaded_by,
             file_name=file_name,
             file_url=file_url,
+            s3_key=s3_key,
             file_size_bytes=file_size_bytes,
             file_type=file_type,
             file_extension=file_extension,

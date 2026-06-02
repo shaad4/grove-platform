@@ -1,21 +1,25 @@
 from rest_framework import serializers
 from .models import Request, RequestActivity, InternalNote, Delivery, File
-
+from .services import FileService
 
 
 class FileSerializer(serializers.ModelSerializer):
     uploaded_by_name = serializers.SerializerMethodField()
+    download_url = serializers.SerializerMethodField()
 
     class Meta:
         model  = File
         fields = [
-            "id", "file_name", "file_url", "file_size_bytes",
+            "id", "file_name", "download_url", "file_size_bytes",
             "file_type", "file_extension", "is_delivery_file",
             "uploaded_by_name", "created_at",
         ]
  
     def get_uploaded_by_name(self, obj):
         return obj.uploaded_by.display_name if obj.uploaded_by else None
+    
+    def get_download_url(self, obj):
+        return FileService.generate_download_url(obj.s3_key)
     
 
 class DeliverySerializer(serializers.ModelSerializer):
@@ -170,3 +174,9 @@ class ConfirmUploadSerializer(serializers.Serializer):
     s3_key = serializers.CharField()
     file_size_bytes = serializers.IntegerField(min_value=1)
     file_type = serializers.CharField(max_length=100)
+
+
+class DeliveryReviewSerializer(serializers.Serializer):
+    action = serializers.ChoiceField(choices=['approve', 'rework'])
+    message = serializers.CharField(required=False, allow_blank=True, allow_null=True)
+    

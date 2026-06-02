@@ -31,6 +31,7 @@ from .serializers import (
     InternalNoteSerializer,
     DeliverySerializer,
     FileSerializer,
+    DeliveryReviewSerializer,
 )
 from .services import (
     RequestService,
@@ -40,6 +41,8 @@ from .services import (
     ForbiddenStatusTransition,
     RequestNotEditable,
     S3PresignError,
+    DeliveryNotFound,
+    InvalidReviewAction,
 )
 
 
@@ -552,6 +555,46 @@ class RequestFilesView(APIView):
         return Response({"success": True, "data": FileSerializer(files, many=True).data})
     
     
+class DeliveryReviewView(APIView):
+    """Client approves or requests rework on a delivered request."""
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, request_id, delivery_id):
+        if not _is_client(request):
+            return Response({"success": False, "message": "Forbidden."}, status=403)
+
+        client = _get_client_profile(request)
+        if not client:
+            return Response({"success": False, "message": "Client profile not found."}, status=404)
+
+        if client.is_deactivated:
+            return Response({"success": False, "message": "Your access has been deactivated."}, status=403)
+
+        serializer = DeliveryReviewSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        try:
+            req = RequestService.review_delivery(
+                request_id=request_id,
+                delivery_id=delivery_id,
+                tenant=request.tenant,
+                client=client,
+                action=serializer.validated_data["action"],
+                message=serializer.validated_data.get("message"),
+            )
+        except RequestNotFound as e:
+            return Response({"success": False, "message": str(e)}, status=404)
+        except DeliveryNotFound as e:
+            return Response({"success": False, "message": str(e)}, status=404)
+        except ForbiddenStatusTransition as e:
+            return Response({"success": False, "message": str(e)}, status=409)
+
+        return Response({
+            "success": True,
+            "message": "Delivery approved." if serializer.validated_data["action"] == "approve" else "Rework requested.",
+            "data": RequestDetailSerializer(req).data,
+        })
+        
 
 
 
