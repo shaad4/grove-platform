@@ -341,7 +341,6 @@ class ClientLoginView(APIView):
             user=user,
             tenant=tenant,
             role=TenantMembership.Role.CLIENT,
-            is_active=True,
         ).first()
 
         if membership is None:
