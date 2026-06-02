@@ -656,6 +656,40 @@ export default function ClientRequestDetailPage() {
                               {delivery.message}
                             </p>
                           )}
+                          
+                          {!!delivery.links?.length && (
+                            <div className="space-y-2 mb-5">
+                              {delivery.links.map((link, i) => (
+                                <a
+                                  key={i}
+                                  href={link.url}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="group flex items-center gap-3 rounded-xl border border-[#e8eae8] px-4 py-3 hover:bg-[#f3fbf7] transition-colors"
+                                >
+                                  <div className="h-10 w-10 rounded-xl bg-[#edf7f3] flex items-center justify-center shrink-0">
+                                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#0f6e56" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                      <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+                                      <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+                                    </svg>
+                                  </div>
+                                  <div className="flex-1 min-w-0">
+                                    <p className="text-[13px] font-medium text-[#141a14] truncate">
+                                      {link.label || link.url}
+                                    </p>
+                                    {link.label && (
+                                      <p className="text-[11px] text-[#9ea89e] truncate mt-0.5">{link.url}</p>
+                                    )}
+                                  </div>
+                                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-[#9ea89e] group-hover:text-[#0f6e56] shrink-0">
+                                    <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+                                    <polyline points="15 3 21 3 21 9"/>
+                                    <line x1="10" y1="14" x2="21" y2="3"/>
+                                  </svg>
+                                </a>
+                              ))}
+                            </div>
+                          )}
 
                           {!!delivery.files?.length && (
                             <div className="space-y-2">
