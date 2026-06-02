@@ -486,13 +486,13 @@ export default function ClientsPage() {
               </div>
 
               {/* Add client */}
-              <button
+              {/* <button
                 onClick={() => setShowAdd(true)}
                 className="hidden sm:flex h-9 items-center gap-2 rounded-xl bg-[#0f6e56] px-4 text-[13px] font-medium text-white hover:bg-[#085041] transition-colors"
               >
                 <Plus size={15} />
                 Add client
-              </button>
+              </button> */}
             </div>
           </div>
 

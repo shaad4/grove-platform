@@ -22,7 +22,7 @@ const NAV_ITEMS = [
     label: 'Home',
   },
   {
-    to: '/portal/requests',
+    to: '/my-requests',
     icon: FolderOpen,
     label: 'Requests',
     badgeKey: 'requests',

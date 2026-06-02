@@ -18,14 +18,20 @@ import ResetPasswordPage  from './pages/ResetPasswordPage'
 import WorkspaceNotFoundPage from './pages/WorkspaceNotFoundPage'
 
 // Client pages
-import AcceptInvitePage from './pages/client/AcceptInvitePage'
-import ClientLoginPage  from './pages/client/ClientLoginPage'
-import ClientDashboard  from './pages/client/ClientDashboard'
+import AcceptInvitePage   from './pages/client/AcceptInvitePage'
+import ClientLoginPage    from './pages/client/ClientLoginPage'
+import ClientDashboard    from './pages/client/ClientDashboard'
+import ClientRequestsPage from './pages/client/ClientRequestsPage'
+import ClientRequestDetailPage  from './pages/client/ClientRequestDetailPage'
+
 
 // Provider pages
 import ProviderDashboard  from './pages/provider/ProviderDashboard'
 import ClientsPage        from './pages/provider/ClientsPage'
 import ClientDetailPage   from './pages/provider/ClientDetailPage'
+import RequestsPage       from './pages/provider/RequestsPage'
+import RequestDetailPage  from './pages/provider/RequestDetailPage'
+import ActivityPage       from './pages/provider/ActivityPage'
 
 function RoleDashboard() {
   const { user, loading } = useAuth()
@@ -84,7 +90,7 @@ export default function App() {
                   element={<TenantRoute><RoleDashboard /></TenantRoute>}
                 />
 
-                {/* ── Client management ── */}
+                {/* ── Client management (provider) ── */}
                 <Route
                   path="/clients"
                   element={<TenantRoute><ClientsPage /></TenantRoute>}
@@ -92,6 +98,32 @@ export default function App() {
                 <Route
                   path="/clients/:clientId"
                   element={<TenantRoute><ClientDetailPage /></TenantRoute>}
+                />
+
+                {/* ── Requests (provider) ── */}
+                <Route
+                  path="/requests"
+                  element={<TenantRoute><RequestsPage /></TenantRoute>}
+                />
+                <Route
+                  path="/requests/:requestId"
+                  element={<TenantRoute><RequestDetailPage /></TenantRoute>}
+                />
+
+                {/* ── Activity (provider) ── */}
+                <Route
+                  path="/activity"
+                  element={<TenantRoute><ActivityPage /></TenantRoute>}
+                />
+
+                {/* ── My requests (client) ── */}
+                <Route
+                  path="/my-requests"
+                  element={<TenantRoute><ClientRequestsPage /></TenantRoute>}
+                />
+                <Route
+                  path="/my-requests/:requestId"
+                  element={<TenantRoute><ClientRequestDetailPage /></TenantRoute>}
                 />
 
               </Route>
