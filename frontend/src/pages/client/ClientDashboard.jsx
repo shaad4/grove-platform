@@ -1,4 +1,5 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
+import requestsApi from '../../api/requests.api'
 import {
   Plus,
   ArrowRight,
@@ -355,10 +356,26 @@ export default function ClientDashboard() {
   const [filter, setFilter] = useState('all')
   const [showNew, setShowNew] = useState(false)
 
-  const loading = false
+  const [loading, setLoading] = useState(true)
+  const [requests, setRequests] = useState([])
 
-  // Mock — replace with real API call when wiring dashboard data
-  const requests = []
+  useEffect(() => {
+    fetchRequests()
+  }, [])
+
+  const fetchRequests = async () => {
+    try {
+      setLoading(true)
+
+      const res = await requestsApi.list()
+
+      setRequests(res.data.data?.requests || [])
+    } catch (err) {
+      console.error('Failed to fetch requests:', err)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const firstName = user?.display_name?.split(' ')[0] || 'there'
   const providerName = tenant?.name || 'Your Portal'

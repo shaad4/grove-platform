@@ -17,6 +17,9 @@ const rejectQueue = (error) =>
     pendingQueue.forEach(({ reject }) => reject(error))
 
 export const authResponseInterceptor = async (_store, api, error) => {
+
+    console.log(error.response?.data)
+
     if (isLoggingOut) {
         return Promise.reject(error)
     }

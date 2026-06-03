@@ -45,7 +45,13 @@ export default function ProviderSidebar({
   const { user, logout } = useAuth()
 
   const [isCollapsed, setIsCollapsed] =
-    useState(false)
+    useState(() => {
+      const saved = localStorage.getItem(
+        'provider-sidebar-collapsed'
+      )
+
+      return saved === 'true'
+    })
 
   const [isPopupOpen, setIsPopupOpen] =
     useState(false)
@@ -85,6 +91,13 @@ export default function ProviderSidebar({
       )
     }
   }, [])
+
+  useEffect(() => {
+    localStorage.setItem(
+      'provider-sidebar-collapsed',
+      isCollapsed
+    )
+  }, [isCollapsed])
 
   return (
     <>
