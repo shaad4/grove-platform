@@ -54,7 +54,29 @@ function TagInput({ tags, onChange }) {
 
   const addTag = (val) => {
     const name = val.trim()
-    if (!name || tags.includes(name)) { setInput(''); return }
+    if (!name) {
+      setInput('')
+      return
+    }
+
+    const exists = tags.some(
+      (t) =>
+        t.toLowerCase() ===
+        name.toLowerCase()
+    )
+
+    if (exists) {
+      setInput('')
+      return
+    }
+
+    if (tags.length >= 10) {
+      return
+    }
+
+    if (name.length > 30) {
+      return
+    }
     onChange([...tags, name])
     setInput('')
   }
@@ -201,17 +223,174 @@ export default function AddClientModal({ onClose, onSuccess }) {
   })
   const [fieldErrors, setFieldErrors] = useState({})
 
-  const set = (k) => (e) => setForm(f => ({ ...f, [k]: e.target.value }))
 
-  const validate = () => {
-    const errs = {}
-    if (!form.client_name.trim() || form.client_name.trim().length < 2)
-      errs.client_name = 'Name must be at least 2 characters.'
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.client_email.trim()))
-      errs.client_email = 'Enter a valid email address.'
-    setFieldErrors(errs)
-    return Object.keys(errs).length === 0
+// ─── VALIDATION ─────────────────────────────────────────────
+
+const set = (k) => (e) => {
+  const value = e.target.value
+
+  setForm((f) => ({
+    ...f,
+    [k]: value,
+  }))
+
+  setFieldErrors((prev) => {
+    const next = { ...prev }
+
+    // ─── Name validation ─────────────────────
+    if (k === 'client_name') {
+      const trimmed = value.trim()
+
+      if (!trimmed) {
+        next.client_name =
+          'Client name is required.'
+      } else if (trimmed.length < 2) {
+        next.client_name =
+          'Name must be at least 2 characters.'
+      } else if (trimmed.length > 120) {
+        next.client_name =
+          'Name cannot exceed 120 characters.'
+      } else {
+        delete next.client_name
+      }
+    }
+
+    // ─── Email validation ────────────────────
+    if (k === 'client_email') {
+      const trimmed = value
+        .trim()
+        .toLowerCase()
+
+      const emailRegex =
+        /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+
+      if (!trimmed) {
+        next.client_email =
+          'Email address is required.'
+      } else if (
+        !emailRegex.test(trimmed)
+      ) {
+        next.client_email =
+          'Enter a valid email address.'
+      } else if (
+        trimmed.length > 255
+      ) {
+        next.client_email =
+          'Email address is too long.'
+      } else {
+        delete next.client_email
+      }
+    }
+
+    // ─── Note validation ─────────────────────
+    if (k === 'private_note') {
+      if (value.length > 2000) {
+        next.private_note =
+          'Internal note cannot exceed 2000 characters.'
+      } else {
+        delete next.private_note
+      }
+    }
+
+    return next
+  })
+}
+
+const validate = () => {
+  const errs = {}
+
+  const name =
+    form.client_name.trim()
+
+  const email = form.client_email
+    .trim()
+    .toLowerCase()
+
+  const note =
+    form.private_note.trim()
+
+  // ─── Name ─────────────────────────────────
+
+  if (!name) {
+    errs.client_name =
+      'Client name is required.'
+  } else if (name.length < 2) {
+    errs.client_name =
+      'Name must be at least 2 characters.'
+  } else if (name.length > 120) {
+    errs.client_name =
+      'Name cannot exceed 120 characters.'
   }
+
+  // ─── Email ────────────────────────────────
+
+  const emailRegex =
+    /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+
+  if (!email) {
+    errs.client_email =
+      'Email address is required.'
+  } else if (
+    !emailRegex.test(email)
+  ) {
+    errs.client_email =
+      'Enter a valid email address.'
+  } else if (
+    email.length > 255
+  ) {
+    errs.client_email =
+      'Email address is too long.'
+  }
+
+  // ─── Tags ─────────────────────────────────
+
+  if (form.tags.length > 10) {
+    errs.tags =
+      'Maximum 10 tags allowed.'
+  }
+
+  const duplicateTags =
+    new Set(
+      form.tags.map((t) =>
+        t.toLowerCase()
+      )
+    )
+
+  if (
+    duplicateTags.size !==
+    form.tags.length
+  ) {
+    errs.tags =
+      'Duplicate tags are not allowed.'
+  }
+
+  const oversizedTag =
+    form.tags.find(
+      (tag) =>
+        tag.length > 30
+    )
+
+  if (oversizedTag) {
+    errs.tags =
+      'Each tag must be under 30 characters.'
+  }
+
+  // ─── Internal note ───────────────────────
+
+  if (note.length > 2000) {
+    errs.private_note =
+      'Internal note cannot exceed 2000 characters.'
+  }
+
+  setFieldErrors(errs)
+
+  return (
+    Object.keys(errs).length ===
+    0
+  )
+}
+
+
 
   const handleSubmit = async () => {
     if (!validate()) return
@@ -426,6 +605,11 @@ export default function AddClientModal({ onClose, onSuccess }) {
                     }
                   />
                 </Field>
+                {fieldErrors.tags && (
+                  <p className="mt-1.5 text-[12px] text-red-500">
+                    {fieldErrors.tags}
+                  </p>
+                )}
               </div>
 
               {/* NOTE */}
@@ -441,6 +625,11 @@ export default function AddClientModal({ onClose, onSuccess }) {
                   placeholder="Add onboarding details, budget notes, references, or anything useful for your team..."
                   className="w-full resize-none rounded-2xl border border-[#e8eae8] bg-white px-4 py-3 text-[14px] outline-none transition-all placeholder:text-[#9ea89e] focus:border-[#0f6e56] focus:ring-4 focus:ring-[#0f6e56]/10"
                 />
+                {fieldErrors.private_note && (
+                  <p className="mt-1.5 text-[12px] text-red-500">
+                    {fieldErrors.private_note}
+                  </p>
+                )}
               </Field>
 
               {/* ACTIONS */}
@@ -455,7 +644,10 @@ export default function AddClientModal({ onClose, onSuccess }) {
 
                 <button
                   onClick={handleSubmit}
-                  disabled={loading}
+                  disabled={
+                    loading ||
+                    Object.keys(fieldErrors).length > 0
+                  }
                   className="flex h-12 items-center justify-center gap-2 rounded-2xl bg-[#0f6e56] px-6 text-[14px] font-medium text-white transition-all hover:bg-[#085041] disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   {loading ? (

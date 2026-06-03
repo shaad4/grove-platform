@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import {
   ChevronRight, Flag, Calendar, Loader2, AlertCircle,
@@ -156,14 +156,74 @@ function DeliverModal({ request, onClose, onSuccess }) {
   const [dragOver, setDragOver] = useState(false)
   const fileInput = useRef(null)
 
+  // ── NEW INLINE VALIDATION STATES ───────────────────────────
+  const [validationErrors, setValidationErrors] = useState({
+    files: '',
+    links: '',
+    message: ''
+  })
+
+  // ── VALIDATION CONSTANTS ────────────────────────────────────
+  const ALLOWED_EXTENSIONS = ['jpg', 'jpeg', 'png', 'webp', 'gif', 'pdf', 'mp4', 'webm', 'mov'];
+  const MAX_FILE_SIZE = 50 * 1024 * 1024 // 50MB
+  const MAX_TOTAL_SIZE = 200 * 1024 * 1024 // 200MB
+  const MAX_FILE_COUNT = 20;
+  const MAX_LINK_COUNT = 20;
+  const MAX_MESSAGE_LENGTH = 5000;
+
+  // ── FILE HANDLER WITH VALIDATIONS ───────────────────────────
   const handleFiles = useCallback((newFiles) => {
-    const entries = Array.from(newFiles).map(f => ({
-      file: f,
-      status: 'pending',
-      fileId: null
-    }))
-    setFiles(prev => [...prev, ...entries])
-  }, [])
+    setValidationErrors(prev => ({ ...prev, files: '' }));
+    const incomingEntries = Array.from(newFiles);
+
+    if (files.length + incomingEntries.length > MAX_FILE_COUNT) {
+      setValidationErrors(prev => ({ ...prev, files: `Maximum of ${MAX_FILE_COUNT} files allowed.` }));
+      return;
+    }
+
+    const validEntries = [];
+    let runningTotalSize = files.reduce((acc, curr) => acc + curr.file.size, 0);
+
+    for (const f of incomingEntries) {
+      const ext = f.name.split('.').pop().toLowerCase();
+      
+      // 1. Allowed file types
+      if (!ALLOWED_EXTENSIONS.includes(ext)) {
+        setValidationErrors(prev => ({ ...prev, files: `File type .${ext} is not allowed. Only images, PDFs, and videos are accepted.` }));
+        return;
+      }
+
+      // 2. Single file size limit
+      if (f.size > MAX_FILE_SIZE) {
+        setValidationErrors(prev => ({ ...prev, files: `"${f.name}" exceeds the 50MB single file size limit.` }));
+        return;
+      }
+
+      // 3. Total upload size limit
+      runningTotalSize += f.size;
+      if (runningTotalSize > MAX_TOTAL_SIZE) {
+        setValidationErrors(prev => ({ ...prev, files: "Total size of all files exceeds the 2GB limit." }));
+        return;
+      }
+
+      // 4. Duplicate file prevention
+      const isDuplicate = files.some(existing => existing.file.name === f.name && existing.file.size === f.size);
+      if (isDuplicate) {
+        setValidationErrors(prev => ({ ...prev, files: `"${f.name}" has already been added.` }));
+        continue;
+      }
+
+      validEntries.push({
+        file: f,
+        status: 'pending',
+        fileId: null
+      });
+    }
+
+    if (validEntries.length > 0) {
+      setFiles(prev => [...prev, ...validEntries]);
+    }
+  }, [files]);
 
   const uploadAll = async () => {
     const updated = [...files]
@@ -191,7 +251,74 @@ function DeliverModal({ request, onClose, onSuccess }) {
       .map(f => f.fileId)
   }
 
+  // ── REAL-TIME LINK VALIDATION UTILITY ──────────────────────
+  const isValidUrl = (urlStr) => {
+    const trimmed = urlStr.trim();
+    if (!trimmed) return false;
+    if (!/^https?:\/\//i.test(trimmed)) return false;
+    try {
+      new URL(trimmed);
+      return true;
+    } catch (_) {
+      return false;
+    }
+  };
+
+  // ── COMPUTE UPLOAD IN PROGRESS STATE ───────────────────────
+  const isCurrentlyUploading = useMemo(() => {
+    return files.some(f => f.status === 'uploading');
+  }, [files]);
+
+  // ── VALIDATED SUBMIT HANDLER ───────────────────────────────
   const handleSubmit = async () => {
+    // Clear previous errors
+    const errors = { files: '', links: '', message: '' };
+    let hasError = false;
+
+    // 1. Prevent submit while uploading
+    if (isCurrentlyUploading) return;
+
+    // 2. Empty delivery preventions based on Mode
+    if (mode === 'files' || mode === 'both') {
+      if (files.length === 0) {
+        errors.files = 'Please upload at least one file for this delivery.';
+        hasError = true;
+      }
+    }
+
+    const validLinks = links
+      .filter(l => l.url.trim())
+      .map(l => ({
+        url: l.url.trim(), // Trim whitespace conversion
+        label: l.label.trim() || l.url.trim(),
+      }));
+
+    if (mode === 'link' || mode === 'both') {
+      if (validLinks.length === 0) {
+        errors.links = 'Please provide at least one valid link for this delivery.';
+        hasError = true;
+      } else {
+        // Validate all non-empty link formatting
+        const hasInvalidUrl = links.some(l => l.url.trim() && !isValidUrl(l.url));
+        if (hasInvalidUrl) {
+          errors.links = 'One or more links have an invalid format. Ensure they start with http:// or https://';
+          hasError = true;
+        }
+      }
+    }
+
+    // 3. Message Validation Max Length & Trim
+    const trimmedMessage = message.trim();
+    if (trimmedMessage.length > MAX_MESSAGE_LENGTH) {
+      errors.message = `Message cannot exceed ${MAX_MESSAGE_LENGTH} characters.`;
+      hasError = true;
+    }
+
+    if (hasError) {
+      setValidationErrors(errors);
+      return;
+    }
+
     setSubmitting(true)
 
     try {
@@ -199,17 +326,18 @@ function DeliverModal({ request, onClose, onSuccess }) {
 
       if (mode !== 'link') {
         fileIds = await uploadAll()
+        
+        // Double check if any files failed upload and block submit if necessary
+        const currentFiles = files; 
+        if (currentFiles.some(f => f.status === 'error')) {
+          setValidationErrors(prev => ({...prev, files: 'Please remove or retry failed file uploads before sending.'}));
+          setSubmitting(false);
+          return;
+        }
       }
 
-      const validLinks = links
-        .filter(l => l.url.trim())
-        .map(l => ({
-          url: l.url,
-          label: l.label || l.url,
-        }))
-
       await requestsApi.createDelivery(request.id, {
-        message: message || null,
+        message: trimmedMessage || null,
         links: mode !== 'files' ? validLinks : [],
         file_ids: fileIds,
       })
@@ -226,82 +354,82 @@ function DeliverModal({ request, onClose, onSuccess }) {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-2 sm:p-4 backdrop-blur-sm"
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
       <div
         className="
-          w-full max-w-[1100px]
+          w-full max-w-[1050px]
           overflow-hidden
           border border-[#e8eae8]
           bg-white
           shadow-[0px_24px_60px_rgba(10,46,36,0.16)]
-          rounded-none sm:rounded-[24px] lg:rounded-[28px]
-          max-h-[95vh]
+          rounded-xl sm:rounded-[24px] lg:rounded-[28px]
+          max-h-[98vh] md:max-h-[90vh]
         "
       >
-        <div className="flex flex-col lg:grid lg:grid-cols-[360px_1fr]">
+        <div className="flex flex-col lg:grid lg:grid-cols-[320px_1fr] max-h-[98vh] md:max-h-[90vh]">
 
           {/* LEFT PANEL */}
-          <div className="relative overflow-hidden border-b border-[#eef0ee] bg-[#f7f8f7] p-6 lg:border-b-0 lg:border-r lg:p-8">
+          <div className="relative overflow-hidden border-b border-[#eef0ee] bg-[#f7f8f7] p-4 sm:p-5 lg:border-b-0 lg:border-r lg:p-6 flex flex-col justify-between">
 
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(15,110,86,0.08),transparent_45%)]" />
 
-            <div className="relative z-10 flex h-full flex-col">
+            <div className="relative z-10 flex h-full flex-col justify-between gap-4">
 
               <div className="flex items-start justify-between">
                 <div>
 
-                  <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-[#dbe7e1] bg-white px-3 py-1 text-[11px] font-medium text-[#0f6e56]">
-                    <div className="h-2 w-2 rounded-full bg-[#0f6e56]" />
+                  <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-[#dbe7e1] bg-white px-2.5 py-0.5 text-[10px] font-medium text-[#0f6e56]">
+                    <div className="h-1.5 w-1.5 rounded-full bg-[#0f6e56]" />
                     DELIVERY PORTAL
                   </div>
 
-                  <h2 className="text-[30px] font-semibold leading-tight text-[#0a2e24]">
+                  <h2 className="text-[24px] sm:text-[26px] font-semibold leading-tight text-[#0a2e24]">
                     Deliver your work
                   </h2>
 
-                  <p className="mt-3 max-w-[260px] text-[14px] leading-6 text-[#6b756d]">
+                  <p className="mt-1.5 max-w-[260px] text-[13px] leading-5 text-[#6b756d]">
                     Share files, links, and updates with your client in one clean delivery.
                   </p>
                 </div>
 
                 <button
                   onClick={onClose}
-                  className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/80 backdrop-blur hover:bg-white transition-colors"
+                  className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/80 backdrop-blur hover:bg-white transition-colors"
                 >
-                  <X size={16} className="text-[#7c867d]" />
+                  <X size={14} className="text-[#7c867d]" />
                 </button>
               </div>
 
               {/* Preview Card */}
-              <div className="mt-10 rounded-2xl border border-[#e3e7e3] bg-white p-5 shadow-sm">
+              <div className="mt-2 lg:mt-4 rounded-xl border border-[#e3e7e3] bg-white p-4 shadow-sm">
 
                 <div className="flex items-start gap-3">
 
-                  <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#e6f5f0]">
-                    <Send size={18} className="text-[#0f6e56]" />
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#e6f5f0]">
+                    <Send size={16} className="text-[#0f6e56]" />
                   </div>
 
                   <div>
-                    <p className="text-[14px] font-medium text-[#141a14]">
+                    <p className="text-[13px] font-medium text-[#141a14]">
                       Delivering to {clientName}
                     </p>
 
-                    <p className="mt-1 text-[12px] leading-5 text-[#7c867d]">
+                    <p className="mt-0.5 text-[11px] leading-4 text-[#7c867d]">
                       Your client will instantly receive access to this delivery.
                     </p>
                   </div>
                 </div>
 
-                <div className="my-5 h-px bg-[#eef0ee]" />
+                <div className="my-3 h-px bg-[#eef0ee]" />
 
-                <div className="rounded-xl bg-[#f7f8f7] px-4 py-3">
-                  <p className="text-[11px] uppercase tracking-wide text-[#9ea89e]">
+                <div className="rounded-lg bg-[#f7f8f7] px-3 py-2">
+                  <p className="text-[10px] uppercase tracking-wide text-[#9ea89e]">
                     Delivery Type
                   </p>
 
-                  <p className="mt-1 text-[13px] font-medium text-[#0f6e56] capitalize">
+                  <p className="mt-0.5 text-[12px] font-medium text-[#0f6e56] capitalize">
                     {mode === 'both'
                       ? 'Files + Links'
                       : mode}
@@ -309,16 +437,16 @@ function DeliverModal({ request, onClose, onSuccess }) {
                 </div>
 
                 {(files.length > 0 || links.some(l => l.url)) && (
-                  <div className="mt-4 flex flex-wrap gap-2">
+                  <div className="mt-3 flex flex-wrap gap-1.5">
 
                     {files.length > 0 && (
-                      <span className="rounded-full bg-[#e6f5f0] px-3 py-1 text-[11px] font-medium text-[#085041]">
+                      <span className="rounded-full bg-[#e6f5f0] px-2.5 py-0.5 text-[10px] font-medium text-[#085041]">
                         {files.length} File{files.length > 1 ? 's' : ''}
                       </span>
                     )}
 
                     {links.filter(l => l.url).length > 0 && (
-                      <span className="rounded-full bg-[#EEF2FF] px-3 py-1 text-[11px] font-medium text-[#3730A3]">
+                      <span className="rounded-full bg-[#EEF2FF] px-2.5 py-0.5 text-[10px] font-medium text-[#3730A3]">
                         {links.filter(l => l.url).length} Link{links.filter(l => l.url).length > 1 ? 's' : ''}
                       </span>
                     )}
@@ -327,21 +455,21 @@ function DeliverModal({ request, onClose, onSuccess }) {
                 )}
               </div>
 
-              <div className="mt-auto pt-8">
-                <div className="rounded-2xl border border-[#bfdbfe] bg-[#f0f9ff] p-4">
+              <div className="mt-auto hidden sm:block">
+                <div className="rounded-xl border border-[#bfdbfe] bg-[#f0f9ff] p-3">
 
-                  <div className="flex items-start gap-3">
+                  <div className="flex items-start gap-2.5">
                     <AlertCircle
-                      size={16}
+                      size={14}
                       className="mt-0.5 shrink-0 text-[#2563eb]"
                     />
 
                     <div>
-                      <p className="text-[13px] font-medium text-[#1e3a8a]">
+                      <p className="text-[12px] font-medium text-[#1e3a8a]">
                         Status changes to Delivered
                       </p>
 
-                      <p className="mt-1 text-[12px] leading-5 text-[#3b82f6]">
+                      <p className="mt-0.5 text-[11px] leading-4 text-[#3b82f6]">
                         Clients can review and request revisions before approval.
                       </p>
                     </div>
@@ -354,26 +482,26 @@ function DeliverModal({ request, onClose, onSuccess }) {
           </div>
 
           {/* RIGHT PANEL */}
-          <div className="overflow-y-auto p-6 lg:p-10 max-h-[calc(95vh-260px)]">
+          <div className="overflow-y-auto p-4 sm:p-6 lg:p-8 max-h-[calc(98vh-220px)] lg:max-h-[90vh]">
 
-            <div className="grid gap-7">
+            <div className="grid gap-5">
 
               {/* MODE SELECT */}
               <div>
 
-                <div className="mb-3 flex items-center justify-between">
+                <div className="mb-2 flex items-center justify-between">
                   <div>
-                    <h3 className="text-[15px] font-semibold text-[#141a14]">
+                    <h3 className="text-[14px] font-semibold text-[#141a14]">
                       What are you delivering?
                     </h3>
 
-                    <p className="mt-1 text-[13px] text-[#9ea89e]">
+                    <p className="mt-0.5 text-[12px] text-[#9ea89e]">
                       Choose how you want to send the delivery.
                     </p>
                   </div>
                 </div>
 
-                <div className="grid grid-cols-3 gap-3">
+                <div className="grid grid-cols-3 gap-2">
 
                   {[
                     { key: 'files', label: 'Files', icon: Upload },
@@ -382,9 +510,12 @@ function DeliverModal({ request, onClose, onSuccess }) {
                   ].map(({ key, label, icon: Icon }) => (
                     <button
                       key={key}
-                      onClick={() => setMode(key)}
+                      onClick={() => {
+                        setMode(key);
+                        setValidationErrors(prev => ({ ...prev, files: '', links: '' }));
+                      }}
                       className={`
-                        group relative overflow-hidden rounded-2xl border-2 p-5 transition-all
+                        group relative overflow-hidden rounded-xl border-2 p-3 sm:p-4 transition-all
                         ${mode === key
                           ? 'border-[#0f6e56] bg-[#f0faf6]'
                           : 'border-[#e8eae8] hover:border-[#0f6e56]/30 hover:bg-[#fafcfb]'
@@ -395,17 +526,17 @@ function DeliverModal({ request, onClose, onSuccess }) {
                       <div className="flex flex-col items-center text-center">
 
                         <div className={`
-                          flex h-12 w-12 items-center justify-center rounded-2xl transition-all
+                          flex h-10 w-10 items-center justify-center rounded-xl transition-all
                           ${mode === key
                             ? 'bg-[#0f6e56] text-white'
                             : 'bg-[#f7f8f7] text-[#4a544a] group-hover:bg-[#e6f5f0] group-hover:text-[#0f6e56]'
                           }
                         `}>
-                          <Icon size={20} />
+                          <Icon size={18} />
                         </div>
 
                         <p className={`
-                          mt-3 text-[14px] font-semibold transition-colors
+                          mt-2 text-[13px] font-semibold transition-colors
                           ${mode === key
                             ? 'text-[#0f6e56]'
                             : 'text-[#141a14]'
@@ -425,14 +556,19 @@ function DeliverModal({ request, onClose, onSuccess }) {
               {(mode === 'files' || mode === 'both') && (
                 <div>
 
-                  <div className="mb-3">
-                    <h3 className="text-[15px] font-semibold text-[#141a14]">
-                      Upload files
-                    </h3>
+                  <div className="mb-2 flex justify-between items-end">
+                    <div>
+                      <h3 className="text-[14px] font-semibold text-[#141a14]">
+                        Upload files
+                      </h3>
 
-                    <p className="mt-1 text-[13px] text-[#9ea89e]">
-                      Drag and drop your delivery files here.
-                    </p>
+                      <p className="mt-0.5 text-[12px] text-[#9ea89e]">
+                        Drag and drop your delivery files here. Max 50MB per file.
+                      </p>
+                    </div>
+                    <span className="text-[11px] text-[#7c867d]">
+                      {files.length}/{MAX_FILE_COUNT} files
+                    </span>
                   </div>
 
                   <div
@@ -448,7 +584,7 @@ function DeliverModal({ request, onClose, onSuccess }) {
                     }}
                     onClick={() => fileInput.current?.click()}
                     className={`
-                      relative overflow-hidden rounded-[24px] border-2 border-dashed p-10 text-center transition-all cursor-pointer
+                      relative overflow-hidden rounded-xl border-2 border-dashed p-6 text-center transition-all cursor-pointer
                       ${dragOver
                         ? 'border-[#0f6e56] bg-[#f0faf6]'
                         : 'border-[#dbe7e1] bg-[#fafcfb] hover:border-[#0f6e56]/40 hover:bg-[#f7fbf9]'
@@ -456,15 +592,15 @@ function DeliverModal({ request, onClose, onSuccess }) {
                     `}
                   >
 
-                    <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-[#e6f5f0]">
-                      <Upload size={28} className="text-[#0f6e56]" />
+                    <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-[#e6f5f0]">
+                      <Upload size={22} className="text-[#0f6e56]" />
                     </div>
 
-                    <h4 className="mt-5 text-[16px] font-semibold text-[#141a14]">
+                    <h4 className="mt-3 text-[14px] font-semibold text-[#141a14]">
                       Drop files here
                     </h4>
 
-                    <p className="mt-2 text-[13px] text-[#7c867d]">
+                    <p className="mt-1 text-[12px] text-[#7c867d]">
                       or click to browse from your device
                     </p>
 
@@ -477,50 +613,69 @@ function DeliverModal({ request, onClose, onSuccess }) {
                     />
                   </div>
 
+                  {/* INLINE ERROR FOR FILES */}
+                  {validationErrors.files && (
+                    <div className="mt-2 flex items-center gap-1.5 text-[12px] text-red-600 font-medium">
+                      <AlertCircle size={14} className="shrink-0" />
+                      <span>{validationErrors.files}</span>
+                    </div>
+                  )}
+
                   {files.length > 0 && (
-                    <div className="mt-4 space-y-3">
+                    <div className="mt-3 space-y-2 max-h-[160px] overflow-y-auto pr-1">
 
                       {files.map((f, i) => (
                         <div
                           key={i}
-                          className="flex items-center gap-4 rounded-2xl border border-[#e8eae8] bg-white px-4 py-3"
+                          className={`flex items-center gap-3 rounded-xl border bg-white px-3 py-2 transition-colors ${
+                            f.status === 'error' ? 'border-red-200 bg-red-50/30' : 'border-[#e8eae8]'
+                          }`}
                         >
 
-                          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#f7f8f7]">
+                          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#f7f8f7]">
                             <FileIcon ext={f.file.name.split('.').pop()} />
                           </div>
 
                           <div className="min-w-0 flex-1">
 
-                            <p className="truncate text-[14px] font-medium text-[#141a14]">
+                            <p className="truncate text-[13px] font-medium text-[#141a14]">
                               {f.file.name}
                             </p>
 
-                            <p className="mt-1 text-[12px] text-[#9ea89e]">
+                            <p className="mt-0.5 text-[11px] text-[#9ea89e]">
                               {(f.file.size / 1024 / 1024).toFixed(1)} MB
                             </p>
                           </div>
 
                           {f.status === 'done' && (
-                            <div className="flex items-center gap-1.5 rounded-full bg-[#e6f5f0] px-3 py-1 text-[12px] font-medium text-[#0f6e56]">
-                              <CheckCircle2 size={13} />
+                            <div className="flex items-center gap-1 rounded-full bg-[#e6f5f0] px-2.5 py-0.5 text-[11px] font-medium text-[#0f6e56]">
+                              <CheckCircle2 size={12} />
                               Uploaded
                             </div>
                           )}
 
                           {f.status === 'uploading' && (
                             <Loader2
-                              size={16}
+                              size={14}
                               className="animate-spin text-[#0f6e56]"
                             />
                           )}
 
-                          {f.status === 'pending' && (
+                          {f.status === 'error' && (
+                            <div className="text-[11px] font-medium text-red-600 bg-red-100 px-2 py-0.5 rounded-md">
+                              Failed
+                            </div>
+                          )}
+
+                          {f.status !== 'uploading' && (
                             <button
-                              onClick={() => setFiles(files.filter((_, j) => j !== i))}
-                              className="flex h-9 w-9 items-center justify-center rounded-xl hover:bg-[#f7f8f7]"
+                              onClick={() => {
+                                setFiles(files.filter((_, j) => j !== i));
+                                setValidationErrors(prev => ({ ...prev, files: '' }));
+                              }}
+                              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg hover:bg-[#f7f8f7]"
                             >
-                              <X size={15} className="text-[#9ea89e]" />
+                              <X size={14} className="text-[#9ea89e]" />
                             </button>
                           )}
                         </div>
@@ -536,66 +691,97 @@ function DeliverModal({ request, onClose, onSuccess }) {
               {(mode === 'link' || mode === 'both') && (
                 <div>
 
-                  <div className="mb-3">
-                    <h3 className="text-[15px] font-semibold text-[#141a14]">
-                      Delivery links
-                    </h3>
+                  <div className="mb-2 flex justify-between items-end">
+                    <div>
+                      <h3 className="text-[14px] font-semibold text-[#141a14]">
+                        Delivery links
+                      </h3>
 
-                    <p className="mt-1 text-[13px] text-[#9ea89e]">
-                      Share Figma, Drive, staging URLs, or anything accessible online.
-                    </p>
+                      <p className="mt-0.5 text-[12px] text-[#9ea89e]">
+                        Share Figma, Drive, or staging URLs. Must begin with http:// or https://
+                      </p>
+                    </div>
+                    <span className="text-[11px] text-[#7c867d]">
+                      {links.length}/{MAX_LINK_COUNT} links
+                    </span>
                   </div>
 
-                  <div className="space-y-3">
+                  <div className="space-y-2 max-h-[160px] overflow-y-auto pr-1">
 
-                    {links.map((link, i) => (
-                      <div key={i}>
+                    {links.map((link, i) => {
+                      const isEntryInvalid = link.url.trim() !== '' && !isValidUrl(link.url);
+                      return (
+                        <div key={i}>
 
-                        <div className="flex items-center gap-3 rounded-2xl border border-[#e8eae8] bg-white px-4 py-3 transition-all focus-within:border-[#0f6e56] focus-within:ring-4 focus-within:ring-[#0f6e56]/10">
+                          <div className={`flex items-center gap-3 rounded-xl border bg-white px-3 py-2 transition-all focus-within:border-[#0f6e56] focus-within:ring-4 focus-within:ring-[#0f6e56]/10 ${
+                            isEntryInvalid ? 'border-amber-300 bg-amber-50/10' : 'border-[#e8eae8]'
+                          }`}>
 
-                          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#f7f8f7]">
-                            <Link2 size={16} className="text-[#0f6e56]" />
-                          </div>
+                            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#f7f8f7]">
+                              <Link2 size={14} className="text-[#0f6e56]" />
+                            </div>
 
-                          <input
-                            value={link.url}
-                            onChange={(e) =>
-                              setLinks(
-                                links.map((l, j) =>
-                                  j === i
-                                    ? { ...l, url: e.target.value }
-                                    : l
+                            <input
+                              value={link.url}
+                              onChange={(e) => {
+                                setValidationErrors(prev => ({ ...prev, links: '' }));
+                                setLinks(
+                                  links.map((l, j) =>
+                                    j === i
+                                      ? { ...l, url: e.target.value }
+                                      : l
+                                  )
                                 )
-                              )
-                            }
-                            placeholder="https://figma.com/file/..."
-                            className="flex-1 bg-transparent text-[14px] outline-none placeholder:text-[#9ea89e]"
-                          />
+                              }}
+                              placeholder="https://figma.com/file/..."
+                              className="flex-1 bg-transparent text-[13px] outline-none placeholder:text-[#9ea89e]"
+                            />
 
-                          {link.url && (
-                            <button
-                              onClick={() =>
-                                setLinks(links.filter((_, j) => j !== i))
-                              }
-                              className="flex h-9 w-9 items-center justify-center rounded-xl hover:bg-[#f7f8f7]"
-                            >
-                              <X size={14} className="text-[#9ea89e]" />
-                            </button>
+                            {link.url && (
+                              <button
+                                onClick={() => {
+                                  setLinks(links.filter((_, j) => j !== i));
+                                  setValidationErrors(prev => ({ ...prev, links: '' }));
+                                }}
+                                className="flex h-8 w-8 items-center justify-center rounded-lg hover:bg-[#f7f8f7]"
+                              >
+                                <X size={13} className="text-[#9ea89e]" />
+                              </button>
+                            )}
+                          </div>
+                          
+                          {isEntryInvalid && (
+                            <p className="text-[11px] text-amber-600 mt-1 ml-1">
+                              URL scheme mismatch. Missing "https://" or "http://" prefix.
+                            </p>
                           )}
-                        </div>
 
-                      </div>
-                    ))}
+                        </div>
+                      );
+                    })}
 
                   </div>
+
+                  {/* INLINE ERROR FOR LINKS */}
+                  {validationErrors.links && (
+                    <div className="mt-2 flex items-center gap-1.5 text-[12px] text-red-600 font-medium">
+                      <AlertCircle size={14} className="shrink-0" />
+                      <span>{validationErrors.links}</span>
+                    </div>
+                  )}
 
                   <button
-                    onClick={() =>
-                      setLinks([...links, { url: '', label: '' }])
-                    }
-                    className="mt-4 inline-flex items-center gap-2 rounded-xl border border-[#dbe7e1] bg-[#f7fbf9] px-4 py-2.5 text-[13px] font-medium text-[#0f6e56] hover:bg-[#eef7f3] transition-colors"
+                    onClick={() => {
+                      if (links.length >= MAX_LINK_COUNT) {
+                        setValidationErrors(prev => ({ ...prev, links: `Maximum limit of ${MAX_LINK_COUNT} links reached.` }));
+                        return;
+                      }
+                      setLinks([...links, { url: '', label: '' }]);
+                    }}
+                    disabled={links.length >= MAX_LINK_COUNT}
+                    className="mt-3 inline-flex items-center gap-1.5 rounded-lg border border-[#dbe7e1] bg-[#f7fbf9] px-3 py-2 text-[12px] font-medium text-[#0f6e56] hover:bg-[#eef7f3] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    <Plus size={14} />
+                    <Plus size={13} />
                     Add another link
                   </button>
 
@@ -605,65 +791,86 @@ function DeliverModal({ request, onClose, onSuccess }) {
               {/* MESSAGE */}
               <div>
 
-                <div className="mb-3">
-                  <h3 className="text-[15px] font-semibold text-[#141a14]">
-                    Message to {clientName}
-                  </h3>
+                <div className="mb-2 flex justify-between items-end">
+                  <div>
+                    <h3 className="text-[14px] font-semibold text-[#141a14]">
+                      Message to {clientName}
+                    </h3>
 
-                  <p className="mt-1 text-[13px] text-[#9ea89e]">
-                    Add context or explain what was delivered.
-                  </p>
+                    <p className="mt-0.5 text-[12px] text-[#9ea89e]">
+                      Add context or explain what was delivered.
+                    </p>
+                  </div>
+                  <span className={`text-[11px] ${message.length > MAX_MESSAGE_LENGTH ? 'text-red-600 font-bold' : 'text-[#7c867d]'}`}>
+                    {message.length}/{MAX_MESSAGE_LENGTH}
+                  </span>
                 </div>
 
                 <textarea
                   value={message}
-                  onChange={(e) => setMessage(e.target.value)}
-                  rows={6}
+                  onChange={(e) => {
+                    setValidationErrors(prev => ({ ...prev, message: '' }));
+                    setMessage(e.target.value);
+                  }}
+                  rows={4}
                   placeholder="Hey! I've attached the final delivery files and latest revisions..."
-                  className="
-                    w-full resize-none rounded-[24px]
-                    border border-[#e8eae8]
-                    bg-white
-                    px-5 py-4
-                    text-[14px]
+                  className={`
+                    w-full resize-none rounded-[16px]
+                    border bg-white
+                    px-4 py-3
+                    text-[13px]
                     outline-none
                     transition-all
                     placeholder:text-[#9ea89e]
                     focus:border-[#0f6e56]
                     focus:ring-4
                     focus:ring-[#0f6e56]/10
-                  "
+                    ${validationErrors.message ? 'border-red-300 focus:border-red-500 focus:ring-red-500/10' : 'border-[#e8eae8]'}
+                  `}
                 />
+
+                {/* INLINE ERROR FOR MESSAGE */}
+                {validationErrors.message && (
+                  <div className="mt-1 flex items-center gap-1.5 text-[12px] text-red-600 font-medium">
+                    <AlertCircle size={14} className="shrink-0" />
+                    <span>{validationErrors.message}</span>
+                  </div>
+                )}
 
               </div>
 
               {/* ACTIONS */}
-              <div className="flex flex-col-reverse gap-3 border-t border-[#eef0ee] pt-6 sm:flex-row sm:items-center sm:justify-end">
+              <div className="flex flex-col-reverse gap-2 border-t border-[#eef0ee] pt-4 sm:flex-row sm:items-center sm:justify-end">
 
                 <button
                   onClick={onClose}
-                  className="h-12 rounded-2xl px-5 text-[14px] font-medium text-[#6b756d] hover:bg-[#f7f8f7] transition-colors"
+                  className="h-10 rounded-xl px-4 text-[13px] font-medium text-[#6b756d] hover:bg-[#f7f8f7] transition-colors"
                 >
                   Cancel
                 </button>
 
                 <button
                   onClick={handleSubmit}
-                  disabled={submitting}
+                  disabled={submitting || isCurrentlyUploading}
                   className="
-                    flex h-12 items-center justify-center gap-2
-                    rounded-2xl bg-[#0f6e56] px-6
-                    text-[14px] font-medium text-white
+                    flex h-10 items-center justify-center gap-2
+                    rounded-xl bg-[#0f6e56] px-5
+                    text-[13px] font-medium text-white
                     transition-all hover:bg-[#085041]
                     disabled:cursor-not-allowed disabled:opacity-60
                   "
                 >
                   {submitting ? (
-                    <Loader2 size={16} className="animate-spin" />
+                    <Loader2 size={14} className="animate-spin" />
+                  ) : isCurrentlyUploading ? (
+                    <>
+                      <Loader2 size={14} className="animate-spin" />
+                      Uploading files...
+                    </>
                   ) : (
                     <>
                       Send delivery
-                      <ArrowRight size={16} />
+                      <ArrowRight size={14} />
                     </>
                   )}
                 </button>
