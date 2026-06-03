@@ -5,6 +5,7 @@ from django.db import transaction
 from django.utils import timezone
 
 from apps.tenants.models import TenantUsage
+from django.core.cache import cache  
 
 from .models import Request, RequestActivity, File
 from .repositories import (
@@ -92,6 +93,8 @@ class RequestService:
             ).get(tenant=tenant) + 1,
         )
 
+        cache.delete(f"dashboard_stats:{tenant.id}")
+
         return request_obj
     
 
@@ -146,6 +149,8 @@ class RequestService:
             TenantUsage.objects.filter(tenant=tenant).update(
                 active_request_count=usage.active_request_count + 1
             )
+
+        cache.delete(f"dashboard_stats:{tenant.id}")
  
         return request_obj
 
@@ -322,6 +327,8 @@ class RequestService:
             TenantUsage.objects.filter(tenant=tenant).update(
                 active_request_count=usage.active_request_count + 1
             ) 
+
+        cache.delete(f"dashboard_stats:{tenant.id}")
 
         return request_obj
 

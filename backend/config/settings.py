@@ -57,6 +57,8 @@ INSTALLED_APPS = [
     "apps.tenants",
     "apps.notifications",
     "apps.request_management",
+    "apps.dashboard",
+
 
 
 ]
@@ -223,3 +225,12 @@ AWS_STORAGE_BUCKET_NAME = config("AWS_STORAGE_BUCKET_NAME")
 AWS_S3_REGION_NAME = config("AWS_S3_REGION_NAME", default="ap-south-1")
 AWS_S3_FILE_OVERWRITE = False
 AWS_DEFAULT_ACL = None   # bucket policy controls access, not object ACL
+
+
+# Redis cache backend
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.redis.RedisCache",
+        "LOCATION": config("REDIS_URL", default="redis://localhost:6379/1"),
+    }
+}

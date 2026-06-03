@@ -3,6 +3,7 @@ from django.utils import timezone
 
 from apps.tenants.models import  TenantMembership, TenantUsage
 from apps.users.repositories import UserRepository
+from django.core.cache import cache 
 
 from .models import Client, Invite
 from .repositories import ClientRepository, InviteRepository, TagRepository
@@ -85,6 +86,7 @@ class ClientService:
         if tags:
             TagRepository.set_client_tags(client, tags, tenant)
 
+        cache.delete(f"dashboard_stats:{tenant.id}")
 
         return {"invite": invite, "client" : client}
     
@@ -229,6 +231,9 @@ class ClientService:
                 "client_count", flat=True
             ).get(tenant=tenant) - 1
         )
+        
+        cache.delete(f"dashboard_stats:{tenant.id}")
+
         return client
     
     @staticmethod
