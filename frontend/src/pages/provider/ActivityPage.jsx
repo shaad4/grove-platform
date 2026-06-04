@@ -1,15 +1,15 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   Search, ChevronDown, Loader2, ArrowUpRight,
   CheckCircle2, FileText, MessageSquare, Bell,
-  Lock, UserCheck, Download,
+  Lock, Download,
 } from 'lucide-react'
 import ProviderLayout from '../../components/layout/ProviderLayout'
 import ProviderTopbar from '../../components/layout/ProviderTopbar'
 import requestsApi from '../../api/requests.api'
 import clientsApi from '../../api/clients.api'
-import { getAvatarColor, getInitials, timeAgo, formatDate } from '../../utils/clientHelpers'
+import { getAvatarColor, getInitials, timeAgo } from '../../utils/clientHelpers'
 
 // ── Event type config ─────────────────────────────────────────
 const EVENT_CONFIG = {
@@ -63,7 +63,6 @@ function StatusTransitionBadge({ from, to }) {
   )
 }
 
-// ── GROUP by date ─────────────────────────────────────────────
 function groupByDate(activities) {
   const groups = {}
   activities.forEach(a => {
@@ -80,51 +79,60 @@ function groupByDate(activities) {
   return groups
 }
 
-// ── ACTIVITY ROW ─────────────────────────────────────────────
 function ActivityRow({ activity, onNavigate }) {
   const [expanded, setExpanded] = useState(false)
   const isAI = activity.actor_source === 'ai'
   const isSystem = activity.actor_source === 'system'
-  const actorName = isAI ? 'Grove AI' : isSystem ? 'System' : activity.actor_name
-  const isYou = !isAI && !isSystem && actorName !== 'System'
-  const cfg = EVENT_CONFIG[activity.event_type] || EVENT_CONFIG.request_created
-  const Icon = cfg.icon
+  const actorName = activity.actor_name || (isAI ? 'Grove AI' : 'System')
+  const isYou = activity.is_current_user === true
 
+  const cfg = EVENT_CONFIG[activity.event_type] || EVENT_CONFIG.request_created
   const meta = activity.metadata || {}
+  const target = activity.target_info || {}
+
   const hasTransition = activity.event_type === 'status_change' && meta.from && meta.to
   const hasSummary = activity.event_type === 'ai_summary_generated' && activity.description
 
   return (
-    <div className="flex items-start gap-4 py-3.5 border-b border-[#f1f3f1] last:border-0 group">
-      {/* Dot */}
-      <div className="flex flex-col items-center pt-1 shrink-0">
+    <div className="flex items-start gap-4 py-3.5 border-b border-[#f1f3f1] last:border-0 group hover:bg-[#fafafa]/40 px-2 rounded-xl transition-colors">
+      <div className="flex flex-col items-center pt-1.5 shrink-0">
         <div className={`h-2 w-2 rounded-full ${cfg.dot}`} />
       </div>
 
-      {/* Avatar */}
       <Avatar name={actorName} isAI={isAI} />
 
-      {/* Content */}
       <div className="flex-1 min-w-0">
-        <div className="flex flex-wrap items-center gap-1 text-[13px]">
-          <span className={`font-semibold ${isAI ? 'text-[#0f6e56]' : 'text-[#141a14]'}`}>
-            {isYou && !isAI ? 'You' : actorName}
+        <div className="text-[13px] text-[#141a14] leading-relaxed">
+          <span className={`font-semibold mr-1.5 ${isAI ? 'text-[#0f6e56]' : 'text-[#141a14]'}`}>
+            {isYou ? 'You' : actorName}
           </span>
           <span className="text-[#4a544a]">{activity.description}</span>
+          
+          {target.request_ref && (
+            <button
+              onClick={() => onNavigate && onNavigate(target.request_id)}
+              className="ml-1.5 inline-font font-medium text-[#0f6e56] hover:underline"
+              title={target.request_title}
+            >
+              for <span className="font-semibold">{target.request_ref}</span>
+            </button>
+          )}
+
           {hasTransition && <StatusTransitionBadge from={meta.from} to={meta.to} />}
+          
           {meta.file_count && (
-            <span className="inline-flex items-center gap-1 rounded-full bg-[#e6f5f0] px-2 py-0.5 text-[11px] font-medium text-[#0f6e56]">
+            <span className="inline-flex items-center gap-1 rounded-full bg-[#e6f5f0] px-2 py-0.5 text-[11px] font-medium text-[#0f6e56] ml-2">
               <CheckCircle2 size={10} /> {meta.file_count} files
             </span>
           )}
         </div>
 
-        {/* Preview text */}
-        {activity.description?.length > 50 && !hasSummary && (
-          <p className="text-[12px] text-[#9ea89e] mt-0.5 truncate">{activity.description}</p>
+        {target.request_title && (
+          <p className="text-[11px] text-[#9ea89e] mt-0.5 truncate max-w-xl">
+            {target.request_title}
+          </p>
         )}
 
-        {/* AI summary expandable */}
         {hasSummary && (
           <div className="mt-2 rounded-xl bg-[#f0faf6] border border-[#d1fae5] px-3 py-2.5">
             <div className="flex items-center justify-between">
@@ -141,28 +149,24 @@ function ActivityRow({ activity, onNavigate }) {
         )}
       </div>
 
-      {/* Right: client badge + request ref + time */}
-      <div className="flex items-center gap-3 shrink-0">
-        {meta.client_initials && (
-          <div className={`h-6 w-6 rounded-full flex items-center justify-center text-[9px] font-bold ${getAvatarColor(meta.client_name || '').bg} ${getAvatarColor(meta.client_name || '').text}`}>
-            {meta.client_initials}
+      {/* Simplified Right Anchor Flank Container */}
+      <div className="flex items-center gap-3 shrink-0 ml-auto">
+        {target.client_name && (
+          <div 
+            className={`h-6 w-6 rounded-full flex items-center justify-center text-[9px] font-bold ${getAvatarColor(target.client_name).bg} ${getAvatarColor(target.client_name).text}`}
+            title={`Client: ${target.client_name}`}
+          >
+            {getInitials(target.client_name)}
           </div>
         )}
-        {meta.request_ref && (
-          <button
-            onClick={() => onNavigate && onNavigate(meta.request_id)}
-            className="text-[11px] font-medium text-[#9ea89e] hover:text-[#0f6e56] transition-colors"
-          >
-            {meta.request_ref}
-          </button>
-        )}
-        <span className="text-[12px] text-[#9ea89e] whitespace-nowrap">{timeAgo(activity.created_at)}</span>
+        <span className="text-[12px] text-[#9ea89e] w-16 text-right whitespace-nowrap">
+          {timeAgo(activity.created_at)}
+        </span>
       </div>
     </div>
   )
 }
 
-// ── FILTER TABS ───────────────────────────────────────────────
 const FILTER_TABS = [
   { key: 'all', label: 'All events' },
   { key: 'request_created', label: 'Requests' },
@@ -172,7 +176,6 @@ const FILTER_TABS = [
   { key: 'note_added', label: 'Notes' },
 ]
 
-// ── DATE RANGE OPTIONS ────────────────────────────────────────
 const DATE_OPTIONS = [
   { value: '7', label: 'Last 7 days' },
   { value: '30', label: 'Last 30 days' },
@@ -181,40 +184,28 @@ const DATE_OPTIONS = [
 
 export default function ActivityPage() {
   const navigate = useNavigate()
-  // Activity data is pulled from all requests' activities
-  // In a real app this would be a dedicated /activity/ endpoint
   const [activities, setActivities] = useState([])
-  const [requests, setRequests] = useState([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [eventFilter, setEventFilter] = useState('all')
   const [dateRange, setDateRange] = useState('7')
-  const [clientFilter, setClientFilter] = useState('')
-  const [clients, setClients] = useState([])
   const [visibleCount, setVisibleCount] = useState(13)
 
   useEffect(() => {
     const load = async () => {
       try {
-        const [reqRes, clientRes] = await Promise.all([
-          requestsApi.list(),
-          clientsApi.list(),
-        ])
+        const reqRes = await requestsApi.list()
         const reqs = reqRes.data.data?.requests || []
-        setRequests(reqs)
-        setClients(clientRes.data.data?.clients || [])
 
-        // Pull activities from all requests (demo approach; prod would use a dedicated endpoint)
         const allActivities = []
         await Promise.all(
-          reqs.slice(0, 10).map(async r => {
+          reqs.slice(0, 15).map(async r => {
             try {
               const res = await requestsApi.getActivity(r.id)
               const acts = (res.data.data || []).map(a => ({
                 ...a,
                 request_title: r.title,
                 request_id: r.id,
-                client_name: r.client_name,
               }))
               allActivities.push(...acts)
             } catch { /* skip */ }
@@ -222,13 +213,12 @@ export default function ActivityPage() {
         )
         allActivities.sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
         setActivities(allActivities)
-      } catch { /* silent */ }
+      } catch { /* error silent */ }
       finally { setLoading(false) }
     }
     load()
   }, [])
 
-  // Filter
   const now = new Date()
   const cutoff = new Date(now - parseInt(dateRange) * 86400000)
 
@@ -237,19 +227,15 @@ export default function ActivityPage() {
     if (new Date(a.created_at) < cutoff) return false
     if (search) {
       const q = search.toLowerCase()
-      return (a.request_title || '').toLowerCase().includes(q) ||
+      return (a.target_info?.request_title || '').toLowerCase().includes(q) ||
         (a.actor_name || '').toLowerCase().includes(q) ||
-        (a.description || '').toLowerCase().includes(q)
+        (a.description || '').toLowerCase().includes(q) ||
+        (a.target_info?.client_name || '').toLowerCase().includes(q)
     }
     return true
   })
 
   const grouped = groupByDate(filtered.slice(0, visibleCount))
-
-  // Stats
-  const byYou = filtered.filter(a => a.actor_source === 'user').length
-  const byClients = filtered.filter(a => a.actor_source === 'user' && a.actor_name !== 'You').length
-  const mostActive = clients.length > 0 ? clients[0]?.display_name || clients[0]?.client_name : null
 
   return (
     <ProviderLayout
@@ -257,30 +243,29 @@ export default function ActivityPage() {
       topbar={
         <ProviderTopbar
           title="Activity"
-          rightSlot={
-            <button className="flex items-center gap-2 rounded-xl border border-[#e8eae8] bg-white px-3 py-2 text-[12px] font-medium text-[#4a544a] hover:border-[#0f6e56]/30 transition-colors">
-              <Download size={13} className="text-[#9ea89e]" />
-              Export CSV
-            </button>
-          }
+          // rightSlot={
+          //   // <button className="flex items-center gap-2 rounded-xl border border-[#e8eae8] bg-white px-3 py-2 text-[12px] font-medium text-[#4a544a] hover:border-[#0f6e56]/30 transition-colors">
+          //   //   <Download size={13} className="text-[#9ea89e]" />
+          //   //   Export CSV
+          //   // </button>
+          // }
         />
       }
     >
       <div className="p-6">
         <div className="rounded-2xl border border-[#e8eae8] bg-white overflow-hidden">
 
-          {/* Search + date filter */}
+          {/* Search + Input layout */}
           <div className="flex items-center gap-3 p-4 border-b border-[#f1f3f1]">
             <div className="relative flex-1">
               <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#9ea89e]" />
               <input
                 value={search}
                 onChange={e => setSearch(e.target.value)}
-                placeholder="Search activity — client name, request title, event type..."
-                className="w-full h-9 rounded-xl border border-[#e8eae8] pl-8 pr-4 text-[13px] outline-none placeholder:text-[#9ea89e] focus:border-[#0f6e56] focus:ring-4 focus:ring-[#0f6e56]/10 transition-all"
+                placeholder="Search activity by client, request title, context..."
+                className="w-full h-9 rounded-xl border border-[#e8eae8] pl-9 pr-4 text-[13px] outline-none placeholder:text-[#9ea89e] focus:border-[#0f6e56] focus:ring-4 focus:ring-[#0f6e56]/10 transition-all"
               />
             </div>
-            {/* Date range */}
             <div className="flex items-center gap-1.5">
               {DATE_OPTIONS.map(o => (
                 <button
@@ -296,7 +281,6 @@ export default function ActivityPage() {
             </div>
           </div>
 
-          {/* Filter tabs + client filter */}
           <div className="flex items-center justify-between px-4 py-3 border-b border-[#f1f3f1]">
             <div className="flex items-center gap-1">
               <span className="text-[12px] font-semibold text-[#9ea89e] mr-2">Filter by:</span>
@@ -305,8 +289,8 @@ export default function ActivityPage() {
                   key={key}
                   onClick={() => setEventFilter(key)}
                   className={`rounded-lg px-3 py-1.5 text-[12px] font-medium transition-colors
-                    ${eventFilter === key ? 'bg-[#0f6e56] text-white' : 'text-[#4a544a] hover:bg-[#f7f8f7]'}
-                  `}
+                    ${eventFilter === key ? 'bg-[#0f6e56] text-white' : 'text-[#4a544a] hover:bg-[#f7f8f7]'}`
+                  }
                 >
                   {label}
                 </button>
@@ -317,22 +301,15 @@ export default function ActivityPage() {
             </button>
           </div>
 
-          {/* Stats strip */}
+          {/* Cleaned minimalist event metadata readout block */}
           {!loading && (
-            <div className="flex items-center gap-5 px-5 py-3 border-b border-[#f1f3f1] bg-[#fafafa]">
-              <span className="text-[13px] font-semibold text-[#141a14]">{filtered.length} events</span>
-              <span className="text-[13px] text-[#9ea89e]">{byYou} by you</span>
-              <span className="text-[13px] text-[#9ea89e]">{byClients} by clients</span>
-              {mostActive && (
-                <span className="text-[13px]">
-                  <span className="font-semibold text-[#141a14]">{mostActive}</span>
-                  <span className="text-[#9ea89e] ml-1">most active</span>
-                </span>
-              )}
+            <div className="flex items-center justify-between px-5 py-2.5 border-b border-[#f1f3f1] bg-[#fafafa]">
+              <p className="text-[12px] text-[#4a544a]">
+                Showing <span className="font-semibold text-[#141a14]">{filtered.length} logs</span> matching your tracking timeframe filter selection criteria.
+              </p>
             </div>
           )}
 
-          {/* Activity list */}
           {loading ? (
             <div className="flex items-center justify-center py-20">
               <Loader2 size={22} className="animate-spin text-[#0f6e56]" />
@@ -344,20 +321,22 @@ export default function ActivityPage() {
               <p className="text-[13px] text-[#9ea89e] mt-1">Try adjusting your filters or date range</p>
             </div>
           ) : (
-            <div className="px-5">
+            <div className="px-5 divide-y divide-[#f1f3f1]">
               {Object.entries(grouped).map(([date, acts]) => (
-                <div key={date}>
-                  <div className="flex items-center justify-between py-3 sticky top-0 bg-white z-10">
+                <div key={date} className="pt-2">
+                  <div className="flex items-center justify-between py-2 sticky top-0 bg-white z-10">
                     <p className="text-[12px] font-semibold text-[#141a14]">{date}</p>
-                    <p className="text-[11px] text-[#9ea89e]">{acts.length} events</p>
+                    <p className="text-[11px] text-[#9ea89e]">{acts.length} logs</p>
                   </div>
-                  {acts.map(a => (
-                    <ActivityRow
-                      key={a.id}
-                      activity={a}
-                      onNavigate={id => navigate(`/requests/${id}`)}
-                    />
-                  ))}
+                  <div className="pb-3">
+                    {acts.map(a => (
+                      <ActivityRow
+                        key={a.id}
+                        activity={a}
+                        onNavigate={id => navigate(`/requests/${id}`)}
+                      />
+                    ))}
+                  </div>
                 </div>
               ))}
               {filtered.length > visibleCount && (
@@ -366,11 +345,8 @@ export default function ActivityPage() {
                     onClick={() => setVisibleCount(v => v + 25)}
                     className="text-[13px] font-medium text-[#0f6e56] hover:underline"
                   >
-                    Load {Math.min(25, filtered.length - visibleCount)} more events
+                    Load more events
                   </button>
-                  <p className="text-[11px] text-[#9ea89e] mt-1">
-                    Showing {Math.min(visibleCount, filtered.length)} of {filtered.length} events
-                  </p>
                 </div>
               )}
             </div>

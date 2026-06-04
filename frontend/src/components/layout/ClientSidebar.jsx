@@ -242,7 +242,7 @@ export default function ClientSidebar({
 
           border-r border-[#ebebeb]
 
-          bg-[#f7f8f7]
+          bg-[#edf1ee]
 
           ${
             isCollapsed
