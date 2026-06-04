@@ -48,7 +48,13 @@ export default function ClientSidebar({
     useAuth()
 
   const [isCollapsed, setIsCollapsed] =
-    useState(false)
+    useState(() => {
+      const saved = localStorage.getItem(
+        'provider-sidebar-collapsed'
+      )
+
+      return saved === 'true'
+    })
 
   const [isPopupOpen, setIsPopupOpen] =
     useState(false)
@@ -111,6 +117,13 @@ export default function ClientSidebar({
         handleClickOutside
       )
   }, [])
+
+  useEffect(() => {
+    localStorage.setItem(
+      'provider-sidebar-collapsed',
+      isCollapsed
+    )
+  }, [isCollapsed])
 
   // ───────────────── User Popup ─────────────────
   const UserPopup = ({
