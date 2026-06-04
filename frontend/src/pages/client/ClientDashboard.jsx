@@ -503,7 +503,11 @@ export default function ClientDashboard() {
         <NewRequestModal
           providerName={providerName}
           onClose={() => setShowNew(false)}
-          onSuccess={() => { setShowNew(false); fetchRequests() }}
+          onSuccess={(newReq) => {
+            setShowNew(false)
+            fetchRequests()
+            navigate(`/my-requests/${newReq.id}`) 
+          }}
         />
       )}
     </ClientLayout>
