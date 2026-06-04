@@ -15,6 +15,7 @@ import {
   MessageSquare,
   X,
   RotateCcw,
+  Pencil,
 } from 'lucide-react'
 
 import ClientLayout from '../../components/layout/ClientLayout'
@@ -222,6 +223,13 @@ export default function ClientRequestDetailPage() {
   const isResizingSidebar = useRef(false)
   const isResizingChat    = useRef(false)
 
+  // Edit Request
+  const [isEditing, setIsEditing]   = useState(false)
+  const [editTitle, setEditTitle]   = useState('')
+  const [editDesc, setEditDesc]     = useState('')
+  const [editLoading, setEditLoading] = useState(false)
+  const [editError, setEditError]   = useState(null)
+
   const startSidebarResize = useCallback((e) => {
     e.preventDefault()
     isResizingSidebar.current = true
@@ -278,6 +286,23 @@ export default function ClientRequestDetailPage() {
   }, [requestId])
 
   useEffect(() => { fetchAll() }, [fetchAll])
+
+  const handleEditSave = async () => {
+    setEditLoading(true)
+    setEditError(null)
+    try {
+      await requestsApi.update(requestId, {
+        title: editTitle,
+        description: editDesc,
+      })
+      await fetchAll()
+      setIsEditing(false)
+    } catch (err) {
+      setEditError(err?.response?.data?.message || 'Failed to save changes.')
+    } finally {
+      setEditLoading(false)
+    }
+  } 
 
   // ── Review handler ─────────────────────────────────────────────────────────
 
@@ -467,8 +492,74 @@ export default function ClientRequestDetailPage() {
 
               {/* Description */}
               <div className="rounded-2xl border border-[#e8eae8] bg-white p-5">
-                <h2 className="text-[15px] font-semibold text-[#141a14] mb-3">Request details</h2>
-                <p className="text-[13px] leading-7 text-[#4a544a] whitespace-pre-wrap">{req.description}</p>
+                <div className="flex items-center justify-between mb-3">
+                  <h2 className="text-[15px] font-semibold text-[#141a14]">Request details</h2>
+                  {req.status === 'received' && !isEditing && (
+                    <button
+                      onClick={() => {
+                        setEditTitle(req.title)
+                        setEditDesc(req.description)
+                        setIsEditing(true)
+                        setEditError(null)
+                      }}
+                      className="h-7 px-2.5 rounded-lg border border-[#e8eae8] flex items-center gap-1.5 text-[11px] text-[#9ea89e] hover:text-[#141a14] hover:border-[#d0d4d0] transition-colors"
+                    >
+                      <Pencil size={11} />
+                      Edit
+                    </button>
+                  )}
+                </div>
+
+                {isEditing ? (
+                  <div className="space-y-3">
+                    <div>
+                      <label className="text-[11px] text-[#9ea89e] mb-1.5 block">Title</label>
+                      <input
+                        value={editTitle}
+                        onChange={e => setEditTitle(e.target.value)}
+                        className="w-full rounded-xl border border-[#e8eae8] bg-[#fafbfa] px-4 py-2.5 text-[13px] text-[#141a14] focus:outline-none focus:border-[#0f6e56] transition-colors"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[11px] text-[#9ea89e] mb-1.5 block">Description</label>
+                      <textarea
+                        value={editDesc}
+                        onChange={e => setEditDesc(e.target.value)}
+                        rows={5}
+                        className="w-full rounded-xl border border-[#e8eae8] bg-[#fafbfa] px-4 py-3 text-[13px] text-[#141a14] resize-none focus:outline-none focus:border-[#0f6e56] transition-colors"
+                      />
+                    </div>
+
+                    {editError && (
+                      <p className="text-[12px] text-red-500">{editError}</p>
+                    )}
+
+                    <div className="flex gap-2 pt-1">
+                      <button
+                        onClick={() => { setIsEditing(false); setEditError(null) }}
+                        disabled={editLoading}
+                        className="h-9 px-4 rounded-xl border border-[#e8eae8] text-[12px] text-[#9ea89e] hover:text-[#141a14] transition-colors disabled:opacity-50"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        onClick={handleEditSave}
+                        disabled={editLoading || !editTitle.trim() || !editDesc.trim()}
+                        className="flex-1 h-9 rounded-xl bg-[#141a14] text-white text-[12px] font-semibold flex items-center justify-center gap-2 disabled:opacity-50 hover:bg-[#1f2a1f] transition-colors"
+                      >
+                        {editLoading
+                          ? <Loader2 size={13} className="animate-spin" />
+                          : <CheckCircle2 size={13} />
+                        }
+                        Save changes
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <p className="text-[13px] leading-7 text-[#4a544a] whitespace-pre-wrap">
+                    {req.description}
+                  </p>
+                )}
               </div>
 
               {/* Attachments */}
