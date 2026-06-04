@@ -29,7 +29,6 @@ from .services import (
     NoProviderMembership,
 )
 from .utils import set_auth_cookies
- 
 
 #Helpers
 def _build_user_payload(user, membership):

@@ -1,7 +1,7 @@
 from django.db import transaction
 from django.utils import timezone
 
-from .models import User
+
 from apps.tenants.models import Plan, TenantUsage
 
 from .repositories import (
@@ -11,7 +11,7 @@ from .repositories import (
 )
 
 from apps.tenants.models import Tenant, TenantMembership
-
+from apps.common.logger import logger
 
 #custom Exceptions
 
@@ -56,6 +56,8 @@ class ProviderSignupService:
             expires_at=timezone.now() + timezone.timedelta(minutes=30)
         )
 
+        logger.info("user_registered user_id=%s email=%s", user.id, user.email)
+
         return { "user" : user, "verification_token" : verification_token }
     
 
@@ -69,12 +71,14 @@ class ProviderSignupService:
         token = EmailVerificationTokenRepository.get_pending(token_value)
 
         if token is None:
+            logger.warning("email_verification_token_invalid token=%s", token_value)
             raise InvalidOrExpiredToken("Invalid or already-used verification token.")
         
 
         if token.expires_at < timezone.now():
             token.status = token.Status.EXPIRED
             token.save(update_fields=["status"])
+            logger.warning("email_verfication_token_expired user_id=%s", token.user_id)
             raise InvalidOrExpiredToken("This verification link has expired.")
         
         user = token.user
@@ -82,6 +86,8 @@ class ProviderSignupService:
         UserRepository.activate(user)
         EmailVerificationTokenRepository.expire_others(user, keep_id=token.id)
         EmailVerificationTokenRepository.mark_used(token)
+
+        logger.info("user_verified_email user_id=%s email=%s", user.id, user.email)
 
         return {"user" : user}
     
@@ -108,6 +114,7 @@ class ProviderSignupService:
             tenant=tenant,
             role=TenantMembership.Role.PROVIDER,
         )
+        logger.info("membership_created tenant_id=%s provider_id=%s slug=%s", tenant.id, user.id, tenant.slug)
         return {"tenant" : tenant, "membership" : membership }
     
 
@@ -132,6 +139,7 @@ class ProviderLoginService:
         ).first()
 
         if membership is None:
+            logger.warning("provider_membership_not_found user_id=%s tenant_id=%s", user.id, tenant.id)
             raise NoProviderMembership(
                 "No provider account found for this workspace."
             )
@@ -153,6 +161,7 @@ class PasswordResetService:
 
         user = UserRepository.get_by_email(email)
         if user is None or not user.is_active:
+            logger.warning("password_reset_requested_for_invalid_user email=%s", user.email)
             return None
         
         PasswordResetTokenRepository.expire_pending_for_user(user)
@@ -161,6 +170,8 @@ class PasswordResetService:
             user=user,
             expires_at=timezone.now() + timezone.timedelta(minutes=30)
         )
+
+        logger.info("password_reset_requested user=%s email=%s", user.id, user.email)
 
         return {"user" : user, "reset_token" : reset_token}
     
@@ -173,13 +184,17 @@ class PasswordResetService:
         token = PasswordResetTokenRepository.get_pending(token_value)
 
         if token is None:
+            logger.warning("password_reset_token_invalid")
             raise InvalidOrExpiredToken("Invalid or already-used reset link.")
         
         if token.expires_at < timezone.now():
+            logger.warning("password_reset_token_expired user=%s", token.user.id )
             PasswordResetTokenRepository.mark_expired(token)
             raise InvalidOrExpiredToken("Reset link has expired. Please request a new one.")
 
         UserRepository.set_password(token.user, new_password)
         PasswordResetTokenRepository.mark_used(token)
+
+        logger.info("password_reset_completed user=%s", token.user.id)
 
         
