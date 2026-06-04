@@ -557,7 +557,7 @@ export default function ProviderDashboard() {
             <div className="rounded-2xl border border-[#e8eae8] bg-white p-5">
               <div className="flex items-center justify-between mb-1">
                 <h3 className="text-[15px] font-semibold text-[#141a14]">Clients</h3>
-                <button onClick={() => navigate('clients')} className="text-[12px] font-medium text-[#0f6e56] hover:underline">
+                <button onClick={() => navigate('/clients')} className="text-[12px] font-medium text-[#0f6e56] hover:underline">
                   See all →
                 </button>
               </div>
@@ -572,7 +572,7 @@ export default function ProviderDashboard() {
                 </div>
               ) : (
                 clients.slice(0, 4).map((c, i) => (
-                  <ClientRow key={c.id} client={c} index={i} onClick={() => navigate(`clients/${c.id}`)} />
+                  <ClientRow key={c.id} client={c} index={i} onClick={() => navigate(`/clients/${c.id}`)} />
                 ))
               )}
             </div>
@@ -581,7 +581,7 @@ export default function ProviderDashboard() {
             <div>
               <div className="flex items-center justify-between mb-3">
                 <h3 className="text-[15px] font-semibold text-[#141a14]">Recent requests</h3>
-                <button onClick={() => navigate('requests')} className="text-[12px] font-medium text-[#0f6e56] hover:underline">
+                <button onClick={() => navigate('/requests')} className="text-[12px] font-medium text-[#0f6e56] hover:underline">
                   See all →
                 </button>
               </div>
@@ -599,7 +599,7 @@ export default function ProviderDashboard() {
               ) : (
                 <div className="space-y-3">
                   {stats.recent_requests.map(r => (
-                    <RecentRequestCard key={r.id} req={r} onClick={() => navigate(`requests/${r.id}`)} />
+                    <RecentRequestCard key={r.id} req={r} onClick={() => navigate(`/requests/${r.id}`)} />
                   ))}
                 </div>
               )}

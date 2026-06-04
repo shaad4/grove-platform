@@ -242,7 +242,7 @@ export default function ClientSidebar({
 
           border-r border-[#ebebeb]
 
-          bg-white
+          bg-[#f7f8f7]
 
           ${
             isCollapsed
@@ -400,14 +400,14 @@ export default function ClientSidebar({
                     ${
                       isActive
                         ? `
-                          bg-[#f0f0f0]
+                          bg-[#edf7f3]
 
-                          text-[#111]
+                          text-[#0f6e56]
 
                           font-medium
                         `
                         : `
-                          text-[#6b7280]
+                          text-[#4a544a]
 
                           hover:text-[#111]
                           hover:bg-[#f7f7f7]
