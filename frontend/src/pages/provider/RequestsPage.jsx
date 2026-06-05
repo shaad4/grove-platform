@@ -185,30 +185,66 @@ function PipelineCard({ req, onClick }) {
 // ── PIPELINE COLUMN ───────────────────────────────────────────
 function PipelineColumn({ status, requests, onCardClick }) {
   const cfg = STATUS_CONFIG[status]
+  const isClosed = status === 'closed'
+  const [collapsed, setCollapsed] = useState(isClosed) // closed starts collapsed
+
   return (
-    <div className="flex flex-col min-w-[220px] flex-1">
+    <div className={`flex flex-col transition-all duration-200 ${collapsed ? 'min-w-[48px] w-12' : 'min-w-[220px] flex-1'}`}>
+      
+      {/* Header */}
       <div className="flex items-center justify-between mb-3 px-1">
-        <div className="flex items-center gap-2">
-          <span className={`h-2 w-2 rounded-full ${cfg.dot}`} />
-          <span className="text-[13px] font-semibold text-[#141a14]">{cfg.label}</span>
-          <span className="text-[12px] text-[#9ea89e] font-medium">{requests.length}</span>
-        </div>
-        {status === 'received' && (
-          <button className="h-6 w-6 rounded-full border border-[#e8eae8] flex items-center justify-center text-[#9ea89e] hover:text-[#0f6e56] hover:border-[#0f6e56] transition-colors">
-            <Plus size={13} />
+        {collapsed ? (
+          // Vertical collapsed header
+          <button
+            onClick={() => setCollapsed(false)}
+            className="flex flex-col items-center gap-2 w-full py-2 group"
+          >
+            <span className={`h-2 w-2 rounded-full ${cfg.dot}`} />
+            <span className="text-[11px] font-semibold text-[#9ea89e] group-hover:text-[#141a14] transition-colors [writing-mode:vertical-rl] rotate-180">
+              {cfg.label}
+            </span>
+            <span className="text-[10px] text-[#9ea89e] font-medium">{requests.length}</span>
           </button>
+        ) : (
+          <>
+            <div className="flex items-center gap-2">
+              <span className={`h-2 w-2 rounded-full ${cfg.dot}`} />
+              <span className="text-[13px] font-semibold text-[#141a14]">{cfg.label}</span>
+              <span className="text-[12px] text-[#9ea89e] font-medium">{requests.length}</span>
+            </div>
+            <div className="flex items-center gap-1">
+              {status === 'received' && (
+                <button className="h-6 w-6 rounded-full border border-[#e8eae8] flex items-center justify-center text-[#9ea89e] hover:text-[#0f6e56] hover:border-[#0f6e56] transition-colors">
+                  <Plus size={13} />
+                </button>
+              )}
+              {isClosed && (
+                <button
+                  onClick={() => setCollapsed(true)}
+                  className="h-6 w-6 rounded-full border border-[#e8eae8] flex items-center justify-center text-[#9ea89e] hover:text-[#141a14] transition-colors"
+                  title="Collapse"
+                >
+                  <ChevronDown size={13} className="rotate-90" />
+                </button>
+              )}
+            </div>
+          </>
         )}
       </div>
-      <div className="flex flex-col gap-2">
-        {requests.map(r => (
-          <PipelineCard key={r.id} req={r} onClick={() => onCardClick(r.id)} />
-        ))}
-        {requests.length === 0 && (
-          <div className="rounded-xl border border-dashed border-[#e8eae8] p-4 text-center">
-            <p className="text-[12px] text-[#9ea89e]">No requests</p>
-          </div>
-        )}
-      </div>
+
+      {/* Cards — hidden when collapsed */}
+      {!collapsed && (
+        <div className="flex flex-col gap-2">
+          {requests.map(r => (
+            <PipelineCard key={r.id} req={r} onClick={() => onCardClick(r.id)} />
+          ))}
+          {requests.length === 0 && (
+            <div className="rounded-xl border border-dashed border-[#e8eae8] p-4 text-center">
+              <p className="text-[12px] text-[#9ea89e]">No requests</p>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   )
 }
