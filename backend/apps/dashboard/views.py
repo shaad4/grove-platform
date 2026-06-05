@@ -10,7 +10,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 
-from apps.tenants.models import TenantMembership, TenantUsage
+from apps.tenants.models import TenantMembership
 from apps.clients.models import Client
 from apps.request_management.models import Request, RequestActivity
 # Create your views here.
@@ -57,12 +57,21 @@ class DashboardStatsView(APIView):
         five_days_ago = now - timedelta(days=5)
 
         #counters
-        try:
-            usage = TenantUsage.objects.get(tenant=tenant)
-            total_clients = usage.client_count
-            active_requests = usage.active_request_count
-        except TenantUsage.DoesNotExist:
-            total_clients = active_requests = 0
+        total_clients = Client.objects.filter(
+            tenant_id=tid,
+            is_deleted=False,
+            is_deactivated=False,
+        ).count()
+
+        active_requests = Request.objects.filter(
+            tenant_id=tid,
+            is_deleted=False,
+            status__in=[
+                Request.Status.RECEIVED,
+                Request.Status.IN_REVIEW,
+                Request.Status.IN_PROGRESS,
+            ],
+        ).count()
 
 
         #Deliverd this week counts
@@ -200,6 +209,60 @@ class DashboardStatsView(APIView):
             "volume_chart": volume_chart,
             "heatmap": heatmap,
         }
+
+class SidebarBadgesView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    CACHE_TTL = 120
+
+    def get(self, request):
+        if not _require_provider(request):
+            return Response(
+                {"success": False, "message": "Forbidden."}, status=403,
+            )
+        
+        tenant = request.tenant
+
+        cache_key = f"sidebar_badges:{tenant.id}"
+
+        cached = cache.get(cache_key)
+        if cached:
+            return Response(
+                {
+                    "success": True,
+                    "data": cached,
+                    "cached" : True,
+                }
+            )
+        
+        tid = tenant.id
+
+        data = {
+            "clients": Client.objects.filter(
+                tenant_id=tid,
+                is_deleted=False,
+                is_deactivated=False,
+            ).count(),
+            "requests": Request.objects.filter(
+                tenant_id=tid,
+                is_deleted=False,
+                status__in=[
+                    Request.Status.RECEIVED,
+                    Request.Status.IN_REVIEW,
+                    Request.Status.IN_PROGRESS,
+                ],
+            ).count(),
+        }
+
+        cache.set(cache_key, data, timeout=self.CACHE_TTL)
+
+        return Response(
+            {
+                "success" : True,
+                "data" : data,
+                "cached" : False,
+            }
+        )
 
 
 

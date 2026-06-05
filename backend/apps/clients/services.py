@@ -87,6 +87,7 @@ class ClientService:
             TagRepository.set_client_tags(client, tags, tenant)
 
         cache.delete(f"dashboard_stats:{tenant.id}")
+        cache.delete(f"sidebar_badges:{tenant.id}")
 
         return {"invite": invite, "client" : client}
     
@@ -233,6 +234,7 @@ class ClientService:
         )
         
         cache.delete(f"dashboard_stats:{tenant.id}")
+        cache.delete(f"sidebar_badges:{tenant.id}")
 
         return client
     

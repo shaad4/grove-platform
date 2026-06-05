@@ -94,6 +94,7 @@ class RequestService:
         )
 
         cache.delete(f"dashboard_stats:{tenant.id}")
+        cache.delete(f"sidebar_badges:{tenant.id}")
 
         return request_obj
     
@@ -151,6 +152,7 @@ class RequestService:
             )
 
         cache.delete(f"dashboard_stats:{tenant.id}")
+        cache.delete(f"sidebar_badges:{tenant.id}")
  
         return request_obj
 
@@ -329,6 +331,7 @@ class RequestService:
             ) 
 
         cache.delete(f"dashboard_stats:{tenant.id}")
+        cache.delete(f"sidebar_badges:{tenant.id}")
 
         return request_obj
 
