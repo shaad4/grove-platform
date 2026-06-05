@@ -1,10 +1,14 @@
 import ProviderSidebar from './ProviderSidebar'
+import { useBadges } from '../../hooks/useBadges'
+
+
 
 export default function ProviderLayout({
   children,
   topbar,
-  badges,
 }) {
+  const { badges } = useBadges()
+  
   return (
     <div className="flex h-screen overflow-hidden bg-[#f7f8f7]">
       <ProviderSidebar badges={badges} />

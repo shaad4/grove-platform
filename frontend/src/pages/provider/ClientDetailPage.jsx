@@ -238,7 +238,7 @@ export default function ClientDetailPage() {
   }
 
   if (loading) return (
-    <ProviderLayout badges={{}}>
+    <ProviderLayout>
       <div className="flex items-center justify-center p-16">
         <Loader2 size={24} className="animate-spin text-[#0f6e56]" />
       </div>
@@ -246,7 +246,7 @@ export default function ClientDetailPage() {
   )
 
   if (notFound || !client) return (
-    <ProviderLayout badges={{}}>
+    <ProviderLayout >
       <div className="flex flex-col items-center justify-center p-16 text-center">
         <p className="text-[16px] font-medium text-[#141a14]">Client not found</p>
         <p className="mt-2 text-[13px] text-[#9ea89e]">This client may have been deleted.</p>
@@ -288,7 +288,7 @@ export default function ClientDetailPage() {
 
   return (
     <>
-      <ProviderLayout badges={{ clients: 0, requests: 0 }}>
+      <ProviderLayout>
         <div className="flex flex-col h-[100dvh] overflow-hidden bg-[#fafafa]">
 
           {/* ── STICKY TOPBAR ── */}

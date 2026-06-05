@@ -32,6 +32,7 @@ import ClientDetailPage   from './pages/provider/ClientDetailPage'
 import RequestsPage       from './pages/provider/RequestsPage'
 import RequestDetailPage  from './pages/provider/RequestDetailPage'
 import ActivityPage       from './pages/provider/ActivityPage'
+import { BadgeProvider } from './context/BadgeContext'
 
 function RoleDashboard() {
   const { user, loading } = useAuth()
@@ -46,94 +47,96 @@ export default function App() {
     <ErrorBoundary>
       <BrowserRouter>
         <AuthProvider>
-          <TenantGuard>
-            <Routes>
+          <BadgeProvider>
+            <TenantGuard>
+              <Routes>
 
-              {/* Public */}
-              <Route path="/" element={<LandingPage />} />
+                {/* Public */}
+                <Route path="/" element={<LandingPage />} />
 
-              {/* Pre-auth — no session needed */}
-              <Route path="/accept-invite" element={<AcceptInvitePage />} />
-              <Route path="/client-login"  element={<ClientLoginPage />} />
+                {/* Pre-auth — no session needed */}
+                <Route path="/accept-invite" element={<AcceptInvitePage />} />
+                <Route path="/client-login"  element={<ClientLoginPage />} />
 
-              {/* Guest only */}
-              <Route element={<GuestRoute />}>
-                <Route path="/signup"          element={<SignupPage />} />
-                <Route path="/login"           element={<LoginPage />} />
-                <Route path="/verify-email"    element={<VerifyEmailPage />} />
-                <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-                <Route path="/reset-password"  element={<ResetPasswordPage />} />
-              </Route>
+                {/* Guest only */}
+                <Route element={<GuestRoute />}>
+                  <Route path="/signup"          element={<SignupPage />} />
+                  <Route path="/login"           element={<LoginPage />} />
+                  <Route path="/verify-email"    element={<VerifyEmailPage />} />
+                  <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+                  <Route path="/reset-password"  element={<ResetPasswordPage />} />
+                </Route>
 
-              {/* Portal picker (root domain, authenticated) */}
-              <Route element={<ProtectedRoute />}>
-                <Route path="/portals" element={<PortalsPage />} />
-              </Route>
+                {/* Portal picker (root domain, authenticated) */}
+                <Route element={<ProtectedRoute />}>
+                  <Route path="/portals" element={<PortalsPage />} />
+                </Route>
 
-              {/* Setup (authenticated but no portal yet) */}
-              <Route element={<SetupRoute />}>
-                <Route path="/setup-workspace" element={<WorkspaceSetupPage />} />
-              </Route>
+                {/* Setup (authenticated but no portal yet) */}
+                <Route element={<SetupRoute />}>
+                  <Route path="/setup-workspace" element={<WorkspaceSetupPage />} />
+                </Route>
 
-              {/* Protected tenant routes */}
-              <Route element={<ProtectedRoute />}>
+                {/* Protected tenant routes */}
+                <Route element={<ProtectedRoute />}>
 
-                {/* Dashboard */}
-                <Route
-                  path="/dashboard"
-                  element={<TenantRoute><RoleDashboard /></TenantRoute>}
-                />
+                  {/* Dashboard */}
+                  <Route
+                    path="/dashboard"
+                    element={<TenantRoute><RoleDashboard /></TenantRoute>}
+                  />
 
-                {/* Client portal */}
-                <Route
-                  path="/portal"
-                  element={<TenantRoute><RoleDashboard /></TenantRoute>}
-                />
+                  {/* Client portal */}
+                  <Route
+                    path="/portal"
+                    element={<TenantRoute><RoleDashboard /></TenantRoute>}
+                  />
 
-                {/* ── Client management (provider) ── */}
-                <Route
-                  path="/clients"
-                  element={<TenantRoute><ClientsPage /></TenantRoute>}
-                />
-                <Route
-                  path="/clients/:clientId"
-                  element={<TenantRoute><ClientDetailPage /></TenantRoute>}
-                />
+                  {/* ── Client management (provider) ── */}
+                  <Route
+                    path="/clients"
+                    element={<TenantRoute><ClientsPage /></TenantRoute>}
+                  />
+                  <Route
+                    path="/clients/:clientId"
+                    element={<TenantRoute><ClientDetailPage /></TenantRoute>}
+                  />
 
-                {/* ── Requests (provider) ── */}
-                <Route
-                  path="/requests"
-                  element={<TenantRoute><RequestsPage /></TenantRoute>}
-                />
-                <Route
-                  path="/requests/:requestId"
-                  element={<TenantRoute><RequestDetailPage /></TenantRoute>}
-                />
+                  {/* ── Requests (provider) ── */}
+                  <Route
+                    path="/requests"
+                    element={<TenantRoute><RequestsPage /></TenantRoute>}
+                  />
+                  <Route
+                    path="/requests/:requestId"
+                    element={<TenantRoute><RequestDetailPage /></TenantRoute>}
+                  />
 
-                {/* ── Activity (provider) ── */}
-                <Route
-                  path="/activity"
-                  element={<TenantRoute><ActivityPage /></TenantRoute>}
-                />
+                  {/* ── Activity (provider) ── */}
+                  <Route
+                    path="/activity"
+                    element={<TenantRoute><ActivityPage /></TenantRoute>}
+                  />
 
-                {/* ── My requests (client) ── */}
-                <Route
-                  path="/my-requests"
-                  element={<TenantRoute><ClientRequestsPage /></TenantRoute>}
-                />
-                <Route
-                  path="/my-requests/:requestId"
-                  element={<TenantRoute><ClientRequestDetailPage /></TenantRoute>}
-                />
+                  {/* ── My requests (client) ── */}
+                  <Route
+                    path="/my-requests"
+                    element={<TenantRoute><ClientRequestsPage /></TenantRoute>}
+                  />
+                  <Route
+                    path="/my-requests/:requestId"
+                    element={<TenantRoute><ClientRequestDetailPage /></TenantRoute>}
+                  />
 
-              </Route>
+                </Route>
 
-              {/* Misc */}
-              <Route path="/workspace-not-found" element={<WorkspaceNotFoundPage />} />
-              <Route path="*" element={<Navigate to="/" replace />} />
+                {/* Misc */}
+                <Route path="/workspace-not-found" element={<WorkspaceNotFoundPage />} />
+                <Route path="*" element={<Navigate to="/" replace />} />
 
-            </Routes>
-          </TenantGuard>
+              </Routes>
+            </TenantGuard>
+          </BadgeProvider>
         </AuthProvider>
       </BrowserRouter>
     </ErrorBoundary>

@@ -413,7 +413,6 @@ export default function ClientsPage() {
   return (
     <>
       <ProviderLayout
-        badges={{ clients: clientCount, requests: 0 }}
         topbar={
           <ProviderTopbar
             title="Clients"

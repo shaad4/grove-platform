@@ -470,7 +470,6 @@ export default function ProviderDashboard() {
   return (
     <>
       <ProviderLayout
-        badges={{ clients: clientCount, requests: s.open_requests ?? 0 }}
         topbar={
           <ProviderTopbar
             title="Dashboard"

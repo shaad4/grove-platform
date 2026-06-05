@@ -10,6 +10,7 @@ import {
 import ProviderLayout from '../../components/layout/ProviderLayout'
 import requestsApi from '../../api/requests.api'
 import { getAvatarColor, getInitials, timeAgo, formatDate } from '../../utils/clientHelpers'
+import { useBadges } from '../../hooks/useBadges'
 
 // ── Status config ─────────────────────────────────────────────
 const STATUS_ORDER = ['received', 'in_review', 'in_progress', 'delivered', 'closed']
@@ -155,6 +156,8 @@ function DeliverModal({ request, onClose, onSuccess }) {
   const [submitting, setSubmitting] = useState(false)
   const [dragOver, setDragOver] = useState(false)
   const fileInput = useRef(null)
+  const { loadBadges } = useBadges()
+
 
   // ── NEW INLINE VALIDATION STATES ───────────────────────────
   const [validationErrors, setValidationErrors] = useState({
@@ -343,6 +346,7 @@ function DeliverModal({ request, onClose, onSuccess }) {
       })
 
       await requestsApi.updateStatus(request.id, 'delivered')
+      await loadBadges()
 
       onSuccess()
     } catch {
@@ -1332,7 +1336,7 @@ export default function RequestDetailPage() {
   }
 
   if (loading) return (
-    <ProviderLayout badges={{}}>
+    <ProviderLayout >
       <div className="flex items-center justify-center h-full bg-[#fafafa]">
         <Loader2 size={24} className="animate-spin text-[#0f6e56]" />
       </div>
@@ -1340,7 +1344,7 @@ export default function RequestDetailPage() {
   )
 
   if (!req) return (
-    <ProviderLayout badges={{}}>
+    <ProviderLayout >
       <div className="flex flex-col items-center justify-center h-full text-center bg-[#fafafa]">
         <AlertCircle size={32} className="text-[#9ea89e] mb-3" />
         <p className="text-[15px] font-medium text-[#141a14]">Request not found</p>
@@ -1356,7 +1360,7 @@ export default function RequestDetailPage() {
   const clientName = req.client_name || 'Client'
 
   return (
-    <ProviderLayout badges={{ requests: 0 }}>
+    <ProviderLayout>
       {/* Scrollbar hiding styles injected into layout container via string literal */}
       <style>{`
         .no-scrollbar::-webkit-scrollbar {
