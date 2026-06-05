@@ -1532,16 +1532,40 @@ export default function RequestDetailPage() {
                     <p className="text-[11px] font-semibold uppercase tracking-wide text-[#9ea89e] mb-2">Attached by Client</p>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                       {req.files.map(f => (
-                        <div key={f.id} className="flex items-center gap-3 rounded-xl border border-[#e8eae8] px-3 py-2 bg-white hover:border-[#0f6e56]/30 transition-colors group">
+                        <a
+                          key={f.id}
+                          href={f.download_url}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="flex items-center gap-3 rounded-xl border border-[#e8eae8] px-3 py-2 bg-white hover:border-[#0f6e56]/30 transition-colors group"
+                        >
                           <FileIcon ext={f.file_extension} />
                           <div className="flex-1 min-w-0">
                             <p className="text-[13px] font-medium text-[#141a14] truncate">{f.file_name}</p>
                             <p className="text-[11px] text-[#9ea89e]">{(f.file_size_bytes / 1024).toFixed(0)} KB</p>
                           </div>
-                          <a href={f.download_url} target="_blank" rel="noreferrer" download className="text-[#9ea89e] hover:text-[#0f6e56] p-1 rounded-md hover:bg-[#f7f8f7] transition-all">
+                          <button
+                            onClick={async (e) => {
+                              e.preventDefault()
+                              e.stopPropagation()
+                              try {
+                                const res = await fetch(f.download_url)
+                                const blob = await res.blob()
+                                const blobUrl = URL.createObjectURL(blob)
+                                const a = document.createElement('a')
+                                a.href = blobUrl
+                                a.download = f.file_name
+                                a.click()
+                                URL.revokeObjectURL(blobUrl)
+                              } catch {
+                                window.open(f.download_url, '_blank')
+                              }
+                            }}
+                            className="text-[#9ea89e] hover:text-[#0f6e56] p-1 rounded-md hover:bg-[#f7f8f7] transition-all"
+                          >
                             <Download size={15} />
-                          </a>
-                        </div>
+                          </button>
+                        </a>
                       ))}
                     </div>
                   </div>
