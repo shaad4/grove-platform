@@ -579,27 +579,47 @@ export default function ClientRequestDetailPage() {
                 ) : (
                   <div className="space-y-2">
                     {req.files.map(file => (
-                      <a
-                        key={file.id}
-                        href={file.download_url}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="group flex items-center gap-3 rounded-xl border border-[#e8eae8] px-3 py-3 hover:bg-[#f7f8f7] transition-colors"
+                    <a
+                      key={file.id}
+                      href={file.download_url}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="group flex items-center gap-3 rounded-xl border border-[#e8eae8] px-3 py-3 hover:bg-[#f7f8f7] transition-colors"
+                    >
+                      <div className="h-10 w-10 rounded-xl bg-[#f5f7f5] flex items-center justify-center shrink-0">
+                        <FileText size={15} className="text-[#9ea89e]" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-[13px] font-medium text-[#141a14] truncate">{file.file_name}</p>
+                        <div className="flex items-center gap-2 mt-1">
+                          <span className="text-[11px] text-[#9ea89e]">{formatFileSize(file.file_size_bytes)}</span>
+                          <span className="text-[#d6dad6]">•</span>
+                          <span className="text-[11px] text-[#9ea89e] uppercase">{file.file_extension}</span>
+                        </div>
+                      </div>
+                      <button
+                        onClick={async (e) => {
+                          e.preventDefault()
+                          e.stopPropagation()
+                          try {
+                            const res = await fetch(file.download_url)
+                            const blob = await res.blob()
+                            const blobUrl = URL.createObjectURL(blob)
+                            const a = document.createElement('a')
+                            a.href = blobUrl
+                            a.download = file.file_name
+                            a.click()
+                            URL.revokeObjectURL(blobUrl)
+                          } catch {
+                            window.open(file.download_url, '_blank')
+                          }
+                        }}
+                        className="shrink-0 h-8 w-8 rounded-lg flex items-center justify-center text-[#9ea89e] hover:text-[#0f6e56] hover:bg-[#edf7f3] transition-colors"
                       >
-                        <div className="h-10 w-10 rounded-xl bg-[#f5f7f5] flex items-center justify-center shrink-0">
-                          <FileText size={15} className="text-[#9ea89e]" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-[13px] font-medium text-[#141a14] truncate">{file.file_name}</p>
-                          <div className="flex items-center gap-2 mt-1">
-                            <span className="text-[11px] text-[#9ea89e]">{formatFileSize(file.file_size_bytes)}</span>
-                            <span className="text-[#d6dad6]">•</span>
-                            <span className="text-[11px] text-[#9ea89e] uppercase">{file.file_extension}</span>
-                          </div>
-                        </div>
-                        <Download size={15} className="text-[#9ea89e] group-hover:text-[#0f6e56]" />
-                      </a>
-                    ))}
+                        <Download size={15} />
+                      </button>
+                    </a>
+                  ))}
                   </div>
                 )}
               </div>
@@ -785,27 +805,47 @@ export default function ClientRequestDetailPage() {
                           {!!delivery.files?.length && (
                             <div className="space-y-2">
                               {delivery.files.map(file => (
-                                <a
-                                  key={file.id}
-                                  href={file.download_url}
-                                  target="_blank"
-                                  rel="noreferrer"
-                                  className="group flex items-center gap-3 rounded-xl border border-[#e8eae8] px-4 py-3 hover:bg-[#f7f8f7] transition-colors"
+                              <a
+                                key={file.id}
+                                href={file.download_url}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="group flex items-center gap-3 rounded-xl border border-[#e8eae8] px-4 py-3 hover:bg-[#f7f8f7] transition-colors"
+                              >
+                                <div className="h-10 w-10 rounded-xl bg-[#f5f7f5] flex items-center justify-center shrink-0">
+                                  <FileText size={15} className="text-[#9ea89e]" />
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-[13px] font-medium text-[#141a14] truncate">{file.file_name}</p>
+                                  <div className="flex items-center gap-2 mt-1">
+                                    <span className="text-[11px] text-[#9ea89e]">{formatFileSize(file.file_size_bytes)}</span>
+                                    <span className="text-[#d6dad6]">•</span>
+                                    <span className="text-[11px] text-[#9ea89e] uppercase">{file.file_extension}</span>
+                                  </div>
+                                </div>
+                                <button
+                                  onClick={async (e) => {
+                                    e.preventDefault()
+                                    e.stopPropagation()
+                                    try {
+                                      const res = await fetch(file.download_url)
+                                      const blob = await res.blob()
+                                      const blobUrl = URL.createObjectURL(blob)
+                                      const a = document.createElement('a')
+                                      a.href = blobUrl
+                                      a.download = file.file_name
+                                      a.click()
+                                      URL.revokeObjectURL(blobUrl)
+                                    } catch {
+                                      window.open(file.download_url, '_blank')
+                                    }
+                                  }}
+                                  className="shrink-0 h-8 w-8 rounded-lg flex items-center justify-center text-[#9ea89e] hover:text-[#0f6e56] hover:bg-[#edf7f3] transition-colors"
                                 >
-                                  <div className="h-10 w-10 rounded-xl bg-[#f5f7f5] flex items-center justify-center shrink-0">
-                                    <FileText size={15} className="text-[#9ea89e]" />
-                                  </div>
-                                  <div className="flex-1 min-w-0">
-                                    <p className="text-[13px] font-medium text-[#141a14] truncate">{file.file_name}</p>
-                                    <div className="flex items-center gap-2 mt-1">
-                                      <span className="text-[11px] text-[#9ea89e]">{formatFileSize(file.file_size_bytes)}</span>
-                                      <span className="text-[#d6dad6]">•</span>
-                                      <span className="text-[11px] text-[#9ea89e] uppercase">{file.file_extension}</span>
-                                    </div>
-                                  </div>
-                                  <Download size={15} className="text-[#9ea89e] group-hover:text-[#0f6e56]" />
-                                </a>
-                              ))}
+                                  <Download size={15} />
+                                </button>
+                              </a>
+                            ))}
                             </div>
                           )}
 
