@@ -12,7 +12,7 @@ from apps.notifications.tasks import send_verification_email, send_password_rese
 from apps.tenants.models import TenantMembership, Tenant
  
 from .models import User
-from .repositories import UserRepository
+from .repositories import UserRepository, EmailVerificationTokenRepository
 from .serializers import (
     ProviderSignupSerializer,
     WorkspaceSetupSerializer,
@@ -20,6 +20,7 @@ from .serializers import (
     ForgotPasswordSerializer,
     ResetPasswordSerializer,
     GoogleAuthSerializer,
+    EmailNotVerified,
 )
 from .services import (
     ProviderSignupService,
@@ -265,6 +266,35 @@ class LoginView(APIView):
 
     def post(self, request):
         serializer = LoginSerializer(data=request.data)
+
+        try:
+            serializer.is_valid(raise_exception=True)
+        except EmailNotVerified as e:
+            user = e.user
+            #Expire old token
+
+            token = EmailVerificationTokenRepository.create(
+                user=user,
+                expires_at=timezone.now() + timezone.timedelta(minutes=30)
+            )
+
+            EmailVerificationTokenRepository.expire_others(user=user, keep_id=token.id)
+
+            send_verification_email.delay(
+                user_email=user.email,
+                display_name=user.display_name,
+                token=str(token.token),
+            )
+
+            return Response(
+                {
+                    "success": False,
+                    "code": "email_not_verified",
+                    "message": "Your email isn't verified. We've sent a new verification link.",
+                },
+                status=400
+            )
+
         if not serializer.is_valid():
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
