@@ -1,9 +1,9 @@
 from django.db import transaction
 from django.utils import timezone
 
-from apps.tenants.models import Tenant, TenantMembership, TenantUsage
-from apps.users.models import User
+from apps.tenants.models import  TenantMembership, TenantUsage
 from apps.users.repositories import UserRepository
+from django.core.cache import cache 
 
 from .models import Client, Invite
 from .repositories import ClientRepository, InviteRepository, TagRepository
@@ -23,6 +23,18 @@ class InvalidInviteToken(Exception):
     pass
 
 class ExpiredInviteToken(Exception):
+    pass
+
+class ClientNotFound(Exception):
+    pass
+
+class ClientAlreadyDeactivated(Exception):
+    pass
+
+class ClientNotDeactivated(Exception):
+    pass
+
+class CannotResendToActiveClient(Exception):
     pass
 
 
@@ -68,11 +80,14 @@ class ClientService:
             client_name=client_name,
             business_type=business_type,
             private_note=private_note,
+            client_email=email,
         )
 
         if tags:
             TagRepository.set_client_tags(client, tags, tenant)
 
+        cache.delete(f"dashboard_stats:{tenant.id}")
+        cache.delete(f"sidebar_badges:{tenant.id}")
 
         return {"invite": invite, "client" : client}
     
@@ -160,3 +175,91 @@ class ClientService:
         InviteRepository.mark_accepted(invite)
 
         return {"user": user, "tenant": tenant, "client": client, "membership": membership}
+    
+
+    @staticmethod
+    @transaction.atomic
+    def update_client(client_id, tenant, tags=None, **fields):
+        client = ClientRepository.get_by_id(client_id, tenant.id)
+        if not client:
+            raise ClientNotFound("Client not found.")
+        ClientRepository.update(client, **fields)
+        if tags is not None:
+            TagRepository.set_client_tags(client, tags, tenant)
+        return client
+    
+
+    @staticmethod
+    @transaction.atomic
+    def deactivate_client(client_id, tenant):
+        client = ClientRepository.get_by_id(client_id, tenant.id)
+        if not client:
+            raise ClientNotFound("Client not found.")
+        if client.is_deactivated:
+            raise ClientAlreadyDeactivated("Client is already deactivated.")
+        if client.membership:
+            client.membership.is_active = False
+            client.membership.save(update_fields=["is_active"])
+        ClientRepository.deactiavte(client)
+        return client
+    
+    @staticmethod
+    @transaction.atomic
+    def reactivate_client(client_id, tenant):
+        client = ClientRepository.get_by_id(client_id, tenant.id)
+        if not client:
+            raise ClientNotFound("Client not found.")
+        if not client.is_deactivated:
+            raise ClientNotDeactivated("Client is not deactivated.")
+        if client.membership:
+            client.membership.is_active = True
+            client.membership.save(update_fields=["is_active"])
+        ClientRepository.reactivate(client)
+        return client
+    
+    @staticmethod
+    @transaction.atomic
+    def delete_client(client_id, tenant):
+        client = ClientRepository.get_by_id(client_id, tenant.id)
+        if not client:
+            raise ClientNotFound("Client not found.")
+        if client.membership:
+            client.membership.is_active = False
+            client.membership.save(update_fields=["is_active"])
+        ClientRepository.soft_delete(client)
+        TenantUsage.objects.filter(tenant=tenant).update(
+            client_count=TenantUsage.objects.values_list(
+                "client_count", flat=True
+            ).get(tenant=tenant) - 1
+        )
+        
+        cache.delete(f"dashboard_stats:{tenant.id}")
+        cache.delete(f"sidebar_badges:{tenant.id}")
+
+        return client
+    
+    @staticmethod
+    @transaction.atomic
+    def resend_invite(client_id, tenant, provider):
+        client = ClientRepository.get_by_id(client_id, tenant.id)
+        if not client:
+            raise ClientNotFound("Client not found.")
+        if client.status != Client.Status.PENDING:
+            raise CannotResendToActiveClient(
+                "Invite can only be resent to pending clients."
+            )
+        old_invite = Invite.objects.filter(
+            tenant=tenant,
+            client_email=client.client_email,
+            status=Invite.Status.PENDING,
+        ).first()
+        if old_invite:
+            InviteRepository.cancel(old_invite)
+        new_invite = InviteRepository.create(
+            tenant=tenant,
+            provider=provider,
+            client_email=client.client_email,
+            client_name=client.client_name,
+        )
+        return {"client": client, "invite": new_invite}
+    

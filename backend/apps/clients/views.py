@@ -21,6 +21,8 @@ from .serializers import (
     ClientListSerializer,
     ClientForgotPasswordSerializer,
     ClientResetPasswordSerializer,
+    UpdateClientSerializer,
+    ClientDetailSerializer
 )
 from .services import (
     ClientService,
@@ -29,6 +31,11 @@ from .services import (
     InvalidInviteToken,
     ExpiredInviteToken,
     PendingInviteExists,
+    ClientNotFound,
+    ClientAlreadyDeactivated,
+    ClientNotDeactivated,
+    CannotResendToActiveClient,
+    
 )
 from .tasks import send_client_invite_email
 
@@ -117,7 +124,102 @@ class ClientListCreateView(APIView):
             },
             status=status.HTTP_201_CREATED,
         )
+    
+class ClientDetailView(APIView):
+    permission_classes = [IsAuthenticated]
 
+    def get(self, request, client_id):
+        if not _require_provider(request):
+            return Response({"success" : False, "message" : "Forbidden"}, status=403)
+        client = ClientRepository.get_by_id(client_id, request.tenant.id)
+        if not client:
+            return Response({"success": False, "message": "Client not found."}, status=404)
+        return Response({"success": True, "data": ClientDetailSerializer(client).data})
+    
+
+    def patch(self, request, client_id):
+        if not _require_provider(request):
+            return Response({"success": False, "message": "Forbidden."}, status=403)
+        serializer = UpdateClientSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        try:
+            client = ClientService.update_client(
+                client_id=client_id,
+                tenant=request.tenant,
+                business_type=serializer.validated_data.get("business_type"),
+                private_note=serializer.validated_data.get("private_note"),
+                tags=serializer.validated_data.get("tags"),
+            )
+        except ClientNotFound as e:
+            return Response({"success": False, "message": str(e)}, status=404)
+        return Response({"success": True, "message": "Client updated.", "data": ClientDetailSerializer(client).data})
+
+
+    def delete(self, request, client_id):
+        if not _require_provider(request):
+            return Response({"success": False, "message": "Forbidden."}, status=403)
+        try:
+            ClientService.delete_client(client_id=client_id, tenant=request.tenant)
+        except ClientNotFound as e:
+            return Response({"success": False, "message": str(e)}, status=404)
+        return Response({"success": True, "message": "Client deleted."})
+    
+class ClientDeactivateView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, client_id):
+        if not _require_provider(request):
+            return Response({"success": False, "message": "Forbidden."}, status=403)
+        try:
+            ClientService.deactivate_client(client_id=client_id, tenant=request.tenant)
+        except ClientNotFound as e:
+            return Response({"success": False, "message": str(e)}, status=404)
+        except ClientAlreadyDeactivated as e:
+            return Response({"success": False, "message": str(e)}, status=409)
+        return Response({"success": True, "message": "Client deactivated."})
+    
+class ClientReactivateView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, client_id):
+        if not _require_provider(request):
+            return Response({"success": False, "message": "Forbidden."}, status=403)
+        try:
+            ClientService.reactivate_client(client_id=client_id, tenant=request.tenant)
+        except ClientNotFound as e:
+            return Response({"success": False, "message": str(e)}, status=404)
+        except ClientNotDeactivated as e:
+            return Response({"success": False, "message": str(e)}, status=409)
+        return Response({"success": True, "message": "Client reactivated."})
+    
+
+class ClientResendInviteView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, client_id):
+        if not _require_provider(request):
+            return Response({"success" : False, "message" : "Forbidden."}, status=403)
+        try:
+            result = ClientService.resend_invite(
+                client_id=client_id,
+                tenant=request.tenant,
+                provider=request.user,
+            )
+        except ClientNotFound as e:
+            return Response({"success": False, "message": str(e)}, status=404)
+        except CannotResendToActiveClient as e:
+            return Response({"success": False, "message": str(e)}, status=409)
+        
+        invite = result["invite"]
+        send_client_invite_email.delay(
+            client_email=invite.client_email,
+            client_name=invite.client_name,
+            provider_name=request.user.display_name,
+            tenant_slug=request.tenant.slug,
+            invite_token=str(invite.token),
+        )
+        return Response({"success" : True, "message" : "Invite resent."})
+    
 
 
 class ValidateInviteTokenView(APIView):
@@ -239,7 +341,6 @@ class ClientLoginView(APIView):
             user=user,
             tenant=tenant,
             role=TenantMembership.Role.CLIENT,
-            is_active=True,
         ).first()
 
         if membership is None:

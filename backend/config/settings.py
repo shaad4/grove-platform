@@ -9,11 +9,13 @@ https://docs.djangoproject.com/en/6.0/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/6.0/ref/settings/
 """
-
+import os
 from pathlib import Path
 from decouple import config
 from corsheaders.defaults import default_headers
-
+from datetime import timedelta
+import sentry_sdk
+from sentry_sdk.integrations.django import DjangoIntegration
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -48,6 +50,8 @@ INSTALLED_APPS = [
     "rest_framework_simplejwt",
     "rest_framework_simplejwt.token_blacklist",
     "corsheaders",
+    "storages",
+    "log_request_id",
 
     # Grove apps
     "apps.users",
@@ -55,6 +59,9 @@ INSTALLED_APPS = [
     "apps.plans",
     "apps.tenants",
     "apps.notifications",
+    "apps.request_management",
+    "apps.dashboard",
+
 
 
 ]
@@ -69,6 +76,8 @@ MIDDLEWARE = [
     'apps.tenants.middleware.TenantMiddleware', #tenant middleware
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    "log_request_id.middleware.RequestIDMiddleware",
+    "config.request_logging.RequestLoggingMiddleware",
 
 ]
 
@@ -152,7 +161,7 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 
 # JWT
-from datetime import timedelta
+
 SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(minutes=15),
     "REFRESH_TOKEN_LIFETIME": timedelta(days=7),
@@ -213,3 +222,58 @@ FRONTEND_URL = config("FRONTEND_URL")
 
 
 GOOGLE_CLIENT_ID = config("GOOGLE_CLIENT_ID")
+
+# S3 Setup
+AWS_ACCESS_KEY_ID = config("AWS_ACCESS_KEY_ID")
+AWS_SECRET_ACCESS_KEY = config("AWS_SECRET_ACCESS_KEY")
+AWS_STORAGE_BUCKET_NAME = config("AWS_STORAGE_BUCKET_NAME")
+AWS_S3_REGION_NAME = config("AWS_S3_REGION_NAME", default="ap-south-1")
+AWS_S3_FILE_OVERWRITE = False
+AWS_DEFAULT_ACL = None   # bucket policy controls access, not object ACL
+
+
+# Redis cache backend
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.redis.RedisCache",
+        "LOCATION": config("REDIS_URL", default="redis://localhost:6379/1"),
+    }
+}
+
+# Logger Config
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+
+    "formatters": {
+        "standard": {
+            "format": (
+                "[{asctime}] "
+                "{levelname:<8} "
+                "{name:<25} "
+                "{message}"
+            ),
+            "style": "{",
+        },
+    },
+
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+            "formatter": "standard",
+        },
+
+        "file": {
+            "class": "logging.handlers.RotatingFileHandler",
+            "filename": BASE_DIR / "logs" / "grove.log",
+            "maxBytes": 10 * 1024 * 1024,
+            "backupCount": 5,
+            "formatter": "standard",
+        },
+    },
+
+    "root": {
+        "handlers": ["console", "file"],
+        "level": "INFO",
+    },
+}

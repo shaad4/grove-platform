@@ -6,6 +6,10 @@ from .views import (
     ClientListCreateView,
     ClientForgotPasswordView,
     ClientResetPasswordView,
+    ClientDetailView,
+    ClientDeactivateView,
+    ClientReactivateView,
+    ClientResendInviteView,
 )
 
 
@@ -16,5 +20,10 @@ urlpatterns = [
     path("login/", ClientLoginView.as_view(), name="client-login"),
     path("forgot-password/", ClientForgotPasswordView.as_view(), name="client-forgot-password"),
     path("reset-password/", ClientResetPasswordView.as_view(), name="client-reset-password"),
+    path("<uuid:client_id>/", ClientDetailView.as_view(), name="client-detail"),
+    path("<uuid:client_id>/deactivate/", ClientDeactivateView.as_view(), name="client-deactivate"),
+    path("<uuid:client_id>/reactivate/", ClientReactivateView.as_view(), name="client-reactivate"),
+    path("<uuid:client_id>/resend-invite/", ClientResendInviteView.as_view(), name="client-resend-invite"),
+
 
 ]

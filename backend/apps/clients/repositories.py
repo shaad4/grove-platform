@@ -46,6 +46,7 @@ class ClientRepository:
         return (
             Client.objects
             .filter(id=client_id, tenant_id=tenant_id, is_deleted=False)
+            .prefetch_related("tag_maps__tag")
             .select_related("user", "membership")
             .first()
         )
@@ -65,7 +66,7 @@ class ClientRepository:
     
 
     @staticmethod
-    def create_pending(tenant, provider, client_name, business_type=None, private_note=None):
+    def create_pending(tenant, provider, client_name, business_type=None, private_note=None, client_email=""):
         """Create a pending Client record before invite is accepted."""
         return Client.objects.create(
             tenant=tenant,
@@ -75,6 +76,8 @@ class ClientRepository:
             status=Client.Status.PENDING,
             business_type=business_type,
             private_note=private_note,
+            client_name=client_name,
+            client_email=client_email,
         )
     
     @staticmethod
@@ -95,7 +98,37 @@ class ClientRepository:
             provider=invite.provider,
             status=Client.Status.PENDING,
             user__isnull=True,
+            client_email=invite.client_email,
         ).first()
+    
+    @staticmethod
+    def update(client, business_type = None, private_note=None):
+        if business_type is not None:
+            client.business_type = business_type or None
+        if private_note is not None:
+            client.private_note = private_note or None
+        client.save(update_fields=["business_type", "private_note", "updated_at"])
+        return client
+    
+    @staticmethod
+    def deactiavte(client):
+        client.is_deactivated = True
+        client.save(update_fields=["is_deactivated", "updated_at"])
+        return client
+    
+    @staticmethod
+    def reactivate(client):
+        client.is_deactivated = False
+        client.save(update_fields=["is_deactivated", "updated_at"])
+        return client
+    
+    @staticmethod
+    def soft_delete(client):
+        client.is_deleted = True
+        client.deleted_at = timezone.now()
+        client.save(update_fields=["is_deleted", "deleted_at", "updated_at"])
+        return client
+        
 
 
 class InviteRepository:
@@ -118,6 +151,14 @@ class InviteRepository:
         ).exists()
 
     @staticmethod
+    def get_pending_for_client_email(email, tenant_id):
+        return Invite.objects.filter(
+            client_email=email.lower().strip(),
+            tenant_id=tenant_id,
+            status=Invite.Status.PENDING,
+        ).first()
+
+    @staticmethod
     def create(tenant, provider, client_email, client_name):
         return Invite.objects.create(
             tenant=tenant,
@@ -132,3 +173,13 @@ class InviteRepository:
         invite.status = Invite.Status.ACCEPTED
         invite.accepted_at = timezone.now()
         invite.save(update_fields=["status", "accepted_at"])
+
+    @staticmethod
+    def cancel(invite):
+        invite.status = Invite.Status.CANCELLED
+        invite.save(update_fields=["status"])
+
+        
+
+
+    

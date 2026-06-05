@@ -22,7 +22,7 @@ const NAV_ITEMS = [
     label: 'Home',
   },
   {
-    to: '/portal/requests',
+    to: '/my-requests',
     icon: FolderOpen,
     label: 'Requests',
     badgeKey: 'requests',
@@ -48,7 +48,13 @@ export default function ClientSidebar({
     useAuth()
 
   const [isCollapsed, setIsCollapsed] =
-    useState(false)
+    useState(() => {
+      const saved = localStorage.getItem(
+        'provider-sidebar-collapsed'
+      )
+
+      return saved === 'true'
+    })
 
   const [isPopupOpen, setIsPopupOpen] =
     useState(false)
@@ -111,6 +117,13 @@ export default function ClientSidebar({
         handleClickOutside
       )
   }, [])
+
+  useEffect(() => {
+    localStorage.setItem(
+      'provider-sidebar-collapsed',
+      isCollapsed
+    )
+  }, [isCollapsed])
 
   // ───────────────── User Popup ─────────────────
   const UserPopup = ({
@@ -229,7 +242,7 @@ export default function ClientSidebar({
 
           border-r border-[#ebebeb]
 
-          bg-white
+          bg-[#edf1ee]
 
           ${
             isCollapsed
@@ -387,14 +400,14 @@ export default function ClientSidebar({
                     ${
                       isActive
                         ? `
-                          bg-[#f0f0f0]
+                          bg-[#edf7f3]
 
-                          text-[#111]
+                          text-[#0f6e56]
 
                           font-medium
                         `
                         : `
-                          text-[#6b7280]
+                          text-[#4a544a]
 
                           hover:text-[#111]
                           hover:bg-[#f7f7f7]

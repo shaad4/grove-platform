@@ -49,6 +49,8 @@ class Client(models.Model):
         TenantMembership,
         on_delete=models.CASCADE,
         related_name="client_profile",
+        null=True,
+        blank=True,
     )
 
     provider = models.ForeignKey(
@@ -56,6 +58,9 @@ class Client(models.Model):
         on_delete=models.CASCADE,
         related_name="managed_clients",
     )
+
+    client_name = models.CharField(max_length=255, blank=True, default="")
+    client_email = models.EmailField(blank=True, default="")
 
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.PENDING)
     business_type = models.CharField(max_length=100, null=True, blank=True)

@@ -11,8 +11,9 @@ import requests as http_requests
 
 from .repositories import UserRepository
 
-
-
+class EmailNotVerified(Exception):
+    def __init__(self, user):
+        self.user = user
 
 
 class ProviderSignupSerializer(serializers.Serializer):
@@ -102,9 +103,7 @@ class LoginSerializer(serializers.Serializer):
             raise serializers.ValidationError("Invalid email or password")
         
         if not user.is_email_verified:
-            raise serializers.ValidationError(
-                "Please verify your email before logging in."
-            )
+            raise EmailNotVerified(user)
         
         if not user.is_active:
             raise serializers.ValidationError(

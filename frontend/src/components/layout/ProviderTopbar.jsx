@@ -6,6 +6,7 @@ export default function ProviderTopbar({
   showAddBtn = true,
   liveIndicator = false,
   actions,
+  rightSlot,
 }) {
   return (
     <header className="flex h-[64px] items-center justify-between border-b border-[#e8eae8] bg-white px-6 shrink-0">
@@ -20,6 +21,8 @@ export default function ProviderTopbar({
         )}
 
         {actions}
+
+        {rightSlot && <div className="flex items-center gap-2">{rightSlot}</div>}
 
         {/* Notification bell */}
         <button className="relative flex h-10 w-10 items-center justify-center rounded-lg border border-[#e8eae8] bg-[#f7f8f7] hover:bg-[#eef0ee] transition-colors">
