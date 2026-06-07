@@ -38,6 +38,8 @@ AUTH_USER_MODEL = "users.User"
 # Application definition
 
 INSTALLED_APPS = [
+    "daphne",
+
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -46,6 +48,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
 
     # third party
+    "channels",
     "rest_framework",
     "rest_framework_simplejwt",
     "rest_framework_simplejwt.token_blacklist",
@@ -237,6 +240,15 @@ CACHES = {
     "default": {
         "BACKEND": "django.core.cache.backends.redis.RedisCache",
         "LOCATION": config("REDIS_URL", default="redis://localhost:6379/1"),
+    }
+}
+
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {
+            "hosts": [config("REDIS_URL", default="redis://localhost:6379/0")],
+        },
     }
 }
 
