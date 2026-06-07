@@ -1,6 +1,6 @@
 import uuid
 from django.db import models
-from apps.request_management.models import Request
+from apps.request_management.models import Request, File
 from apps.tenants.models import Tenant
 from apps.users.models import User
 
@@ -31,4 +31,18 @@ class Message(models.Model):
         return f"Message by {self.sender.email} on request {self.request_id}"
     
 
+class MessageAttachment(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    message = models.ForeignKey(Message, on_delete=models.CASCADE, related_name="attachments")
+    file = models.ForeignKey(File, on_delete=models.CASCADE, related_name="message_attachments")
+
+    class Meta:
+        db_table = "message_attachments"
+        indexes = [
+            models.Index(fields=["message"], name="idx_msg_attachments_message_id"),
+            models.Index(fields=["file"], name="idx_msg_attachments_file_id"),
+        ]
+
+    def __str__(self):
+        return f"Attachment on message {self.message_id}"
 
