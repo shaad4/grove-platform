@@ -1,6 +1,6 @@
 from django.utils import timezone
 from django.db import DatabaseError
-from common.logger import logger
+from apps.common.logger import logger
 from .models import Message, MessageAttachment
 
 class MessageRepository:
@@ -17,6 +17,21 @@ class MessageRepository:
         except DatabaseError as e:
                 logger.error(f"[MessageRepository.get_for_request] DB error: {e}")
                 return Message.objects.none()
+        
+
+    @staticmethod
+    def get_by_id(message_id, tenant_id):
+        try:
+            return Message.objects.select_related("sender").get(
+                id=message_id,
+                tenant_id=tenant_id,
+            )
+        except Message.DoesNotExist:
+            return None
+        except DatabaseError as e:
+            logger.error(f"[MessageRepository.get_by_id] DB error: {e}")
+            return None
+
         
     
     @staticmethod
@@ -45,6 +60,30 @@ class MessageRepository:
         except DatabaseError as e:
             logger.error(f"[MessageRepository.mark_read] DB error: {e}")
             return 0
+        
+    @staticmethod
+    def get_unread_count(request_id, exclude_sender_id):
+        try:
+            return Message.objects.filter(
+                request_id=request_id,
+                is_read=False,
+            ).exclude(sender_id=exclude_sender_id).count()
+        except DatabaseError as e:
+            logger.error(f"[MessageRepository.get_unread_count] DB error: {e}")
+            return 0
+        
+class MessageAttachmentRepository:
+
+    @staticmethod
+    def create(message, file_obj):
+        try:
+            return MessageAttachment.objects.create(
+                message=message,
+                file=file_obj,
+            )
+        except DatabaseError as e:
+            logger.error(f"[MessageAttachmentRepository.create] DB error: {e}")
+            raise
 
         
 

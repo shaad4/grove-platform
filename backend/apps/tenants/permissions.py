@@ -8,7 +8,7 @@ class BelongsToTenant(BasePermission):
     message = "You do not have access to this workspace."
 
     def has_permission(self, request, view):
-        tenant = getattr(request, 'tenant', None)
+        tenant = getattr(request, "tenant", None)
 
         if not tenant:
             return True  # no tenant context, let view decide
@@ -19,4 +19,6 @@ class BelongsToTenant(BasePermission):
         if request.user.is_superuser:
             return True  # grove admin, allow all
 
-        return request.user.tenant_id == tenant.id
+        # v2 global identity — role lives in TenantMembership,
+        # middleware already validated and attached it
+        return getattr(request, "tenant_membership", None) is not None
