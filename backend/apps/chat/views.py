@@ -7,7 +7,7 @@ from apps.common.logger import logger
 
 from .repositories import MessageRepository
 from .serializers import MessageSerializer
-from .services import create_message
+from .services import create_message, mark_messages_read
 # Create your views here.
 
 
@@ -87,8 +87,30 @@ class MessageListCreateView(APIView):
                 {"success": False, "message": "Something went wrong."},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
-        
-             
+
+
+class MarkMessagesReadView(APIView):
+
+    def post(self, request, request_id):
+        try:
+            req_obj = _get_request_or_none(request_id, request.tenant)
+            if req_obj is None:
+                return Response(
+                    {"success": False, "message": "Request not found."},
+                    status=status.HTTP_404_NOT_FOUND,
+                )
+            
+            updated = mark_messages_read(req_obj, request.user)
+            return Response({"success": True, "marked_read": updated})
+
+        except Exception as e:
+            logger.error(f"[MarkMessagesReadView.post] Unexpected error: {e}")
+            return Response(
+                {"success": False, "message": "Something went wrong."},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+
 
 
 

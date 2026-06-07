@@ -19,6 +19,16 @@ def create_message(request_obj, sender, content):
         logger.error(f"[ChatService.create_message] Failed to create message: {e}")
         raise
 
+def mark_messages_read(request_obj, reader):
+    try:
+        updated = MessageRepository.mark_read(request_obj, exclude_sender=reader)
+        if updated:
+            _broadcast_read_receipt(request_obj, str(reader.id))
+        return updated
+    except Exception as e:
+        logger.error(f"[ChatService.mark_messages_read] Error: {e}")
+        return 0
+            
 
 
 def _broadcast_message(message):
@@ -40,3 +50,18 @@ def _broadcast_message(message):
         )
     except Exception as e:
         logger.error(f"[ChatService._broadcast_message] Channel layer error: {e}")
+
+def _broadcast_read_receipt(request_obj, reader_id):
+    try:
+        channel_layer = get_channel_layer()
+        group_name = get_chat_group_name(str(request_obj.id))
+        async_to_sync(channel_layer.group_send)(
+            group_name,
+            {
+                "type": "chat.read_receipt",
+                "request_id": str(request_obj.id),
+                "reader_id": reader_id,
+            },
+        )
+    except Exception as e:
+        logger.error(f"[ChatService._broadcast_read_receipt] Channel layer error: {e}")
