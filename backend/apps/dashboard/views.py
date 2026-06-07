@@ -30,7 +30,7 @@ class DashboardStatsView(APIView):
     """
     
     permission_classes = [IsAuthenticated]
-    CACHE_TTL = 120
+    CACHE_TTL = 120 #add to env
 
     def get(self, request):
         if not _require_provider(request):
