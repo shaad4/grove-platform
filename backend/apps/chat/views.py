@@ -1,3 +1,96 @@
-from django.shortcuts import render
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+from django.db import DatabaseError
+from apps.request_management.models import Request
+from apps.common.logger import logger
 
+from .repositories import MessageRepository
+from .serializers import MessageSerializer
+from .services import create_message
 # Create your views here.
+
+
+def _get_request_or_none(request_id, tenant):
+    try:
+        return Request.objects.get(
+            id=request_id,
+            tenant=tenant,
+            is_deleted=False,
+        )
+    except Request.DoesNotExist:
+        return None
+    except DatabaseError as e:
+        logger.error(f"[ChatViews._get_request_or_none] DB error: {e}")
+        return None
+
+
+class MessageListCreateView(APIView):
+    
+    def get(self, request, request_id):
+        try:
+            req_obj = _get_request_or_none(request_id, request.tenant)
+            if req_obj is None:
+                return Response(
+                    {"success" : False, "message": "Request not found."},
+                    status=status.HTTP_404_NOT_FOUND,
+                )
+            
+            messages = MessageRepository.get_for_request(request_id, request.tenant.id)
+            serializer = MessageSerializer(messages, many=True)
+            return Response({"success": True, "results": serializer.data})
+        
+        except Exception as e:
+            logger.error(f"[MessageListCreateView.get] Unexpected error: {e}")
+            return Response(
+                {"success": False, "message": "Something went wrong."},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+        
+    def post(self, request, request_id):
+        try:
+            req_obj = _get_request_or_none(request_id, request.tenant)
+            if req_obj is None:
+                return Response(
+                    {"success": False, "message": "Request not found."},
+                    status=status.HTTP_404_NOT_FOUND,
+                )
+            
+            if req_obj.status == Request.Status.CLOSED:
+                return Response(
+                    {"success": False, "message": "Cannot send messages on a closed request."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            
+            content = request.data.get("content", "").strip()
+            if not content:
+                return Response(
+                    {"success": False, "message": "Message content is required."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            
+            message = create_message(req_obj, request.user, content)
+            serializer = MessageSerializer(message)
+            return Response(
+                {"success": True, "message": serializer.data},
+                status=status.HTTP_201_CREATED,
+            )
+        except DatabaseError as e:
+            logger.error(f"[MessageListCreateView.post] DB error: {e}")
+            return Response(
+                {"success": False, "message": "Failed to send message."},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+        except Exception as e:
+            logger.error(f"[MessageListCreateView.post] Unexpected error: {e}")
+            return Response(
+                {"success": False, "message": "Something went wrong."},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+        
+             
+
+
+
+
+        
