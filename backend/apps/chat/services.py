@@ -5,6 +5,9 @@ from django.db import DatabaseError
 from apps.common.logger import logger
 from .repositories import MessageRepository
 
+from apps.notifications.utils import create_notification
+from apps.notifications.models import Notification
+
 
 def get_chat_group_name(request_id):
     return f"chat_{request_id}"
@@ -14,11 +17,40 @@ def create_message(request_obj, sender, content):
     try:
         message = MessageRepository.create(request_obj, sender, content)
         _broadcast_message(message)
+        _notify_other_party(request_obj, sender)
         return message
     except DatabaseError as e:
         logger.error(f"[ChatService.create_message] Failed to create message: {e}")
         raise
 
+def _notify_other_party(request_obj, sender):
+    """
+    If sender is the client  → notify the provider.
+    If sender is the provider → notify the client.
+    Wrapped in try/except so a push failure never breaks message creation.
+    """
+    try:
+        client_user = request_obj.client.user
+        provider_user =request_obj.provider
+
+        recipient = provider_user if sender == client_user else client_user
+
+        if not recipient or recipient == sender:
+            return
+        
+        create_notification(
+            tenant=request_obj.tenant,
+            recipient=recipient,
+            event_type=Notification.EventType.NEW_MESSAGE,
+            title="New Message",
+            body=f'{sender.display_name} sent a message on "{request_obj.title}".',
+            related_request=request_obj,
+            related_client=request_obj.client,
+        )
+    except Exception as e:
+        logger.error(f"[ChatService._notify_other_party] Error: {e}")
+
+        
 def mark_messages_read(request_obj, reader):
     try:
         updated = MessageRepository.mark_read(request_obj, exclude_sender=reader)
