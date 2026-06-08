@@ -288,6 +288,22 @@ class RequestService:
             actor_source=RequestActivity.ActorSource.USER,
             metadata={"delivery_id": str(delivery.id)},
         )
+
+        try:
+            client_user = request_obj.client.user
+            if client_user:
+                create_notification(
+                    tenant=tenant,
+                    recipient=client_user,
+                    event_type=Notification.EventType.FILES_DELIVERED,
+                    title="Your delivery is ready",
+                    body=f'Delivery #{delivery.delivery_number} for "{request_obj.title}" is avaialble.',
+                    related_request=request_obj,
+                    related_client=request_obj.client,
+                )
+        except Exception as e:
+            logger.error(f"[create_delivery] Notification failed: {e}")
+
  
         return delivery
     
