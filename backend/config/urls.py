@@ -25,4 +25,5 @@ urlpatterns = [
     path("api/requests/" , include("apps.request_management.urls")),
     path("api/dashboard/", include("apps.dashboard.urls")),
     path("api/", include("apps.chat.urls")),
+    path("api/notifications/", include("apps.notifications.urls")),
 ]

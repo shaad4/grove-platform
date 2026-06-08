@@ -54,3 +54,16 @@ class MarkNotificationReadView(APIView):
             return Response({"detail": "Not found."}, status=status.HTTP_404_NOT_FOUND)
         
         return Response({"detail": "Marked as read."})
+    
+
+class MarkAllReadView(APIView):
+    permission_classes = [IsAuthenticated, BelongsToTenant]
+
+    def post(self, request):
+        Notification.objects.filter(
+            tenant=request.tenant,
+            recipient=request.user,
+            is_read=False,
+        ).update(is_read=True, read_at=timezone.now())
+
+        return Response({"detail": "All notifications marked as read."})
