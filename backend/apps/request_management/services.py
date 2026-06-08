@@ -6,6 +6,10 @@ from django.utils import timezone
 
 from apps.tenants.models import TenantUsage
 from django.core.cache import cache  
+from apps.common.logger import logger
+
+from apps.notifications.utils import create_notification
+from apps.notifications.models import Notification
 
 from .models import Request, RequestActivity, File
 from .repositories import (
@@ -153,6 +157,24 @@ class RequestService:
 
         cache.delete(f"dashboard_stats:{tenant.id}")
         cache.delete(f"sidebar_badges:{tenant.id}")
+
+        # Notify the client that their request status changed
+
+        try:
+            client_user = request_obj.client.user
+            if client_user and client_user != actor:
+                create_notification(
+                    tenant=tenant,
+                    recipient=client_user,
+                    event_type=Notification.EventType.STATUS_CHANGE,
+                    title="Your request status was updated",
+                    body=f'"{request_obj.title}" moved to {new_status.replace("_", " ").title()}.',
+                    related_request=request_obj,
+                    related_client=request_obj.client,
+                )
+        except Exception as e:
+                logger.error(f"[update_status] Notification failed: {e}")
+
  
         return request_obj
 
