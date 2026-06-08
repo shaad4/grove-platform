@@ -6,6 +6,9 @@ from apps.common.logger import logger
 from apps.clients.models import Invite
 from django.utils import timezone
 
+from apps.request_management.models import Request
+from apps.clients.models import Client
+
 
 @shared_task(bind=True, max_retries=3, default_retry_delay=60)
 def send_client_invite_email(
@@ -101,6 +104,33 @@ def expire_old_invites():
 
     logger.info(f"[expire_old_invites] Marked {updated} invite(s) as expired.")
     return updated
+
+
+@shared_task
+def mark_inactive_clients():
+    """
+    Nightly — flag clients with no request activity in 90+ days.
+    Uses last request updated_at as the activity signal.
+    """
+
+    cutoff = timezone.now() - timezone.timedelta(days=90)
+
+    active_client_ids = Request.objects.filter(
+        is_deleted=False,
+        updated_at_gte=cutoff,
+    ).values_list("client_id", flat=True).distinct()
+
+    updated = Client.objects.filter(
+        is_deleted=False,
+        is_deactivated=False,
+    ).exclude(
+        id__in=active_client_ids,
+    ).update(is_deactivated=True)
+
+    logger.info(f"[mark_inactive_clients] Deactivated {updated} inactive client(s).")
+    return updated
+
+
 
 
 
