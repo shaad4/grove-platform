@@ -3,6 +3,8 @@ from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
 from apps.tenants.permissions import BelongsToTenant
 from .models import Notification
+from django.utils import timezone
+from rest_framework import status
 # Create your views here.
 
 
@@ -38,3 +40,17 @@ class NotificationListView(APIView):
         return Response(data)
 
 
+class MarkNotificationReadView(APIView):
+    permission_classes = [IsAuthenticated, BelongsToTenant]
+
+    def post(self, request, pk):
+        updated = Notification.objects.filter(
+            id=pk,
+            tenant=request.tenant,
+            recipient=request.user,
+        ).update(is_read=True, read_at=timezone.now())
+
+        if not updated:
+            return Response({"detail": "Not found."}, status=status.HTTP_404_NOT_FOUND)
+        
+        return Response({"detail": "Marked as read."})
