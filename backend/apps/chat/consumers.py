@@ -6,6 +6,7 @@ from apps.request_management.models import Request
 from .services import get_chat_group_name
 
 
+
 class RequestChatConsumer(AsyncJsonWebsocketConsumer):
 
     async def connect(self):
