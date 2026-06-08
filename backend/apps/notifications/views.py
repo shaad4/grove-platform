@@ -18,6 +18,9 @@ class NotificationListView(APIView):
             recipient=request.user,
         ).select_related("related_request", "related_client")
 
+        if tenant:
+            qs = qs.filter(tenant=tenant)
+
         if request.query_params.get("unread") == "true":
             qs = qs.filter(is_read=False)
 
