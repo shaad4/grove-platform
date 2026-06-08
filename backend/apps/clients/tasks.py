@@ -2,6 +2,9 @@
 from celery import shared_task
 from django.core.mail import send_mail
 from django.conf import settings
+from apps.common.logger import logger
+from apps.clients.models import Invite
+from django.utils import timezone
 
 
 @shared_task(bind=True, max_retries=3, default_retry_delay=60)
@@ -80,3 +83,29 @@ If you weren't expecting this invite, you can ignore this email.
         )
     except Exception as exc:
         raise self.retry(exc=exc)
+    
+
+
+
+@shared_task
+def expire_old_invites():
+    """
+    Every hour — mark pending invites past their expiry as expired.
+    """
+
+    now = timezone.now()
+    updated = Invite.objects.filter(
+        status="Pending",
+        expires_at__lt=now,
+    ).update(status=Invite.Status.EXPIRED)
+
+    logger.info(f"[expire_old_invites] Marked {updated} invite(s) as expired.")
+    return updated
+
+
+
+
+
+
+
+
