@@ -1,5 +1,7 @@
-import { useState, useEffect, useCallback , useRef } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { ChevronRight, AlertCircle, Users, Inbox, CheckCircle2, Clock3, MoreHorizontal, UserX, TrendingUp, } from 'lucide-react'
+import { useWebSocket } from '../../hooks/useWebSocket'
+import ConnectionPill from '../../components/ui/ConnectionPill'
 import { useSelector } from 'react-redux'
 import { selectAccessToken } from '../../features/auth/authSlice'
 import { useNavigate } from 'react-router-dom'
@@ -349,7 +351,6 @@ const ACTIVITY_CONFIG = {
 function LiveFeed() {
   const [activities, setActivities] = useState([])
   const [loading, setLoading]       = useState(true)
-  const wsRef                       = useRef(null)
   const accessToken                 = useSelector(selectAccessToken)
   const navigate                    = useNavigate()
 
@@ -362,30 +363,19 @@ function LiveFeed() {
   }, [])
 
   // WebSocket — prepend incoming activity events
-  useEffect(() => {
-    if (!accessToken) return
+  const wsHost = window.location.hostname
+  const tenant = wsHost.split('.')[0]
+  const wsUrl  = accessToken
+    ? `ws://${wsHost}:8000/ws/feed/?token=${accessToken}&tenant=${tenant}`
+    : null
 
-    const tenant = window.location.hostname.split('.')[0]
-    const wsHost = window.location.hostname
-    const ws = new WebSocket(
-      `ws://${wsHost}:8000/ws/feed/?token=${accessToken}&tenant=${tenant}`
-    )
-    wsRef.current = ws
-
-    ws.onmessage = (e) => {
-      try {
-        const msg = JSON.parse(e.data)
-        if (msg.type === 'activity') {
-          setActivities(prev => [msg, ...prev].slice(0, 20))
-        }
-      } catch { /* ignore malformed frames */ }
+  const handleMessage = useCallback((msg) => {
+    if (msg.type === 'activity') {
+      setActivities(prev => [msg, ...prev].slice(0, 20))
     }
+  }, [])
 
-    ws.onopen  = () => ws.send(JSON.stringify({ type: 'ping' }))
-    ws.onerror = () => {}
-
-    return () => ws.close()
-  }, [accessToken])
+  useWebSocket(wsUrl, handleMessage, 'feed')
 
   return (
     <div className="rounded-2xl border border-[#e8eae8] bg-white overflow-hidden">
@@ -536,7 +526,7 @@ export default function ProviderDashboard() {
         topbar={
           <ProviderTopbar
             title="Dashboard"
-            liveIndicator
+            rightSlot={<ConnectionPill connectionKey="feed" />}
             onAddClient={() => setShowAddClient(true)}
             showAddBtn={!atLimit}
           />
