@@ -56,6 +56,12 @@ const requestsApi = {
     })
     return confirmRes.data.data
   },
+
+  // Chat
+  getMessages: (requestId) => api.get(`/requests/${requestId}/messages/`),
+  sendMessage: (requestId, data) => api.post(`/requests/${requestId}/messages/`, data),
+  markRead: (requestId) => api.post(`/requests/${requestId}/messages/mark-read/`)
+
 }
 
 export default requestsApi

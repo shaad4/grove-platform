@@ -1,5 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
+import ChatPanel from '../../components/chat/ChatPanel'
+import ConnectionPill from '../../components/ui/ConnectionPill'
 import {
   ChevronRight,
   Loader2,
@@ -213,6 +215,8 @@ export default function ClientRequestDetailPage() {
   const [loading, setLoading]       = useState(true)
   const [showChat, setShowChat]     = useState(false)
 
+  const [activities, setActivities] = useState([])
+
   // Review modal
   const [reviewModal, setReviewModal]   = useState(null)  // delivery object | null
   const [reviewLoading, setReviewLoading] = useState(false)
@@ -272,12 +276,14 @@ export default function ClientRequestDetailPage() {
 
   const fetchAll = useCallback(async () => {
     try {
-      const [reqRes, delRes] = await Promise.all([
+      const [reqRes, delRes, actRes] = await Promise.all([
         requestsApi.get(requestId),
         requestsApi.getDeliveries(requestId),
+        requestsApi.getActivity(requestId),
       ])
       setReq(reqRes.data.data)
       setDeliveries(delRes.data.data || [])
+      setActivities(actRes.data.data || []) 
     } catch {
       //
     } finally {
@@ -874,40 +880,26 @@ export default function ClientRequestDetailPage() {
           </div>
 
           {/* ── DESKTOP CHAT ───────────────────────────────────────────────── */}
+          
           <div
             style={{ width: `${chatWidth}px` }}
             className="hidden lg:flex border-l border-[#e8eae8] bg-white flex-col shrink-0 h-full overflow-hidden"
           >
-            <div className="h-[68px] border-b border-[#e8eae8] px-5 flex items-center shrink-0">
+            {/* Chat header */}
+            <div className="h-[68px] border-b border-[#e8eae8] px-5 flex items-center justify-between shrink-0">
               <div>
                 <h2 className="text-[15px] font-semibold text-[#141a14]">Conversation</h2>
-                <p className="text-[12px] text-[#9ea89e] mt-0.5">Messaging coming soon</p>
+                <p className="text-[12px] text-[#9ea89e] mt-0.5">with your provider</p>
               </div>
+              <ConnectionPill connectionKey={`chat-${requestId}`} />
             </div>
 
-            <div className="flex-1 flex items-center justify-center px-8 min-h-0 overflow-y-auto no-scrollbar">
-              <div className="text-center">
-                <div className="h-14 w-14 rounded-2xl bg-[#f5f7f5] flex items-center justify-center mx-auto mb-4">
-                  <MessageSquare size={22} className="text-[#9ea89e]" />
-                </div>
-                <h3 className="text-[15px] font-semibold text-[#141a14]">Conversation coming soon</h3>
-                <p className="text-[13px] text-[#9ea89e] mt-2 leading-6">
-                  Real-time messaging between clients and providers will be available soon.
-                </p>
-              </div>
-            </div>
-
-            <div className="border-t border-[#e8eae8] p-4 shrink-0">
-              <div className="flex items-center gap-3">
-                <div className="flex-1 h-12 rounded-xl border border-[#e8eae8] bg-[#fafbfa] px-4 flex items-center gap-3 opacity-50">
-                  <Paperclip size={15} className="text-[#9ea89e]" />
-                  <span className="text-[13px] text-[#9ea89e]">Send a message...</span>
-                </div>
-                <button disabled className="h-12 w-12 rounded-xl bg-[#0f6e56] opacity-50 flex items-center justify-center">
-                  <Send size={16} className="text-white" />
-                </button>
-              </div>
-            </div>
+            <ChatPanel
+              clientName={req?.provider_name || 'Provider'}
+              requestId={requestId}
+              requestStatus={req?.status}
+              activities={[]}
+            />
           </div>
 
         </div>

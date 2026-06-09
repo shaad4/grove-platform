@@ -4,19 +4,16 @@ from .models import Message
 class MessageSerializer(serializers.ModelSerializer):
     sender_name = serializers.CharField(source="sender.display_name", read_only=True)
     sender_email = serializers.CharField(source="sender.email", read_only=True)
+    attachment_ids = serializers.ListField(
+        child=serializers.UUIDField(), required=False, default=list, write_only=True
+    )
+
 
     class Meta:
         model = Message
         fields = [
-            "id",
-            "request",
-            "sender",
-            "sender_name",
-            "sender_email",
-            "content",
-            "is_read",
-            "read_at",
-            "created_at",
+            "id", "request", "sender", "sender_name", "sender_email",
+            "content", "is_read", "read_at", "created_at", "attachment_ids",
         ]
         read_only_fields = [
             "id", "sender", "sender_name", "sender_email",

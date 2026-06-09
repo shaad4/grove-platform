@@ -68,8 +68,8 @@ class MessageListCreateView(APIView):
                     {"success": False, "message": "Message content is required."},
                     status=status.HTTP_400_BAD_REQUEST,
                 )
-            
-            message = create_message(req_obj, request.user, content)
+            attachment_ids = request.data.get("attachment_ids", [])
+            message = create_message(req_obj, request.user, content, attachment_ids)
             serializer = MessageSerializer(message)
             return Response(
                 {"success": True, "message": serializer.data},

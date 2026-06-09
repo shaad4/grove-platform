@@ -11,6 +11,12 @@ import ProviderLayout from '../../components/layout/ProviderLayout'
 import requestsApi from '../../api/requests.api'
 import { getAvatarColor, getInitials, timeAgo, formatDate } from '../../utils/clientHelpers'
 import { useBadges } from '../../hooks/useBadges'
+import ConnectionPill from '../../components/ui/ConnectionPill'
+import ChatPanel from '../../components/chat/ChatPanel'
+import { useSelector } from 'react-redux'
+import { selectAccessToken, selectCurrentUser } from '../../features/auth/authSlice'
+import { useWebSocket } from '../../hooks/useWebSocket'
+
 
 // ── Status config ─────────────────────────────────────────────
 const STATUS_ORDER = ['received', 'in_review', 'in_progress', 'delivered', 'closed']
@@ -890,225 +896,6 @@ function DeliverModal({ request, onClose, onSuccess }) {
   )
 }
 
-// ── CHAT PANEL ────────────────────────────────────────────────
-function ChatPanel({ clientName, requestId }) {
-  const [messages, setMessages] = useState([])
-  const [input, setInput] = useState('')
-  const [sending, setSending] = useState(false)
-  const [attachments, setAttachments] = useState([])
-  const messagesEndRef = useRef(null)
-  const fileInputRef = useRef(null)
-  const textareaRef = useRef(null)
-
-  // Fetch messages on mount
-  useEffect(() => {
-    const loadMessages = async () => {
-      try {
-        const res = await requestsApi.getMessages(requestId)
-        setMessages(res.data.data || [])
-      } catch {
-        // silent — chat may not be implemented yet
-      }
-    }
-    loadMessages()
-  }, [requestId])
-
-  // Auto-scroll to bottom when messages change
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [messages])
-
-  // Auto-resize textarea
-  useEffect(() => {
-    const ta = textareaRef.current
-    if (!ta) return
-    ta.style.height = 'auto'
-    ta.style.height = Math.min(ta.scrollHeight, 120) + 'px'
-  }, [input])
-
-  const handleSend = async () => {
-    if (!input.trim() && attachments.length === 0) return
-    const content = input.trim()
-    setInput('')
-    setAttachments([])
-    setSending(true)
-
-    // Optimistic update
-    const optimistic = {
-      id: `opt-${Date.now()}`,
-      content,
-      sender_type: 'provider',
-      sender_name: 'You',
-      created_at: new Date().toISOString(),
-      optimistic: true,
-    }
-    setMessages(prev => [...prev, optimistic])
-
-    try {
-      await requestsApi.sendMessage(requestId, { content })
-      const res = await requestsApi.getMessages(requestId)
-      setMessages(res.data.data || [])
-    } catch {
-      // Remove optimistic on error
-      setMessages(prev => prev.filter(m => m.id !== optimistic.id))
-    } finally {
-      setSending(false)
-    }
-  }
-
-  const handleKeyDown = (e) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault()
-      handleSend()
-    }
-  }
-
-  const groupedMessages = messages.reduce((acc, msg) => {
-    const date = new Date(msg.created_at).toDateString()
-    if (!acc.length || acc[acc.length - 1].date !== date) {
-      acc.push({ date, msgs: [msg] })
-    } else {
-      acc[acc.length - 1].msgs.push(msg)
-    }
-    return acc
-  }, [])
-
-  const formatMsgTime = (iso) => {
-    return new Date(iso).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-  }
-
-  const formatGroupDate = (dateStr) => {
-    const d = new Date(dateStr)
-    const today = new Date()
-    const yesterday = new Date(today)
-    yesterday.setDate(yesterday.getDate() - 1)
-    if (d.toDateString() === today.toDateString()) return 'Today'
-    if (d.toDateString() === yesterday.toDateString()) return 'Yesterday'
-    return d.toLocaleDateString([], { month: 'short', day: 'numeric' })
-  }
-
-  return (
-    <>
-      {/* Messages area — scrollable */}
-      <div className="flex-1 overflow-y-auto overflow-x-hidden bg-[#fafafa] px-4 py-4 space-y-4 min-h-0 no-scrollbar">
-        {messages.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full text-center space-y-3 py-12">
-            <div className="h-12 w-12 rounded-full bg-white border border-[#e8eae8] flex items-center justify-center shadow-xs">
-              <Send size={18} className="text-[#9ea89e]" />
-            </div>
-            <div className="space-y-1">
-              <p className="text-[14px] font-medium text-[#141a14]">No messages yet</p>
-              <p className="text-[12px] text-[#9ea89e] leading-normal max-w-[200px]">
-                Start a conversation with {clientName} about this request.
-              </p>
-            </div>
-          </div>
-        ) : (
-          groupedMessages.map(group => (
-            <div key={group.date}>
-              {/* Date divider */}
-              <div className="flex items-center gap-3 my-3">
-                <div className="flex-1 h-px bg-[#e8eae8]" />
-                <span className="text-[11px] text-[#9ea89e] font-medium px-1">{formatGroupDate(group.date)}</span>
-                <div className="flex-1 h-px bg-[#e8eae8]" />
-              </div>
-              <div className="space-y-2">
-                {group.msgs.map((msg, idx) => {
-                  const isProvider = msg.sender_type === 'provider'
-                  const prevMsg = group.msgs[idx - 1]
-                  const showAvatar = !prevMsg || prevMsg.sender_type !== msg.sender_type
-                  return (
-                    <div
-                      key={msg.id}
-                      className={`flex items-end gap-2 ${isProvider ? 'flex-row-reverse' : 'flex-row'}`}
-                    >
-                      {/* Avatar spacer — only show on first in group */}
-                      <div className="w-6 shrink-0">
-                        {showAvatar && !isProvider && (
-                          <div className={`h-6 w-6 rounded-full flex items-center justify-center text-[9px] font-bold ${getAvatarColor(clientName).bg} ${getAvatarColor(clientName).text}`}>
-                            {getInitials(clientName)}
-                          </div>
-                        )}
-                      </div>
-                      <div className={`max-w-[80%] space-y-0.5 ${isProvider ? 'items-end' : 'items-start'} flex flex-col`}>
-                        {showAvatar && (
-                          <span className={`text-[11px] text-[#9ea89e] font-medium ${isProvider ? 'text-right' : 'text-left'} px-1`}>
-                            {isProvider ? 'You' : clientName}
-                          </span>
-                        )}
-                        <div
-                          className={`px-3 py-2 rounded-2xl text-[13px] leading-relaxed break-words
-                            ${isProvider
-                              ? 'bg-[#0f6e56] text-white rounded-br-sm'
-                              : 'bg-white text-[#141a14] border border-[#e8eae8] rounded-bl-sm shadow-xs'
-                            }
-                            ${msg.optimistic ? 'opacity-70' : ''}
-                          `}
-                        >
-                          {msg.content}
-                        </div>
-                        <span className={`text-[10px] text-[#9ea89e] px-1 ${isProvider ? 'text-right' : 'text-left'}`}>
-                          {formatMsgTime(msg.created_at)}
-                          {msg.optimistic && ' · Sending...'}
-                        </span>
-                      </div>
-                    </div>
-                  )
-                })}
-              </div>
-            </div>
-          ))
-        )}
-        <div ref={messagesEndRef} />
-      </div>
-
-      {/* Input bar — fixed at bottom of panel */}
-      <div className="border-t border-[#e8eae8] p-3 bg-white shrink-0 sticky bottom-0">
-        <div className="rounded-xl border border-[#e8eae8] bg-[#f7f8f7] focus-within:bg-white focus-within:border-[#0f6e56] focus-within:ring-4 focus-within:ring-[#0f6e56]/8 transition-all overflow-hidden">
-          <textarea
-            ref={textareaRef}
-            value={input}
-            onChange={e => setInput(e.target.value)}
-            onKeyDown={handleKeyDown}
-            placeholder={`Message ${clientName}...`}
-            rows={1}
-            className="w-full bg-transparent px-3 pt-2.5 pb-1 text-[13px] text-[#141a14] outline-none placeholder:text-[#9ea89e] resize-none leading-relaxed"
-            style={{ minHeight: '36px', maxHeight: '120px' }}
-          />
-          <div className="flex items-center justify-between px-2 pb-2 pt-1">
-            <button
-              onClick={() => fileInputRef.current?.click()}
-              className="h-7 w-7 flex items-center justify-center rounded-lg text-[#9ea89e] hover:text-[#0f6e56] hover:bg-[#f0faf6] transition-all"
-              title="Attach file"
-            >
-              <Paperclip size={14} />
-            </button>
-            <input ref={fileInputRef} type="file" multiple className="hidden" />
-            <div className="flex items-center gap-1.5">
-              <span className="text-[11px] text-[#9ea89e]">⏎ send</span>
-              <button
-                onClick={handleSend}
-                disabled={sending || (!input.trim() && attachments.length === 0)}
-                className={`h-7 w-7 flex items-center justify-center rounded-lg transition-all
-                  ${(input.trim() || attachments.length > 0) && !sending
-                    ? 'bg-[#0f6e56] text-white hover:bg-[#085041] shadow-xs'
-                    : 'bg-[#e8eae8] text-[#9ea89e] cursor-not-allowed'
-                  }
-                `}
-              >
-                {sending
-                  ? <Loader2 size={13} className="animate-spin" />
-                  : <Send size={13} />
-                }
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </>
-  )
-}
-
 // ── DRAG HANDLE ───────────────────────────────────────────────
 function usePanelResize({ initialWidth = 360, minWidth = 240, maxWidth = 600 }) {
   const [chatWidth, setChatWidth] = useState(initialWidth)
@@ -1721,14 +1508,18 @@ export default function RequestDetailPage() {
                   Conversation with {clientName}
                 </p>
                 <div className="flex items-center gap-1.5 mt-0.5">
-                  <div className="h-1.5 w-1.5 rounded-full bg-[#1d9e75]" />
-                  <p className="text-[12px] text-[#9ea89e]">Active</p>
+                  <ConnectionPill connectionKey={`chat-${requestId}`} />
                 </div>
               </div>
             </div>
 
             {/* Chat messages + input — ChatPanel handles its own scroll */}
-            <ChatPanel clientName={clientName} requestId={requestId} />
+            <ChatPanel
+              clientName={clientName}
+              requestId={requestId}
+              requestStatus={req.status}
+              activities={activities}
+            />
           </div>
 
         </div>

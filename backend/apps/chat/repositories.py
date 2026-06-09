@@ -2,6 +2,7 @@ from django.utils import timezone
 from django.db import DatabaseError
 from apps.common.logger import logger
 from .models import Message, MessageAttachment
+from apps.request_management.models import File
 
 class MessageRepository:
 
@@ -35,14 +36,23 @@ class MessageRepository:
         
     
     @staticmethod
-    def create(request_obj, sender, content):
+    def create(request_obj, sender, content, attachment_ids=None):
         try:
-            return Message.objects.create(
+            message = Message.objects.create(
                 request=request_obj,
                 tenant=request_obj.tenant,
                 sender=sender,
                 content=content,
             )
+            if attachment_ids:
+                files = File.objects.filter(
+                    id__in=attachment_ids,
+                    tenant=request_obj.tenant,
+                )
+                for file_obj in files:
+                    MessageAttachmentRepository.create(message, file_obj)
+            return message
+
         except DatabaseError as e:
             logger.error(f"[MessageRepository.create] DB error: {e}")
             raise

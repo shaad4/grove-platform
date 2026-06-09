@@ -13,9 +13,9 @@ def get_chat_group_name(request_id):
     return f"chat_{request_id}"
 
 
-def create_message(request_obj, sender, content):
+def create_message(request_obj, sender, content, attachment_ids=None):
     try:
-        message = MessageRepository.create(request_obj, sender, content)
+        message = MessageRepository.create(request_obj, sender, content, attachment_ids)
         _broadcast_message(message)
         _notify_other_party(request_obj, sender)
         return message
