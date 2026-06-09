@@ -358,3 +358,90 @@ def build_password_reset_email(display_name, reset_url):
         "text_content": text_content,
         "html_content": html_content,
     }
+
+
+def build_notification_email(notif):
+    subject = notif.title
+    text_content = f"Hi {notif.recipient.display_name},\n\n{notif.body}\n\n— Grove"
+
+    html_content = f"""
+    <!DOCTYPE html>
+    <html>
+    <body style="font-family:Arial,sans-serif;background:#f4f7f5;padding:40px 0;">
+      <div style="max-width:520px;margin:0 auto;background:#fff;border-radius:12px;
+                  padding:40px;border:1px solid #E8EAE8;">
+        <p style="font-size:20px;font-weight:600;color:#0F6E56;margin:0 0 24px;">Grove 🌿</p>
+        <h2 style="font-size:18px;font-weight:500;color:#141A14;margin:0 0 12px;">
+          {notif.title}
+        </h2>
+        <p style="font-size:14px;color:#4A544A;margin:0 0 32px;">{notif.body}</p>
+        <hr style="border:none;border-top:1px solid #E8EAE8;margin:0 0 24px;" />
+        <p style="font-size:12px;color:#9EA89E;margin:0;">
+          You're receiving this because you were offline when the update came in.
+        </p>
+      </div>
+    </body>
+    </html>
+    """
+
+    return {
+        "subject" : subject,
+        "text_content" : text_content,
+        "html_content" : html_content,
+    }
+
+
+def build_weekly_summary_email(
+    display_name, tenant_name,
+    requests_received, requests_delivered
+):
+    subject = f"Your Grove week — {tenant_name}"
+    text_content = (
+        f"Hi {display_name},\n\n"
+        f"Here's your weekly summary for {tenant_name}:\n\n"
+        f"  • Requests received: {requests_received}\n"
+        f"  • Requests delivered: {requests_delivered}\n\n"
+        f"Log in to see the full picture.\n\n— Grove"
+    )
+
+    html_content = f"""
+    <!DOCTYPE html>
+    <html>
+    <body style="font-family:Arial,sans-serif;background:#f4f7f5;padding:40px 0;">
+      <div style="max-width:520px;margin:0 auto;background:#fff;border-radius:12px;
+                  padding:40px;border:1px solid #E8EAE8;">
+        <p style="font-size:20px;font-weight:600;color:#0F6E56;margin:0 0 24px;">Grove 🌿</p>
+        <h2 style="font-size:18px;font-weight:500;color:#141A14;margin:0 0 8px;">
+          Your week at a glance
+        </h2>
+        <p style="font-size:13px;color:#9EA89E;margin:0 0 32px;">{tenant_name}</p>
+
+        <div style="display:flex;gap:16px;margin-bottom:32px;">
+          <div style="flex:1;background:#F7F8F7;border-radius:8px;padding:20px;text-align:center;">
+            <p style="font-size:28px;font-weight:600;color:#0F6E56;margin:0;">
+              {requests_received}
+            </p>
+            <p style="font-size:12px;color:#9EA89E;margin:8px 0 0;">Received</p>
+          </div>
+          <div style="flex:1;background:#F7F8F7;border-radius:8px;padding:20px;text-align:center;">
+            <p style="font-size:28px;font-weight:600;color:#0F6E56;margin:0;">
+              {requests_delivered}
+            </p>
+            <p style="font-size:12px;color:#9EA89E;margin:8px 0 0;">Delivered</p>
+          </div>
+        </div>
+
+        <hr style="border:none;border-top:1px solid #E8EAE8;margin:0 0 24px;" />
+        <p style="font-size:12px;color:#9EA89E;margin:0;">
+          © 2026 Grove. You're receiving this as a workspace owner.
+        </p>
+      </div>
+    </body>
+    </html>
+    """
+
+    return {
+        "subject" : subject,
+        "text_content" : text_content,
+        "html_content" : html_content,
+    }
