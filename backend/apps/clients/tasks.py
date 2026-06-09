@@ -98,9 +98,9 @@ def expire_old_invites():
 
     now = timezone.now()
     updated = Invite.objects.filter(
-        status="Pending",
+        status="pending",
         expires_at__lt=now,
-    ).update(status=Invite.Status.EXPIRED)
+    ).update(status="expired")
 
     logger.info(f"[expire_old_invites] Marked {updated} invite(s) as expired.")
     return updated

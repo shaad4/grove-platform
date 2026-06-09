@@ -14,8 +14,7 @@ from pathlib import Path
 from decouple import config
 from corsheaders.defaults import default_headers
 from datetime import timedelta
-import sentry_sdk
-from sentry_sdk.integrations.django import DjangoIntegration
+from celery.schedules import crontab
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -155,6 +154,9 @@ USE_I18N = True
 
 USE_TZ = True
 
+CELERY_TIMEZONE = "UTC"
+CELERY_ENABLE_UTC = True
+
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
@@ -252,6 +254,48 @@ CHANNEL_LAYERS = {
         },
     }
 }
+
+#Celery Beat Configs
+
+CELERY_BEAT_SCHEDULE = {
+    # Every hour — expire stale invites
+    "expire-old-invites": {
+        "task": "apps.clients.tasks.expire_old_invites",
+        "schedule": crontab(minute=0),  # top of every hour
+    },
+
+    # Nightly 2am IST — purge soft-deleted records older than 30 days
+    "purge-soft-deleted-records": {
+        "task": "apps.request_management.tasks.purge_soft_deleted_records",
+        "schedule": crontab(hour=2, minute=0),
+    },
+
+    # Nightly 3am IST — deactivate clients silent for 90+ days
+    "mark-inactive-clients": {
+        "task": "apps.clients.tasks.mark_inactive_clients",
+        "schedule": crontab(hour=3, minute=0),
+    },
+    
+    # Every 15 min — email fallback for users who missed WS notifications
+    "email-fallback-offline-users": {
+        "task": "apps.notifications.tasks.email_fallback_for_offline_users",
+        "schedule": crontab(minute="*/15"),
+    },
+
+    # Monday 8am IST — weekly provider digest
+    "weekly-provider-summary": {
+        "task": "apps.notifications.tasks.send_weekly_provider_summary",
+        "schedule": crontab(hour=8, minute=0, day_of_week=1),
+    },
+
+    # Every 30 min — refresh Redis tenant usage cache
+    "cache-tenant-usage-stats": {
+        "task": "apps.tenants.tasks.cache_tenant_usage_stats",
+        "schedule": crontab(minute="*/30"),
+    },
+    
+}
+
 
 # Logger Config
 LOGGING = {
