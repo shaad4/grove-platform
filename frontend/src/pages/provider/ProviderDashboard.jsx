@@ -1,5 +1,7 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback , useRef } from 'react'
 import { ChevronRight, AlertCircle, Users, Inbox, CheckCircle2, Clock3, MoreHorizontal, UserX, TrendingUp, } from 'lucide-react'
+import { useSelector } from 'react-redux'
+import { selectAccessToken } from '../../features/auth/authSlice'
 import { useNavigate } from 'react-router-dom'
 import ProviderLayout from '../../components/layout/ProviderLayout'
 import ProviderTopbar from '../../components/layout/ProviderTopbar'
@@ -47,16 +49,6 @@ const HEATMAP_ROWS = [
 const COL_ORDER  = [2, 3, 4, 5, 6, 7, 1]
 const COL_LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
 
-// Live feed placeholder data
-const FEED_PLACEHOLDER = [
-  { dot: 'bg-[#1d9e75]', text: 'Priya Labs submitted a new request',            sub: 'Instagram feed integration on homepage…', time: 'just now' },
-  { dot: 'bg-[#f59e0b]', text: 'Meera Enterprises replied to Homepage Eid Sale Banner', sub: 'English only please, bigger font…',   time: '18m' },
-  { dot: 'bg-[#9ea89e]', text: 'Ravi Studios viewed status update',              sub: '',                                           time: '1h' },
-  { dot: 'bg-[#9ea89e]', text: 'Nisha Kreations accepted their portal invite',   sub: '',                                           time: '3h' },
-  { dot: 'bg-[#f59e0b]', text: 'Priya Labs replied to SEO Audit request',        sub: '',                                           time: '5h' },
-  { dot: 'bg-[#1d9e75]', text: 'Meera Enterprises submitted a new request',      sub: 'Need updated social media kit for Q1…',      time: 'yesterday' },
-  { dot: 'bg-[#9ea89e]', text: 'Ravi Studios Logo Animation request closed',     sub: '',                                           time: 'yesterday' },
-]
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -342,11 +334,59 @@ function BusiestHeatmap({ heatmap }) {
   )
 }
 
-// ─── Live Feed Placeholder ────────────────────────────────────────────────────
+// ─── Live Feed  ────────────────────────────────────────────────────
 
-function LiveFeedPlaceholder() {
-  const [filter, setFilter] = useState('All')
-  const tabs = ['All', 'New requests', 'Replies', 'Status updates']
+const ACTIVITY_CONFIG = {
+  request_created:      { dot: 'bg-[#0f6e56]' },
+  status_change:        { dot: 'bg-[#6366f1]' },
+  message_sent:         { dot: 'bg-[#f59e0b]' },
+  delivery_created:     { dot: 'bg-[#0f6e56]' },
+  note_added:           { dot: 'bg-[#9ea89e]' },
+  file_uploaded:        { dot: 'bg-[#9ea89e]' },
+  ai_summary_generated: { dot: 'bg-[#0f6e56]' },
+}
+
+function LiveFeed() {
+  const [activities, setActivities] = useState([])
+  const [loading, setLoading]       = useState(true)
+  const wsRef                       = useRef(null)
+  const accessToken                 = useSelector(selectAccessToken)
+  const navigate                    = useNavigate()
+
+  // Initial snapshot from REST
+  useEffect(() => {
+    dashboardApi.getActivityFeed()
+      .then(res => setActivities(res.data.data?.results || []))
+      .catch(() => {})
+      .finally(() => setLoading(false))
+  }, [])
+
+  // WebSocket — prepend incoming activity events
+  useEffect(() => {
+    if (!accessToken) return
+
+    const tenant = window.location.hostname.split('.')[0]
+    const wsHost = window.location.hostname
+    const ws = new WebSocket(
+      `ws://${wsHost}:8000/ws/feed/?token=${accessToken}&tenant=${tenant}`
+    )
+    wsRef.current = ws
+
+    ws.onmessage = (e) => {
+      try {
+        const msg = JSON.parse(e.data)
+        if (msg.type === 'activity') {
+          setActivities(prev => [msg, ...prev].slice(0, 20))
+        }
+      } catch { /* ignore malformed frames */ }
+    }
+
+    ws.onopen  = () => ws.send(JSON.stringify({ type: 'ping' }))
+    ws.onerror = () => {}
+
+    return () => ws.close()
+  }, [accessToken])
+
   return (
     <div className="rounded-2xl border border-[#e8eae8] bg-white overflow-hidden">
       <div className="flex items-center justify-between px-5 py-4 border-b border-[#e8eae8]">
@@ -354,35 +394,58 @@ function LiveFeedPlaceholder() {
           <span className="text-[14px] font-semibold text-[#141a14]">Live feed</span>
           <span className="h-2 w-2 rounded-full bg-[#1d9e75] animate-pulse" />
         </div>
-        <button className="text-[12px] text-[#0f6e56] hover:underline">Mark all read</button>
+        <button
+          onClick={() => navigate('/activity')}
+          className="text-[12px] text-[#0f6e56] hover:underline"
+        >
+          See all →
+        </button>
       </div>
-      <div className="flex gap-1.5 px-4 pt-3 pb-2">
-        {tabs.map(t => (
-          <button
-            key={t}
-            onClick={() => setFilter(t)}
-            className={`px-3 py-1 rounded-full text-[11px] font-medium transition-colors ${
-              filter === t ? 'bg-[#141a14] text-white' : 'bg-[#f7f8f7] text-[#4a544a] hover:bg-[#e8eae8]'
-            }`}
-          >
-            {t}
-          </button>
-        ))}
-      </div>
-      <div className="px-4 pb-2">
-        {FEED_PLACEHOLDER.map((item, i) => (
-          <div key={i} className="flex gap-3 py-3 border-b border-[#f1f3f1] last:border-none">
-            <div className={`mt-1.5 h-2 w-2 rounded-full shrink-0 ${item.dot}`} />
-            <div className="flex-1 min-w-0">
-              <p className="text-[13px] text-[#141a14] leading-snug">{item.text}</p>
-              {item.sub && <p className="text-[11px] text-[#9ea89e] mt-0.5 truncate italic">{item.sub}</p>}
-            </div>
-            <span className="text-[11px] text-[#9ea89e] shrink-0 mt-0.5">{item.time}</span>
-          </div>
-        ))}
-      </div>
-      <div className="px-4 pb-4">
-        <button className="w-full text-center text-[12px] text-[#0f6e56] hover:underline py-1">Load more</button>
+
+      {loading ? (
+        <div className="px-4 py-6 space-y-3">
+          {[1, 2, 3].map(i => <Skeleton key={i} className="h-10" />)}
+        </div>
+      ) : activities.length === 0 ? (
+        <div className="px-4 py-8 text-center">
+          <p className="text-[13px] text-[#9ea89e]">No activity yet.</p>
+        </div>
+      ) : (
+        <div className="px-4 pb-2 divide-y divide-[#f1f3f1]">
+          {activities.slice(0, 5).map((a, i) => {
+            const cfg = ACTIVITY_CONFIG[a.event_type] || { dot: 'bg-[#9ea89e]' }
+            return (
+              <div key={a.id || i} className="flex gap-3 py-3">
+                <div className={`mt-1.5 h-2 w-2 rounded-full shrink-0 ${cfg.dot}`} />
+                <div className="flex-1 min-w-0">
+                  <p className="text-[13px] text-[#141a14] leading-snug">
+                    {a.description}
+                  </p>
+                  {a.request_title && (
+                    <button
+                      onClick={() => navigate(`/requests/${a.request_id}`)}
+                      className="text-[11px] text-[#0f6e56] hover:underline truncate max-w-[200px] block mt-0.5"
+                    >
+                      {a.request_title}
+                    </button>
+                  )}
+                </div>
+                <span className="text-[11px] text-[#9ea89e] shrink-0 mt-0.5">
+                  {relativeTime(a.created_at)}
+                </span>
+              </div>
+            )
+          })}
+        </div>
+      )}
+
+      <div className="px-4 pb-4 pt-1 border-t border-[#f1f3f1]">
+        <button
+          onClick={() => navigate('/activity')}
+          className="w-full text-center text-[12px] text-[#0f6e56] hover:underline py-1"
+        >
+          View full activity log →
+        </button>
       </div>
     </div>
   )
@@ -608,7 +671,7 @@ export default function ProviderDashboard() {
 
           {/* RIGHT */}
           <div className="space-y-5">
-            <LiveFeedPlaceholder />
+            <LiveFeed />
             <div className="rounded-2xl border border-[#e8eae8] bg-white p-5">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">

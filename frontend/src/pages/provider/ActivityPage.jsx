@@ -7,8 +7,7 @@ import {
 } from 'lucide-react'
 import ProviderLayout from '../../components/layout/ProviderLayout'
 import ProviderTopbar from '../../components/layout/ProviderTopbar'
-import requestsApi from '../../api/requests.api'
-import clientsApi from '../../api/clients.api'
+import dashboardApi from '../../api/dashboard.api'
 import { getAvatarColor, getInitials, timeAgo } from '../../utils/clientHelpers'
 
 // ── Event type config ─────────────────────────────────────────
@@ -83,7 +82,7 @@ function ActivityRow({ activity, onNavigate }) {
   const [expanded, setExpanded] = useState(false)
   const isAI = activity.actor_source === 'ai'
   const isSystem = activity.actor_source === 'system'
-  const actorName = activity.actor_name || (isAI ? 'Grove AI' : 'System')
+  const actorName = activity.actor || (isAI ? 'Grove AI' : isSystem ? 'System' : 'Unknown')
   const isYou = activity.is_current_user === true
 
   const cfg = EVENT_CONFIG[activity.event_type] || EVENT_CONFIG.request_created
@@ -193,49 +192,43 @@ export default function ActivityPage() {
 
   useEffect(() => {
     const load = async () => {
+      setLoading(true)
       try {
-        const reqRes = await requestsApi.list()
-        const reqs = reqRes.data.data?.requests || []
+        const from_date = new Date(Date.now() - parseInt(dateRange) * 86400000)
+          .toISOString().split('T')[0]
 
-        const allActivities = []
-        await Promise.all(
-          reqs.slice(0, 15).map(async r => {
-            try {
-              const res = await requestsApi.getActivity(r.id)
-              const acts = (res.data.data || []).map(a => ({
-                ...a,
-                request_title: r.title,
-                request_id: r.id,
-              }))
-              allActivities.push(...acts)
-            } catch { /* skip */ }
-          })
-        )
-        allActivities.sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
-        setActivities(allActivities)
-      } catch { /* error silent */ }
+        const params = { from_date }
+        if (eventFilter !== 'all') params.event_type = eventFilter
+        if (search) params.search = search
+
+        const res = await dashboardApi.getActivityFeed(params)
+        setActivities(res.data.data?.results || [])
+      } catch { /* silent */ }
       finally { setLoading(false) }
     }
     load()
-  }, [])
+  }, [dateRange, eventFilter, search])
 
-  const now = new Date()
-  const cutoff = new Date(now - parseInt(dateRange) * 86400000)
+  const handleExport = async () => {
+    try {
+      const from_date = new Date(Date.now() - parseInt(dateRange) * 86400000)
+        .toISOString().split('T')[0]
 
-  const filtered = activities.filter(a => {
-    if (eventFilter !== 'all' && a.event_type !== eventFilter) return false
-    if (new Date(a.created_at) < cutoff) return false
-    if (search) {
-      const q = search.toLowerCase()
-      return (a.target_info?.request_title || '').toLowerCase().includes(q) ||
-        (a.actor_name || '').toLowerCase().includes(q) ||
-        (a.description || '').toLowerCase().includes(q) ||
-        (a.target_info?.client_name || '').toLowerCase().includes(q)
-    }
-    return true
-  })
+      const params = { from_date }
+      if (eventFilter !== 'all') params.event_type = eventFilter
+      if (search) params.search = search
 
-  const grouped = groupByDate(filtered.slice(0, visibleCount))
+      const res = await dashboardApi.getActivityExport(params)
+      const url = URL.createObjectURL(new Blob([res.data], { type: 'text/csv' }))
+      const a = document.createElement('a')
+      a.href = url
+      a.download = 'activity.csv'
+      a.click()
+      URL.revokeObjectURL(url)
+    } catch { /* silent */ }
+  }
+
+  const grouped = groupByDate(activities.slice(0, visibleCount))
 
   return (
     <ProviderLayout
@@ -243,12 +236,15 @@ export default function ActivityPage() {
       topbar={
         <ProviderTopbar
           title="Activity"
-          // rightSlot={
-          //   // <button className="flex items-center gap-2 rounded-xl border border-[#e8eae8] bg-white px-3 py-2 text-[12px] font-medium text-[#4a544a] hover:border-[#0f6e56]/30 transition-colors">
-          //   //   <Download size={13} className="text-[#9ea89e]" />
-          //   //   Export CSV
-          //   // </button>
-          // }
+          rightSlot={
+            <button
+              onClick={handleExport}
+              className="flex items-center gap-2 rounded-xl border border-[#e8eae8] bg-white px-3 py-2 text-[12px] font-medium text-[#4a544a] hover:border-[#0f6e56]/30 transition-colors"
+            >
+              <Download size={13} className="text-[#9ea89e]" />
+              Export CSV
+            </button>
+          }
         />
       }
     >
@@ -305,7 +301,7 @@ export default function ActivityPage() {
           {!loading && (
             <div className="flex items-center justify-between px-5 py-2.5 border-b border-[#f1f3f1] bg-[#fafafa]">
               <p className="text-[12px] text-[#4a544a]">
-                Showing <span className="font-semibold text-[#141a14]">{filtered.length} logs</span> matching your tracking timeframe filter selection criteria.
+                Showing <span className="font-semibold text-[#141a14]">{activities.length} logs</span> matching your tracking timeframe filter selection criteria.
               </p>
             </div>
           )}
@@ -314,7 +310,7 @@ export default function ActivityPage() {
             <div className="flex items-center justify-center py-20">
               <Loader2 size={22} className="animate-spin text-[#0f6e56]" />
             </div>
-          ) : filtered.length === 0 ? (
+          ) : activities.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 text-center">
               <Bell size={24} className="text-[#9ea89e] mb-3" />
               <p className="text-[15px] font-medium text-[#141a14]">No activity found</p>
@@ -339,7 +335,7 @@ export default function ActivityPage() {
                   </div>
                 </div>
               ))}
-              {filtered.length > visibleCount && (
+              {activities.length > visibleCount && (
                 <div className="py-5 text-center border-t border-[#f1f3f1]">
                   <button
                     onClick={() => setVisibleCount(v => v + 25)}

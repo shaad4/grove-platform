@@ -59,6 +59,21 @@ class NotificationFeedConsumer(AsyncJsonWebsocketConsumer):
         except Exception as e:
             logger.error(f"[NotificationFeedConsumer.feed_notification] Error: {e}")
 
-
+    async def feed_activity(self, event):
+        try:
+            await self.send_json({
+                "type": "activity",
+                "id": event["id"],
+                "event_type": event["event_type"],
+                "description": event["description"],
+                "actor_source": event["actor_source"],
+                "actor": event["actor"],
+                "request_id": event["request_id"],
+                "request_title": event["request_title"],
+                "metadata": event["metadata"],
+                "created_at": event["created_at"],
+            })
+        except Exception as e:
+            logger.error(f"[NotificationFeedConsumer.feed_activity] Error: {e}")
     
         

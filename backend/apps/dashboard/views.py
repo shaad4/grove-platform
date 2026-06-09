@@ -1,3 +1,8 @@
+import base64
+import csv
+from io import StringIO
+from django.http import StreamingHttpResponse
+from django.db.models import Q
 from django.shortcuts import render
 from datetime import timedelta
 
@@ -266,12 +271,132 @@ class SidebarBadgesView(APIView):
 
 
 
+class ActivityFeedView(APIView):
+    permission_classes = [IsAuthenticated]
+    PAGE_SIZE = 500
+
+    def get(self, request):
+        if not _require_provider(request):
+            return Response({"success": False, "message": "Forbidden."}, status=403)
+
+        qs = self._build_queryset(request)
+        cursor = request.query_params.get("cursor")
+
+        if cursor:
+            try:
+                decoded = base64.b64decode(cursor.encode()).decode()
+                ts, uid = decoded.split("|", 1)
+                qs = qs.filter(
+                    Q(created_at__lt=ts) | Q(created_at=ts) | Q(created_at=ts, id__lt=uid)
+                )
+            except Exception:
+                return Response({"success": False, "message": "Invalid cursor."}, status=400)
+
+
+        page = list(qs[: self.PAGE_SIZE + 1])
+        has_next = len(page) > self.PAGE_SIZE
+        page = page[: self.PAGE_SIZE]
+
+        next_cursor = None
+        if has_next and page:
+            last = page[-1]
+            raw = f"{last.created_at.isoformat()}|{last.id}"
+            next_cursor = base64.b64encode(raw.encode()).decode()
+
+        return Response({
+            "success": True,
+            "data": {
+                "results": self._serialize(page),
+                "next_cursor": next_cursor,
+                "has_next": has_next,
+            },
+        })
 
 
 
 
+    def _build_queryset(self, request):
+        tid = request.tenant.id
+        p = request.query_params
+
+        qs = (
+            RequestActivity.objects.filter(tenant_id=tid)
+            .select_related("actor", "request")
+            .order_by("-created_at", "-id")
+        )
+
+        if p.get("search"):
+            qs = qs.filter(description__icontains=p["search"])
+
+        if p.get("from_date"):
+            qs = qs.filter(created_at__date__gte=p["from_date"])
+
+        if p.get("to_date"):
+            qs = qs.filter(created_at__date__lte=p["to_date"])
+
+        if p.get("event_type"):
+            qs = qs.filter(event_type=p["event_type"])
+
+        return qs
+    
+    def _serialize(self, activities):
+        return [
+            {
+                "id": str(a.id),
+                "event_type": a.event_type,
+                "description": a.description,
+                "actor_source": a.actor_source,
+                "actor": a.actor.display_name if a.actor else None,
+                "request_id": str(a.request_id),
+                "request_title": a.request.title if a.request else None,
+                "metadata": a.metadata,
+                "created_at": a.created_at.isoformat(),
+            }
+            for a in activities
+        ]
 
 
+class ActivityExportView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        if not _require_provider(request):
+            return Response({"success": False, "message": "Forbidden."}, status=403)
+        
+        qs = ActivityFeedView._build_queryset(self, request)
+
+        response = StreamingHttpResponse(
+            self._stream_csv(qs),
+            content_type="text/csv"
+        )
+        response["Content-Disposition"] = 'attachment; filename="activity.csv"'
+        return response
+    
+    def _stream_csv(self, qs):
+        columns = [
+            "id", "event_type", "description", "actor_source",
+            "actor", "request_id", "request_title", "created_at",
+        ]
+
+        buffer = StringIO()
+        writer = csv.writer(buffer)
+        writer.writerow(columns)
+        yield buffer.getvalue()
+
+        for a in qs.iterator(chunk_size=500):
+            buffer = StringIO()
+            writer = csv.writer(buffer)
+            writer.writerow([
+                str(a.id),
+                a.event_type,
+                a.description,
+                a.actor_source,
+                a.actor.display_name if a.actor else "",
+                str(a.request_id),
+                a.request.title if a.request else "",
+                a.created_at.isoformat(),
+            ])
+            yield buffer.getvalue()
 
 
 

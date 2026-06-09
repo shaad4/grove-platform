@@ -3,6 +3,8 @@ from django.db.models import Q
 
 
 from .models import Request, RequestActivity, InternalNote, Delivery, File
+from apps.notifications.utils import push_activity
+from apps.common.logger import logger
 
 class RequestRepository:
 
@@ -174,7 +176,7 @@ class RequestActivityRepository:
     def log(request_obj, event_type, description, actor=None,
             actor_source=RequestActivity.ActorSource.USER, metadata=None):
         
-        return RequestActivity.objects.create(
+        activity = RequestActivity.objects.create(
             request=request_obj,
             tenant=request_obj.tenant,
             actor=actor,
@@ -183,6 +185,18 @@ class RequestActivityRepository:
             description=description,
             metadata=metadata,
         )
+
+        try:
+            push_activity(
+                activity=activity,
+                provider_id=request_obj.provider_id,
+            )
+        except Exception as e:
+            logger.error(f"[RequestActivityRepository.log] push_activity failed: {e}")
+
+        return activity
+    
+
     
     @staticmethod
     def get_for_request(request_id, tenant_id):
