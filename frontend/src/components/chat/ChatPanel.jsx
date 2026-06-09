@@ -1,5 +1,4 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
-import { useNavigate } from 'react-router-dom'
 import {
   Send, Paperclip, Loader2, CheckCircle2,
   AlertCircle, X, Lock,
@@ -30,10 +29,16 @@ export default function ChatPanel({
   // ── Initial load ────────────────────────────────────────────
   useEffect(() => {
     requestsApi.getMessages(requestId)
-      .then(res => setMessages(res.data.results || []))
+      .then(res => {
+        const msgs = res.data.results || []
+        setMessages(msgs)
+        const hasUnread = msgs.some(
+          m => !m.is_read && (m.sender?.id ?? m.sender) !== currentUser?.id
+        )
+        if (hasUnread) requestsApi.markRead(requestId).catch(() => {})
+      })
       .catch(() => {})
-    requestsApi.markRead(requestId).catch(() => {})
-  }, [requestId])
+  }, [requestId, currentUser?.id])
 
   // ── Auto scroll ─────────────────────────────────────────────
   useEffect(() => {
@@ -75,7 +80,10 @@ export default function ChatPanel({
     }
     if (msg.type === 'read_receipt') {
       setMessages(prev =>
-        prev.map(m => m.sender !== currentUser?.id ? { ...m, is_read: true } : m)
+        prev.map(m => {
+          const senderId = m.sender?.id ?? m.sender
+          return senderId === currentUser?.id ? { ...m, is_read: true } : m
+        })
       )
     }
   }, [currentUser?.id, requestId])
@@ -111,7 +119,7 @@ export default function ChatPanel({
 
   // ── Send ────────────────────────────────────────────────────
   const handleSend = async () => {
-    const content       = input.trim()
+    const content         = input.trim()
     const doneAttachments = attachments.filter(a => a.status === 'done')
     if (!content && doneAttachments.length === 0) return
     if (attachments.some(a => a.status === 'uploading')) return
@@ -207,7 +215,6 @@ export default function ChatPanel({
         ) : (
           groupedTimeline.map(group => (
             <div key={group.date}>
-              {/* Date divider */}
               <div className="flex items-center gap-3 my-3">
                 <div className="flex-1 h-px bg-[#e8eae8]" />
                 <span className="text-[11px] text-[#9ea89e] font-medium px-1">
@@ -219,7 +226,6 @@ export default function ChatPanel({
               <div className="space-y-2">
                 {group.items.map((item, idx) => {
 
-                  // Activity pill
                   if (item._type === 'activity') {
                     return (
                       <div key={item.id} className="flex items-center gap-2 py-1">
@@ -232,8 +238,7 @@ export default function ChatPanel({
                     )
                   }
 
-                  // Message bubble
-                  const isMe       = item.sender === currentUser?.id
+                  const isMe       = (item.sender?.id ?? item.sender) === currentUser?.id
                   const prevItem   = group.items[idx - 1]
                   const showAvatar = !prevItem
                     || prevItem._type === 'activity'
@@ -299,10 +304,8 @@ export default function ChatPanel({
           </div>
         </div>
       ) : (
-        /* Input bar */
         <div className="border-t border-[#e8eae8] p-3 bg-white shrink-0">
 
-          {/* Attachment chips */}
           {attachments.length > 0 && (
             <div className="flex flex-wrap gap-1.5 mb-2">
               {attachments.map((a, i) => (
