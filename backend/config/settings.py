@@ -290,3 +290,18 @@ LOGGING = {
         "level": "INFO",
     },
 }
+
+
+# Configuration
+
+EMAIL_FALLBACK_DELAY_MINUTES = 5  # Email Fallback Message Delay Time (notification-tasks)
+
+
+
+
+
+
+
+
+
+
