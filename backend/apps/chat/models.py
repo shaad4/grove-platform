@@ -12,7 +12,7 @@ class Message(models.Model):
     request = models.ForeignKey(Request, on_delete=models.CASCADE, related_name="messages")
     tenant = models.ForeignKey(Tenant, on_delete=models.CASCADE, related_name="messages")
     sender = models.ForeignKey(User, on_delete=models.CASCADE, related_name="sent_messages")
-    content = models.TextField()
+    content = models.TextField(blank=True, default="")
     is_read = models.BooleanField(default=False)
     read_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)

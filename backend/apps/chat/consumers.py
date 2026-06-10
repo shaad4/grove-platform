@@ -67,6 +67,8 @@ class RequestChatConsumer(AsyncJsonWebsocketConsumer):
                 "sender_name": event["sender_name"],
                 "sender_email": event["sender_email"],
                 "content": event["content"],
+                "attachments": event.get("attachments", []),
+                "is_read": event.get("is_read", False),
                 "created_at": event["created_at"],
             })
         except Exception as e:

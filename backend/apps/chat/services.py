@@ -7,7 +7,8 @@ from .repositories import MessageRepository
 
 from apps.notifications.utils import create_notification
 from apps.notifications.models import Notification
-
+from apps.request_management.services import FileService
+from .models import Message as MessageModel
 
 def get_chat_group_name(request_id):
     return f"chat_{request_id}"
@@ -65,19 +66,36 @@ def mark_messages_read(request_obj, reader):
 
 def _broadcast_message(message):
     try:
+        message = MessageModel.objects.prefetch_related(
+            "attachments__file"
+        ).get(id=message.id)
+
         channel_layer = get_channel_layer()
         group_name = get_chat_group_name(str(message.request_id))
+
+        attachments = []
+        for a in message.attachments.select_related("file").all():
+            attachments.append({
+                "id":              str(a.file.id),
+                "file_name":       a.file.file_name,
+                "file_type":       a.file.file_type,
+                "file_size_bytes": a.file.file_size_bytes,
+                "download_url":    FileService.generate_download_url(a.file.s3_key),
+            })
+
         async_to_sync(channel_layer.group_send)(
             group_name,
             {
-                "type": "chat.message",
-                "id": str(message.id),
-                "request_id": str(message.request_id),
-                "sender_id": str(message.sender_id),
+                "type":        "chat.message",
+                "id":          str(message.id),
+                "request_id":  str(message.request_id),
+                "sender_id":   str(message.sender_id),
                 "sender_name": message.sender.display_name,
-                "sender_email": message.sender.email,
-                "content": message.content,
-                "created_at": message.created_at.isoformat(),
+                "sender_email":message.sender.email,
+                "content":     message.content,
+                "attachments": attachments,
+                "is_read":     message.is_read,
+                "created_at":  message.created_at.isoformat(),
             },
         )
     except Exception as e:

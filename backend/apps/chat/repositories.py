@@ -13,6 +13,7 @@ class MessageRepository:
                 Message.objects
                 .filter(request_id=request_id, tenant_id=tenant_id)
                 .select_related("sender")
+                .prefetch_related("attachments__file")
                 .order_by("created_at")
             )
         except DatabaseError as e:

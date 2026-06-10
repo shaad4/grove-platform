@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import {
   Send, Paperclip, Loader2, CheckCircle2,
-  AlertCircle, X, Lock,
+  AlertCircle, X, Lock, Download, FileText,
+  Image as ImageIcon, File as FileIcon,
 } from 'lucide-react'
 import { useSelector } from 'react-redux'
 import { selectAccessToken } from '../../features/auth/authSlice'
@@ -9,6 +10,128 @@ import { useWebSocket } from '../../hooks/useWebSocket'
 import requestsApi from '../../api/requests.api'
 import { getAvatarColor, getInitials } from '../../utils/clientHelpers'
 
+// ── File type helpers ──────────────────────────────────────────
+function getFileIcon(fileType = '', fileName = '') {
+  const ext = fileName.split('.').pop()?.toLowerCase()
+  if (fileType.startsWith('image/')) return { icon: ImageIcon, color: 'text-emerald-600', bg: 'bg-emerald-50' }
+  if (fileType === 'application/pdf' || ext === 'pdf') return { icon: FileText, color: 'text-rose-600', bg: 'bg-rose-50' }
+  return { icon: FileIcon, color: 'text-amber-600', bg: 'bg-amber-50' }
+}
+
+function formatBytes(bytes) {
+  if (!bytes) return ''
+  if (bytes < 1024) return `${bytes} B`
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
+}
+
+//  Attachment bubble (sent/received) 
+function AttachmentBubble({ attachment, isMe }) {
+  const { icon: Icon, color, bg } = getFileIcon(
+    attachment.file_type,
+    attachment.file_name
+  )
+
+  const isImage = attachment.file_type?.startsWith('image/')
+
+  if (isImage && attachment.download_url) {
+    return (
+      <div className="group relative mt-1.5 rounded-xl overflow-hidden border border-slate-200/80 max-w-[220px] shadow-sm transition-all hover:shadow-md">
+        <img
+          src={attachment.download_url}
+          alt={attachment.file_name}
+          className="w-full object-cover rounded-xl max-h-[180px]"
+        />
+
+        <a
+          href={attachment.download_url}
+          download={attachment.file_name}
+          target="_blank"
+          rel="noreferrer"
+          className="absolute inset-0 flex items-center justify-center bg-slate-900/40 opacity-0 group-hover:opacity-100 transition-opacity rounded-xl backdrop-blur-[2px]"
+        >
+          <div className="h-9 w-9 rounded-full bg-white/90 shadow flex items-center justify-center">
+            <Download size={15} className="text-slate-700" />
+          </div>
+        </a>
+      </div>
+    )
+  }
+
+  return (
+    <a
+      href={attachment.download_url}
+      download={attachment.file_name}
+      target="_blank"
+      rel="noreferrer"
+      className={`group flex items-center gap-3 mt-1.5 px-3 py-2.5 rounded-xl max-w-[240px] transition-all border shadow-sm
+        ${
+          isMe
+            ? 'bg-emerald-50/40 hover:bg-emerald-50 border-emerald-100/70'
+            : 'bg-white hover:bg-slate-50 border-slate-100'
+        }
+      `}
+    >
+      <div
+        className={`h-9 w-9 rounded-lg flex items-center justify-center shrink-0 border border-slate-100 ${bg}`}
+      >
+        <Icon size={16} className={color} />
+      </div>
+
+      <div className="flex-1 min-w-0">
+        <p
+          className={`text-[12px] font-medium truncate leading-tight ${
+            isMe ? 'text-emerald-950' : 'text-slate-800'
+          }`}
+        >
+          {attachment.file_name}
+        </p>
+
+        <p className="text-[11px] mt-0.5 text-slate-400">
+          {formatBytes(attachment.file_size_bytes)}
+        </p>
+      </div>
+
+      <Download
+        size={13}
+        className="shrink-0 text-slate-400 opacity-0 group-hover:opacity-100 transition-all"
+      />
+    </a>
+  )
+}
+
+// ── Pending upload chip ────────────────────────────────────────
+function UploadChip({ attachment, onRemove }) {
+  const { icon: Icon, color } = getFileIcon(attachment.file?.type, attachment.file?.name)
+
+  return (
+    <div className={`flex items-center gap-2 rounded-lg border px-2.5 py-1.5 text-[11px] font-medium transition-all shadow-sm
+      ${attachment.status === 'error'
+        ? 'border-rose-200 bg-rose-50 text-rose-700'
+        : attachment.status === 'done'
+          ? 'border-emerald-200 bg-emerald-50 text-emerald-800'
+          : 'border-slate-200 bg-slate-50 text-slate-600'
+      }
+    `}>
+      {attachment.status === 'uploading'
+        ? <Loader2 size={12} className="animate-spin text-emerald-600" />
+        : attachment.status === 'done'
+          ? <CheckCircle2 size={12} className="text-emerald-600" />
+          : attachment.status === 'error'
+            ? <AlertCircle size={12} />
+            : <Icon size={12} className={color} />
+      }
+      <span className="max-w-[120px] truncate">{attachment.file?.name}</span>
+      {attachment.status !== 'uploading' && (
+        <button onClick={onRemove} className="ml-1 text-slate-400 hover:text-slate-600 transition-colors">
+          <X size={12} />
+        </button>
+      )}
+    </div>
+  )
+}
+
+// ── Main component ─────────────────────────────────────────────
 export default function ChatPanel({
   clientName,
   requestId,
@@ -26,7 +149,7 @@ export default function ChatPanel({
   const currentUser    = useSelector(s => s.auth.user)
   const isClosed       = requestStatus === 'closed'
 
-  // ── Initial load ────────────────────────────────────────────
+  // ── Initial load ─────────────────────────────────────────────
   useEffect(() => {
     requestsApi.getMessages(requestId)
       .then(res => {
@@ -40,12 +163,12 @@ export default function ChatPanel({
       .catch(() => {})
   }, [requestId, currentUser?.id])
 
-  // ── Auto scroll ─────────────────────────────────────────────
+  // ── Auto scroll ──────────────────────────────────────────────
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
 
-  // ── Auto resize textarea ────────────────────────────────────
+  // ── Auto resize textarea ─────────────────────────────────────
   useEffect(() => {
     const ta = textareaRef.current
     if (!ta) return
@@ -53,7 +176,7 @@ export default function ChatPanel({
     ta.style.height = Math.min(ta.scrollHeight, 120) + 'px'
   }, [input])
 
-  // ── WebSocket ───────────────────────────────────────────────
+  // ── WebSocket ────────────────────────────────────────────────
   const wsHost = window.location.hostname
   const tenant = wsHost.split('.')[0]
   const wsUrl  = accessToken
@@ -64,25 +187,63 @@ export default function ChatPanel({
     if (msg.type === 'message') {
       setMessages(prev => {
         const optIdx = prev.findIndex(
-          m => m.optimistic && m.content === msg.content && m.sender === msg.sender_id
+          m =>
+            m.optimistic &&
+            m.content === msg.content &&
+            m.sender === msg.sender_id
         )
+
+        // Replace optimistic message with real message
         if (optIdx !== -1) {
           const next = [...prev]
-          next[optIdx] = { ...msg, sender: msg.sender_id }
+          const optimistic = prev[optIdx]
+
+          // Cleanup temporary blob URLs
+          optimistic.attachments?.forEach(att => {
+            if (att.download_url?.startsWith('blob:')) {
+              URL.revokeObjectURL(att.download_url)
+            }
+          })
+
+          next[optIdx] = {
+            ...msg,
+            sender: msg.sender_id,
+            attachments: msg.attachments || [],
+          }
+
           return next
         }
-        if (prev.some(m => m.id === msg.id)) return prev
+
+        // Ignore duplicate WS messages
+        if (prev.some(m => m.id === msg.id)) {
+          return prev
+        }
+
+        // Mark incoming messages as read
         if (msg.sender_id !== currentUser?.id) {
           requestsApi.markRead(requestId).catch(() => {})
         }
-        return [...prev, { ...msg, sender: msg.sender_id }]
+
+        // Add new incoming message
+        return [
+          ...prev,
+          {
+            ...msg,
+            sender: msg.sender_id,
+            attachments: msg.attachments || [],
+          },
+        ]
       })
     }
+
     if (msg.type === 'read_receipt') {
       setMessages(prev =>
         prev.map(m => {
           const senderId = m.sender?.id ?? m.sender
-          return senderId === currentUser?.id ? { ...m, is_read: true } : m
+
+          return senderId === currentUser?.id
+            ? { ...m, is_read: true }
+            : m
         })
       )
     }
@@ -90,7 +251,7 @@ export default function ChatPanel({
 
   useWebSocket(wsUrl, handleWsMessage, `chat-${requestId}`)
 
-  // ── File attachments ────────────────────────────────────────
+  // ── File attachments ─────────────────────────────────────────
   const handleAttachFiles = useCallback(async (fileList) => {
     const incoming = Array.from(fileList).map(f => ({
       file: f, status: 'pending', fileId: null,
@@ -117,7 +278,7 @@ export default function ChatPanel({
     }
   }, [requestId])
 
-  // ── Send ────────────────────────────────────────────────────
+  // ── Send ─────────────────────────────────────────────────────
   const handleSend = async () => {
     const content         = input.trim()
     const doneAttachments = attachments.filter(a => a.status === 'done')
@@ -128,6 +289,14 @@ export default function ChatPanel({
     setAttachments([])
     setSending(true)
 
+     const optimisticAttachments = doneAttachments.map(a => ({
+      id:              a.fileId,
+      file_name:       a.file.name,
+      file_type:       a.file.type,
+      file_size_bytes: a.file.size,
+      download_url:    URL.createObjectURL(a.file), 
+    }))
+
     const optimistic = {
       id:          `opt-${Date.now()}`,
       content,
@@ -136,6 +305,7 @@ export default function ChatPanel({
       created_at:  new Date().toISOString(),
       is_read:     false,
       optimistic:  true,
+      attachments: optimisticAttachments,
     }
     setMessages(prev => [...prev, optimistic])
 
@@ -158,7 +328,7 @@ export default function ChatPanel({
     }
   }
 
-  // ── Merge messages + activities ─────────────────────────────
+  // ── Merge messages + activities ──────────────────────────────
   const timeline = useMemo(() => {
     const msgs = messages.map(m => ({ ...m, _type: 'message' }))
     const acts = activities.map(a => ({ ...a, _type: 'activity' }))
@@ -189,99 +359,155 @@ export default function ChatPanel({
     yesterday.setDate(yesterday.getDate() - 1)
     if (d.toDateString() === today.toDateString())     return 'Today'
     if (d.toDateString() === yesterday.toDateString()) return 'Yesterday'
-    return d.toLocaleDateString([], { month: 'short', day: 'numeric' })
+    return d.toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' })
   }
 
   const hasUploading = attachments.some(a => a.status === 'uploading')
   const canSend      = (input.trim() || attachments.some(a => a.status === 'done')) && !hasUploading
 
-  // ── Render ──────────────────────────────────────────────────
+  // ── Render ───────────────────────────────────────────────────
   return (
-    <>
+    <div className="flex flex-col h-full bg-slate-50/60">
+
+      {/* Header bar */}
+      <div className="shrink-0 flex items-center gap-3 px-5 py-3.5 border-b border-slate-200/80 bg-white/80 backdrop-blur-md sticky top-0 z-10 shadow-sm">
+        <div className={`h-9 w-9 rounded-full flex items-center justify-center text-[11px] font-bold shrink-0 shadow-inner
+          ${getAvatarColor(clientName).bg} ${getAvatarColor(clientName).text}`}>
+          {getInitials(clientName)}
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-[14px] font-semibold text-slate-800 leading-tight truncate">{clientName}</p>
+          <div className="flex items-center gap-1.5 mt-1">
+            <span className={`h-2 w-2 rounded-full ring-4 ring-opacity-30 ${isClosed ? 'bg-slate-400 ring-slate-400/20' : 'bg-emerald-500 ring-emerald-500/20 animate-pulse'}`} />
+            <span className="text-[11px] font-medium text-slate-400">{isClosed ? 'Closed · Read only' : 'Live conversation'}</span>
+          </div>
+        </div>
+      </div>
+
       {/* Messages area */}
-      <div className="flex-1 overflow-y-auto overflow-x-hidden bg-[#fafafa] px-4 py-4 space-y-4 min-h-0 no-scrollbar">
+      <div className="flex-1 overflow-y-auto overflow-x-hidden px-5 py-4 space-y-1 min-h-0 custom-scrollbar">
         {timeline.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full text-center space-y-3 py-12">
-            <div className="h-12 w-12 rounded-full bg-white border border-[#e8eae8] flex items-center justify-center">
-              <Send size={18} className="text-[#9ea89e]" />
+          <div className="flex flex-col items-center justify-center h-full text-center space-y-4 py-12">
+            <div className="h-16 w-16 rounded-2xl flex items-center justify-center bg-emerald-50 border border-emerald-100 shadow-sm">
+              <Send size={22} className="text-emerald-600" />
             </div>
             <div className="space-y-1">
-              <p className="text-[14px] font-medium text-[#141a14]">No messages yet</p>
-              <p className="text-[12px] text-[#9ea89e] leading-normal max-w-[200px]">
-                Start a conversation about this request.
+              <p className="text-[15px] font-semibold text-slate-700">No messages yet</p>
+              <p className="text-[13px] text-slate-400 max-w-[200px] mx-auto leading-normal">
+                Drop a line or attach a file to jumpstart the conversation.
               </p>
             </div>
           </div>
         ) : (
           groupedTimeline.map(group => (
             <div key={group.date}>
-              <div className="flex items-center gap-3 my-3">
-                <div className="flex-1 h-px bg-[#e8eae8]" />
-                <span className="text-[11px] text-[#9ea89e] font-medium px-1">
+              {/* Date divider */}
+              <div className="flex items-center gap-4 my-6">
+                <div className="flex-1 h-px bg-slate-200/60" />
+                <span className="text-[10px] font-semibold tracking-wider uppercase px-3 py-1 rounded-full bg-slate-100 text-slate-400 border border-slate-200/40">
                   {formatGroupDate(group.date)}
                 </span>
-                <div className="flex-1 h-px bg-[#e8eae8]" />
+                <div className="flex-1 h-px bg-slate-200/60" />
               </div>
 
-              <div className="space-y-2">
+              <div className="space-y-1">
                 {group.items.map((item, idx) => {
 
+                  // Activity pill
                   if (item._type === 'activity') {
                     return (
-                      <div key={item.id} className="flex items-center gap-2 py-1">
-                        <div className="flex-1 h-px bg-[#f1f3f1]" />
-                        <span className="text-[10px] text-[#9ea89e] bg-[#f7f8f7] border border-[#e8eae8] rounded-full px-2.5 py-0.5 shrink-0">
+                      <div key={item.id} className="flex items-center gap-3 py-2.5">
+                        <div className="flex-1 h-px bg-slate-100" />
+                        <span className="text-[11px] font-medium px-3 py-1 rounded-lg bg-slate-100 text-slate-500 border border-slate-200/40 max-w-[85%] text-center">
                           {item.description}
                         </span>
-                        <div className="flex-1 h-px bg-[#f1f3f1]" />
+                        <div className="flex-1 h-px bg-slate-100" />
                       </div>
                     )
                   }
 
-                  const isMe       = (item.sender?.id ?? item.sender) === currentUser?.id
-                  const prevItem   = group.items[idx - 1]
-                  const showAvatar = !prevItem
+                  const isMe     = (item.sender?.id ?? item.sender) === currentUser?.id
+                  const prevItem = group.items[idx - 1]
+                  const nextItem = group.items[idx + 1]
+
+                  const isFirstInGroup = !prevItem
                     || prevItem._type === 'activity'
-                    || prevItem.sender !== item.sender
+                    || (prevItem.sender?.id ?? prevItem.sender) !== (item.sender?.id ?? item.sender)
+
+                  const isLastInGroup = !nextItem
+                    || nextItem._type === 'activity'
+                    || (nextItem.sender?.id ?? nextItem.sender) !== (item.sender?.id ?? item.sender)
+
+                  const msgAttachments = item.attachments || []
+                  const hasContent = item.content && item.content.trim().length > 0
 
                   return (
                     <div
                       key={item.id}
-                      className={`flex items-end gap-2 ${isMe ? 'flex-row-reverse' : 'flex-row'}`}
+                      className={`flex items-end gap-2.5 ${isMe ? 'flex-row-reverse' : 'flex-row'}
+                        ${isFirstInGroup ? 'mt-4' : 'mt-0.5'}
+                      `}
                     >
-                      <div className="w-6 shrink-0">
-                        {showAvatar && !isMe && (
-                          <div className={`h-6 w-6 rounded-full flex items-center justify-center text-[9px] font-bold ${getAvatarColor(clientName).bg} ${getAvatarColor(clientName).text}`}>
+                      {/* Avatar column */}
+                      <div className="w-8 shrink-0 self-end pb-0.5">
+                        {isLastInGroup && !isMe && (
+                          <div className={`h-8 w-8 rounded-full flex items-center justify-center text-[10px] font-bold shadow-sm
+                            ${getAvatarColor(clientName).bg} ${getAvatarColor(clientName).text}`}>
                             {getInitials(clientName)}
                           </div>
                         )}
                       </div>
-                      <div className={`max-w-[80%] space-y-0.5 flex flex-col ${isMe ? 'items-end' : 'items-start'}`}>
-                        {showAvatar && (
-                          <span className={`text-[11px] text-[#9ea89e] font-medium px-1 ${isMe ? 'text-right' : 'text-left'}`}>
+
+                      {/* Bubble column */}
+                      <div className={`max-w-[70%] flex flex-col gap-1 ${isMe ? 'items-end' : 'items-start'}`}>
+
+                        {/* Sender name — only on first in group */}
+                        {isFirstInGroup && (
+                          <span className={`text-[11px] font-semibold tracking-wide px-1 text-slate-400 ${isMe ? 'text-right' : 'text-left'}`}>
                             {isMe ? 'You' : clientName}
                           </span>
                         )}
-                        <div className={`px-3 py-2 rounded-2xl text-[13px] leading-relaxed break-words
-                          ${isMe
-                            ? 'bg-[#0f6e56] text-white rounded-br-sm'
-                            : 'bg-white text-[#141a14] border border-[#e8eae8] rounded-bl-sm'
-                          }
-                          ${item.optimistic ? 'opacity-70' : ''}
-                        `}>
-                          {item.content}
-                        </div>
-                        <div className={`flex items-center gap-1 px-1 ${isMe ? 'flex-row-reverse' : 'flex-row'}`}>
-                          <span className="text-[10px] text-[#9ea89e]">
-                            {formatMsgTime(item.created_at)}
-                            {item.optimistic && ' · Sending...'}
-                          </span>
-                          {isMe && !item.optimistic && (
-                            <span className={`text-[10px] ${item.is_read ? 'text-[#0f6e56]' : 'text-[#9ea89e]'}`}>
-                              {item.is_read ? '✓✓' : '✓'}
+
+                        {/* Text bubble — only if there's content */}
+                        {hasContent && (
+                          <div className={`px-4 py-2.5 text-[13.5px] leading-relaxed break-words shadow-sm border
+                            ${isMe
+                              ? `text-white rounded-2xl rounded-br-none border-emerald-600 bg-gradient-to-br from-emerald-600 to-emerald-700`
+                              : `text-slate-700 bg-white rounded-2xl rounded-bl-none border-slate-100`
+                            }
+                            ${item.optimistic ? 'opacity-60' : ''}
+                          `}>
+                            {item.content}
+                          </div>
+                        )}
+
+                        {/* Attachments */}
+                        {msgAttachments.length > 0 && (
+                          <div className={`flex flex-col gap-1.5 ${isMe ? 'items-end' : 'items-start'}`}>
+                            {msgAttachments.map((att, i) => (
+                              <AttachmentBubble
+                                key={att.id || i}
+                                attachment={att.file || att}
+                                isMe={isMe}
+                              />
+                            ))}
+                          </div>
+                        )}
+
+                        {/* Timestamp + read receipt */}
+                        {isLastInGroup && (
+                          <div className={`flex items-center gap-1.5 px-1 mt-0.5 ${isMe ? 'flex-row-reverse' : 'flex-row'}`}>
+                            <span className="text-[10px] text-slate-400 font-medium">
+                              {formatMsgTime(item.created_at)}
+                              {item.optimistic && ' · Sending…'}
                             </span>
-                          )}
-                        </div>
+                            {isMe && !item.optimistic && (
+                              <span className={`text-[11px] font-bold ${item.is_read ? 'text-emerald-500' : 'text-slate-300'}`}>
+                                {item.is_read ? '✓✓' : '✓'}
+                              </span>
+                            )}
+                          </div>
+                        )}
                       </div>
                     </div>
                   )
@@ -295,66 +521,50 @@ export default function ChatPanel({
 
       {/* Locked state */}
       {isClosed ? (
-        <div className="border-t border-[#e8eae8] px-4 py-3 bg-[#f7f8f7] shrink-0">
-          <div className="flex items-center gap-2 justify-center">
-            <Lock size={13} className="text-[#9ea89e]" />
-            <p className="text-[12px] text-[#9ea89e]">
-              This request is closed. Conversation is read-only.
-            </p>
-          </div>
+        <div className="shrink-0 border-t px-4 py-4 flex items-center gap-2 justify-center bg-slate-100/80 border-slate-200">
+          <Lock size={14} className="text-slate-400" />
+          <p className="text-[13px] text-slate-500 font-medium">
+            This request is closed — conversation is read-only.
+          </p>
         </div>
       ) : (
-        <div className="border-t border-[#e8eae8] p-3 bg-white shrink-0">
+        <div className="shrink-0 p-4 bg-white border-t border-slate-200/80 shadow-[0_-4px_12px_rgba(0,0,0,0.02)]">
 
+          {/* Pending upload chips */}
           {attachments.length > 0 && (
-            <div className="flex flex-wrap gap-1.5 mb-2">
+            <div className="flex flex-wrap gap-1.5 mb-3">
               {attachments.map((a, i) => (
-                <div
+                <UploadChip
                   key={i}
-                  className={`flex items-center gap-1.5 rounded-lg border px-2 py-1 text-[11px] font-medium
-                    ${a.status === 'error'
-                      ? 'border-red-200 bg-red-50 text-red-600'
-                      : a.status === 'done'
-                        ? 'border-[#b3e0d1] bg-[#e6f5f0] text-[#085041]'
-                        : 'border-[#e8eae8] bg-[#f7f8f7] text-[#4a544a]'
-                    }
-                  `}
-                >
-                  {a.status === 'uploading' && <Loader2 size={10} className="animate-spin" />}
-                  {a.status === 'done'      && <CheckCircle2 size={10} />}
-                  {a.status === 'error'     && <AlertCircle size={10} />}
-                  <span className="max-w-[100px] truncate">{a.file.name}</span>
-                  {a.status !== 'uploading' && (
-                    <button
-                      onClick={() => setAttachments(prev => prev.filter((_, j) => j !== i))}
-                      className="ml-0.5 hover:opacity-70"
-                    >
-                      <X size={10} />
-                    </button>
-                  )}
-                </div>
+                  attachment={a}
+                  onRemove={() => setAttachments(prev => prev.filter((_, j) => j !== i))}
+                />
               ))}
             </div>
           )}
 
-          <div className="rounded-xl border border-[#e8eae8] bg-[#f7f8f7] focus-within:bg-white focus-within:border-[#0f6e56] focus-within:ring-4 focus-within:ring-[#0f6e56]/8 transition-all overflow-hidden">
+          {/* Input area */}
+          <div className="rounded-2xl transition-all duration-200 bg-slate-50 border border-slate-200 focus-within:border-emerald-500/80 focus-within:bg-white focus-within:ring-4 focus-within:ring-emerald-500/10">
             <textarea
               ref={textareaRef}
               value={input}
               onChange={e => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder={`Message ${clientName}...`}
+              placeholder={`Message ${clientName}…`}
               rows={1}
-              className="w-full bg-transparent px-3 pt-2.5 pb-1 text-[13px] text-[#141a14] outline-none placeholder:text-[#9ea89e] resize-none leading-relaxed"
-              style={{ minHeight: '36px', maxHeight: '120px' }}
+              className="w-full bg-transparent px-4 pt-3.5 pb-1 text-[13.5px] text-slate-700 placeholder-slate-400 outline-none resize-none leading-relaxed"
+              style={{
+                minHeight: '42px',
+                maxHeight: '120px',
+              }}
             />
-            <div className="flex items-center justify-between px-2 pb-2 pt-1">
+            <div className="flex items-center justify-between px-3 pb-3 pt-1">
               <button
                 onClick={() => fileInputRef.current?.click()}
-                className="h-7 w-7 flex items-center justify-center rounded-lg text-[#9ea89e] hover:text-[#0f6e56] hover:bg-[#f0faf6] transition-all"
+                className="h-8 w-8 flex items-center justify-center rounded-xl text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 transition-all"
                 title="Attach file"
               >
-                <Paperclip size={14} />
+                <Paperclip size={16} />
               </button>
               <input
                 ref={fileInputRef}
@@ -363,21 +573,23 @@ export default function ChatPanel({
                 className="hidden"
                 onChange={e => handleAttachFiles(e.target.files)}
               />
-              <div className="flex items-center gap-1.5">
-                <span className="text-[11px] text-[#9ea89e]">⏎ send · ⇧⏎ newline</span>
+              <div className="flex items-center gap-3">
+                <span className="text-[11px] text-slate-400 hidden sm:inline font-medium tracking-wide">
+                  ⏎ Send &nbsp;·&nbsp; ⇧⏎ Newline
+                </span>
                 <button
                   onClick={handleSend}
                   disabled={!canSend || sending}
-                  className={`h-7 w-7 flex items-center justify-center rounded-lg transition-all
+                  className={`h-8 w-8 flex items-center justify-center rounded-xl transition-all shadow-sm
                     ${canSend && !sending
-                      ? 'bg-[#0f6e56] text-white hover:bg-[#085041]'
-                      : 'bg-[#e8eae8] text-[#9ea89e] cursor-not-allowed'
+                      ? 'bg-gradient-to-br from-emerald-600 to-emerald-700 text-white hover:shadow-md hover:scale-[1.02] active:scale-[0.98]'
+                      : 'bg-slate-100 text-slate-300 cursor-not-allowed shadow-none border border-slate-200/50'
                     }
                   `}
                 >
                   {sending
-                    ? <Loader2 size={13} className="animate-spin" />
-                    : <Send size={13} />
+                    ? <Loader2 size={15} className="animate-spin" />
+                    : <Send size={14} className="ml-0.5" />
                   }
                 </button>
               </div>
@@ -385,6 +597,6 @@ export default function ChatPanel({
           </div>
         </div>
       )}
-    </>
+    </div>
   )
 }
