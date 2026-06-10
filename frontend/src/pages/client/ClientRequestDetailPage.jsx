@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import ChatPanel from '../../components/chat/ChatPanel'
 import ConnectionPill from '../../components/ui/ConnectionPill'
+import { usePanelResize } from '../../hooks/usePanelResize'
 import {
   ChevronRight,
   Loader2,
@@ -221,12 +222,7 @@ export default function ClientRequestDetailPage() {
   const [reviewModal, setReviewModal]   = useState(null)  // delivery object | null
   const [reviewLoading, setReviewLoading] = useState(false)
 
-  // Resizable panels
-  const [sidebarWidth, setSidebarWidth] = useState(340)
-  const [chatWidth, setChatWidth]       = useState(360)
-  const isResizingSidebar = useRef(false)
-  const isResizingChat    = useRef(false)
-
+  
   // Edit Request
   const [isEditing, setIsEditing]   = useState(false)
   const [editTitle, setEditTitle]   = useState('')
@@ -234,19 +230,22 @@ export default function ClientRequestDetailPage() {
   const [editLoading, setEditLoading] = useState(false)
   const [editError, setEditError]   = useState(null)
 
-  const startSidebarResize = useCallback((e) => {
-    e.preventDefault()
-    isResizingSidebar.current = true
-    document.body.style.cursor    = 'col-resize'
-    document.body.style.userSelect = 'none'
-  }, [])
+  const { width: sidebarWidth, onMouseDown: startSidebarResize } = usePanelResize({
+    storageKey: 'client-request-sidebar-width',
+    initialWidth: 340,
+    minWidth: 280,
+    maxWidth: 480,
+    direction: 'left',
+  })
 
-  const startChatResize = useCallback((e) => {
-    e.preventDefault()
-    isResizingChat.current = true
-    document.body.style.cursor    = 'col-resize'
-    document.body.style.userSelect = 'none'
-  }, [])
+  const { width: chatWidth, onMouseDown: startChatResize } = usePanelResize({
+    storageKey: 'client-request-chat-width',
+    initialWidth: 360,
+    minWidth: 300,
+    maxWidth: 650,
+    direction: 'right',
+  })
+
 
   useEffect(() => {
     const handleMouseMove = (e) => {

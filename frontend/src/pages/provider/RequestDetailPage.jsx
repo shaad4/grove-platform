@@ -16,7 +16,7 @@ import ChatPanel from '../../components/chat/ChatPanel'
 import { useSelector } from 'react-redux'
 import { selectAccessToken, selectCurrentUser } from '../../features/auth/authSlice'
 import { useWebSocket } from '../../hooks/useWebSocket'
-
+import { usePanelResize } from '../../hooks/usePanelResize'
 
 // ── Status config ─────────────────────────────────────────────
 const STATUS_ORDER = ['received', 'in_review', 'in_progress', 'delivered', 'closed']
@@ -896,46 +896,6 @@ function DeliverModal({ request, onClose, onSuccess }) {
   )
 }
 
-// ── DRAG HANDLE ───────────────────────────────────────────────
-function usePanelResize({ initialWidth = 360, minWidth = 240, maxWidth = 600 }) {
-  const [chatWidth, setChatWidth] = useState(initialWidth)
-  const dragging = useRef(false)
-  const startX = useRef(0)
-  const startWidth = useRef(initialWidth)
-
-  const onMouseDown = useCallback((e) => {
-    e.preventDefault()
-    dragging.current = true
-    startX.current = e.clientX
-    startWidth.current = chatWidth
-    document.body.style.cursor = 'col-resize'
-    document.body.style.userSelect = 'none'
-  }, [chatWidth])
-
-  useEffect(() => {
-    const onMouseMove = (e) => {
-      if (!dragging.current) return
-      // Dragging left = growing chat panel (chat is on the right)
-      const delta = startX.current - e.clientX
-      const next = Math.max(minWidth, Math.min(maxWidth, startWidth.current + delta))
-      setChatWidth(next)
-    }
-    const onMouseUp = () => {
-      if (!dragging.current) return
-      dragging.current = false
-      document.body.style.cursor = ''
-      document.body.style.userSelect = ''
-    }
-    window.addEventListener('mousemove', onMouseMove)
-    window.addEventListener('mouseup', onMouseUp)
-    return () => {
-      window.removeEventListener('mousemove', onMouseMove)
-      window.removeEventListener('mouseup', onMouseUp)
-    }
-  }, [minWidth, maxWidth])
-
-  return { chatWidth, onMouseDown }
-}
 
 // ── ACTIVITY LOG MODAL ────────────────────────────────────────
 const EVENT_META = {
@@ -1064,7 +1024,13 @@ export default function RequestDetailPage() {
   const [urgentLoading, setUrgentLoading] = useState(false)
   const [showActivityLog, setShowActivityLog] = useState(false)
 
-  const { chatWidth, onMouseDown } = usePanelResize({ initialWidth: 360, minWidth: 240, maxWidth: 600 })
+  const { width: chatWidth, onMouseDown } = usePanelResize({
+    storageKey: 'provider-request-chat-width',
+    initialWidth: 360,
+    minWidth: 240,
+    maxWidth: 600,
+    direction: 'right',
+  })
 
   const fetchAll = useCallback(async () => {
     try {
