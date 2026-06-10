@@ -100,6 +100,22 @@ class RequestService:
         cache.delete(f"dashboard_stats:{tenant.id}")
         cache.delete(f"sidebar_badges:{tenant.id}")
 
+        def _notify_new_request():
+            try:
+                create_notification(
+                    tenant=tenant,
+                    recipient=provider,
+                    event_type=Notification.EventType.NEW_REQUEST,
+                    title=f"New request from {client.client_name or 'a client'}",
+                    body=f'"{title}" was just submitted.',
+                    related_request=request_obj,
+                    related_client=client,
+                )
+            except Exception as e:
+                logger.error(f"[create_request] Notification failed: {e}")
+
+        transaction.on_commit(_notify_new_request)
+
         return request_obj
     
 
@@ -158,24 +174,24 @@ class RequestService:
         cache.delete(f"dashboard_stats:{tenant.id}")
         cache.delete(f"sidebar_badges:{tenant.id}")
 
-        # Notify the client that their request status changed
-
-        try:
-            client_user = request_obj.client.user
-            if client_user and client_user != actor:
-                create_notification(
-                    tenant=tenant,
-                    recipient=client_user,
-                    event_type=Notification.EventType.STATUS_CHANGE,
-                    title="Your request status was updated",
-                    body=f'"{request_obj.title}" moved to {new_status.replace("_", " ").title()}.',
-                    related_request=request_obj,
-                    related_client=request_obj.client,
-                )
-        except Exception as e:
+        def _notify_status_change():
+            try:
+                client_user = request_obj.client.user
+                if client_user and client_user != actor:
+                    create_notification(
+                        tenant=tenant,
+                        recipient=client_user,
+                        event_type=Notification.EventType.STATUS_CHANGE,
+                        title=f'"{request_obj.title}" is now {new_status.replace("_", " ").title()}',
+                        body=f'{old_status.replace("_", " ").title()} → {new_status.replace("_", " ").title()}',
+                        related_request=request_obj,
+                        related_client=request_obj.client,
+                    )
+            except Exception as e:
                 logger.error(f"[update_status] Notification failed: {e}")
 
- 
+        transaction.on_commit(_notify_status_change)
+
         return request_obj
 
 
@@ -289,24 +305,28 @@ class RequestService:
             metadata={"delivery_id": str(delivery.id)},
         )
 
-        try:
-            client_user = request_obj.client.user
-            if client_user:
-                create_notification(
-                    tenant=tenant,
-                    recipient=client_user,
-                    event_type=Notification.EventType.FILES_DELIVERED,
-                    title="Your delivery is ready",
-                    body=f'Delivery #{delivery.delivery_number} for "{request_obj.title}" is avaialble.',
-                    related_request=request_obj,
-                    related_client=request_obj.client,
-                )
-        except Exception as e:
-            logger.error(f"[create_delivery] Notification failed: {e}")
+        def _notify_delivery():
+            try:
+                client_user = request_obj.client.user
+                if client_user:
+                    create_notification(
+                        tenant=tenant,
+                        recipient=client_user,
+                        event_type=Notification.EventType.FILES_DELIVERED,
+                        title="Your delivery is ready",
+                        body=f'Delivery #{delivery.delivery_number} for "{request_obj.title}" is available.',
+                        related_request=request_obj,
+                        related_client=request_obj.client,
+                    )
+            except Exception as e:
+                logger.error(f"[create_delivery] Notification failed: {e}")
 
+        transaction.on_commit(_notify_delivery)
  
         return delivery
     
+    @staticmethod
+    @transaction.atomic
     def review_delivery(request_id, delivery_id, tenant, client, action, message=None):
         """
         Client approves or requests rework on a delivered request.
@@ -367,6 +387,24 @@ class RequestService:
             TenantUsage.objects.filter(tenant=tenant).update(
                 active_request_count=usage.active_request_count + 1
             ) 
+
+        def _notify_review():
+            try:
+                provider_user = request_obj.provider
+                action_label = "approved the delivery" if action == "approve" else "requested rework"
+                create_notification(
+                    tenant=tenant,
+                    recipient=provider_user,
+                    event_type=Notification.EventType.STATUS_CHANGE,
+                    title=f'{client.client_name or "Client"} {action_label} on "{request_obj.title}"',
+                    body=f'{old_status.replace("_", " ").title()} → {new_status.replace("_", " ").title()}',
+                    related_request=request_obj,
+                    related_client=client,
+                )
+            except Exception as e:
+                logger.error(f"[review_delivery] Notification failed: {e}")
+
+        transaction.on_commit(_notify_review)
 
         cache.delete(f"dashboard_stats:{tenant.id}")
         cache.delete(f"sidebar_badges:{tenant.id}")

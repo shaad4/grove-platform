@@ -1,4 +1,5 @@
-import { Bell, Plus } from 'lucide-react'
+import { Plus } from 'lucide-react'
+import NotificationBell from '../notifications/NotificationBell'
 
 export default function ProviderTopbar({
   title,
@@ -24,11 +25,7 @@ export default function ProviderTopbar({
 
         {rightSlot && <div className="flex items-center gap-2">{rightSlot}</div>}
 
-        {/* Notification bell */}
-        <button className="relative flex h-10 w-10 items-center justify-center rounded-lg border border-[#e8eae8] bg-[#f7f8f7] hover:bg-[#eef0ee] transition-colors">
-          <Bell size={17} className="text-[#4a544a]" />
-          <div className="absolute right-2 top-2 h-2 w-2 rounded-full bg-red-500 border border-white" />
-        </button>
+        <NotificationBell />
 
         {showAddBtn && onAddClient && (
           <button
