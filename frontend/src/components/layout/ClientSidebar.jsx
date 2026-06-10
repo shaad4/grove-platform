@@ -1,10 +1,10 @@
 import { useState, useRef, useEffect } from 'react'
 import { NavLink } from 'react-router-dom'
+import ClientNotificationBell from '../notifications/ClientNotificationBell'
 import {
   LayoutDashboard,
   FolderOpen,
   MessageSquare,
-  Bell,
   Settings,
   LogOut,
   ChevronDown,
@@ -27,18 +27,7 @@ const NAV_ITEMS = [
     label: 'Requests',
     badgeKey: 'requests',
   },
-  {
-    to: '/portal/messages',
-    icon: MessageSquare,
-    label: 'Messages',
-    badgeKey: 'messages',
-  },
-  {
-    to: '/portal/notifications',
-    icon: Bell,
-    label: 'Notifications',
-    badgeKey: 'notifications',
-  },
+ 
 ]
 
 export default function ClientSidebar({
@@ -466,38 +455,24 @@ export default function ClientSidebar({
         <div className="mx-3 my-1 border-t border-[#f0f0f0]" />
 
         {/* ───────────────── Footer ───────────────── */}
-        <div
-          className="px-2 pb-3 pt-1 relative"
-          ref={popupRef}
-        >
-          {/* User row */}
-          {!isCollapsed && (
-            <div
-              onClick={() =>
-                setIsPopupOpen(
-                  !isPopupOpen
-                )
-              }
-              className={`
-                flex items-center justify-between gap-2.5
+        <div className="px-2 pb-3 pt-1 relative" ref={popupRef}>
 
-                rounded-[9px]
+            {/* Bell + user row */}
+            <div className="flex items-center gap-1 mb-1">
+              <ClientNotificationBell collapsed={isCollapsed} />
+            </div>
 
-                cursor-pointer
-
-                transition-all duration-150
-
-                hover:bg-[#f5f5f5]
-
-                p-2
-
-                ${
-                  isPopupOpen
-                    ? 'bg-[#f5f5f5]'
-                    : ''
-                }
-              `}
-            >
+            {/* User row */}
+            {!isCollapsed && (
+              <div
+                onClick={() => setIsPopupOpen(!isPopupOpen)}
+                className={`
+                  flex items-center justify-between gap-2.5
+                  rounded-[9px] cursor-pointer transition-all duration-150
+                  hover:bg-[#f5f5f5] p-2
+                  ${isPopupOpen ? 'bg-[#f5f5f5]' : ''}
+                `}
+              >
               <div className="flex items-center gap-2.5 min-w-0">
                 <div
                   className="
