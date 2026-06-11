@@ -30,7 +30,7 @@ const ALLOWED_TYPES = [
 function Backdrop({ children, onClose }) {
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm"
+      className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center sm:p-4 bg-sidebar/40 backdrop-blur-sm transition-opacity"
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
       {children}
@@ -42,11 +42,11 @@ function Backdrop({ children, onClose }) {
 function Field({ label, optional, hint, children }) {
   return (
     <div>
-      <div className="mb-1.5 flex items-center gap-1.5">
-        <label className="text-[13px] font-medium text-[#141a14]">{label}</label>
-        {optional && <span className="text-[12px] text-[#9ea89e]">(optional)</span>}
+      <div className="mb-2 flex items-center gap-1.5">
+        <label className="text-sm font-semibold text-text-main">{label}</label>
+        {optional && <span className="text-xs text-text-dim font-medium">(optional)</span>}
       </div>
-      {hint && <p className="mb-2 text-[12px] text-[#9ea89e]">{hint}</p>}
+      {hint && <p className="mb-2.5 text-xs text-text-dim">{hint}</p>}
       {children}
     </div>
   )
@@ -148,8 +148,14 @@ export default function NewRequestModal({ providerName, onClose, onSuccess }) {
   }
 
   const removeFile = (index) => {
-    setFiles(files.filter((_, i) => i !== index))
-    setErrors((prev) => ({ ...prev, files: '' }))
+    const updatedFiles = files.filter((_, i) => i !== index)
+    setFiles(updatedFiles)
+    
+    // Re-evaluate file errors upon removal
+    const totalSize = updatedFiles.reduce((sum, file) => sum + file.size, 0)
+    if (updatedFiles.length <= MAX_FILES && totalSize <= MAX_TOTAL_SIZE) {
+      setErrors((prev) => ({ ...prev, files: '' }))
+    }
   }
 
   // ───────────────── Submit Pipeline ─────────────────
@@ -188,37 +194,35 @@ export default function NewRequestModal({ providerName, onClose, onSuccess }) {
   if (created) {
     return (
       <Backdrop onClose={onClose}>
-        <div className="relative w-full max-w-[460px] rounded-[24px] bg-white p-8 shadow-[0px_24px_32px_rgba(10,46,36,0.18)]">
+        <div className="relative w-full sm:max-w-[420px] h-[100dvh] sm:h-auto bg-white sm:rounded-3xl p-6 sm:p-8 shadow-2xl flex flex-col justify-center animate-in zoom-in-95 duration-200">
           <button
             onClick={onClose}
-            className="absolute right-5 top-5 flex h-9 w-9 items-center justify-center rounded-xl bg-[#f7f8f7]"
+            className="absolute right-5 top-5 flex h-10 w-10 items-center justify-center rounded-full bg-surface hover:bg-border/50 transition-colors"
           >
-            <X size={16} className="text-[#9ea89e]" />
+            <X size={18} className="text-text-dim" />
           </button>
 
           <div className="flex flex-col items-center text-center">
-            <div className="flex h-14 w-14 items-center justify-center rounded-full border border-[#b3e0d1] bg-[#e6f5f0]">
-              <CheckCircle2 size={28} className="text-[#0f6e56]" />
+            <div className="flex h-16 w-16 items-center justify-center rounded-full border-4 border-primary-light bg-primary/10 mb-6">
+              <CheckCircle2 size={32} className="text-primary" />
             </div>
-            <h2 className="mt-5 text-[22px] font-semibold text-[#0a2e24]">
-              Request sent!
+            <h2 className="text-2xl font-bold text-text-main tracking-tight">
+              Request Sent!
             </h2>
-            <p className="mt-3 max-w-[300px] text-[13px] leading-6 text-[#9ea89e]">
-              We have received your project details.{' '}
-              <span className="font-medium text-[#4a544a]">{providerName}</span> will
-              review it shortly.
+            <p className="mt-3 text-sm leading-relaxed text-text-sub max-w-[280px]">
+              We have received your project details. <span className="font-semibold text-text-main">{providerName}</span> will review it shortly.
             </p>
 
-            <div className="my-6 h-px w-full bg-[#e8eae8]" />
+            <div className="my-8 h-px w-full bg-border/50" />
 
             <button
               onClick={() => {
                 onSuccess?.(created)
                 onClose()
               }}
-              className="w-full rounded-xl bg-[#0f6e56] py-3.5 text-[14px] font-semibold text-white hover:bg-[#085041] transition-colors shadow-sm"
+              className="w-full rounded-xl bg-primary py-4 text-sm font-semibold text-white hover:bg-primary-dark active:scale-[0.98] transition-all shadow-sm"
             >
-              View my request
+              View My Request
             </button>
           </div>
         </div>
@@ -229,76 +233,88 @@ export default function NewRequestModal({ providerName, onClose, onSuccess }) {
   // ── FORM SCREEN ───────────────────────────────────────────
   return (
     <Backdrop onClose={onClose}>
-      <div className="w-full max-w-[980px] overflow-hidden border border-[#e8eae8] bg-white shadow-[0px_24px_60px_rgba(10,46,36,0.16)] max-h-[95vh] rounded-none sm:rounded-[24px] lg:rounded-[28px]">
-        <div className="flex flex-col lg:grid lg:grid-cols-[360px_1fr]">
-          
-          {/* LEFT PANEL */}
-          <div className="relative overflow-hidden border-b border-[#eef0ee] bg-[#f7f8f7] p-6 lg:border-b-0 lg:border-r lg:p-8">
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(15,110,86,0.08),transparent_45%)]" />
+      <div className="flex flex-col sm:flex-row w-full h-[100dvh] sm:h-auto sm:max-h-[85vh] sm:max-w-4xl bg-white sm:rounded-3xl shadow-2xl overflow-hidden animate-in slide-in-from-bottom-full sm:slide-in-from-bottom-8 duration-300">        
+        
+        {/* MOBILE HEADER (Only visible on small screens) */}
+        <div className="sm:hidden shrink-0 flex items-center justify-between px-5 py-4 border-b border-border/50 bg-white/95 backdrop-blur-md sticky top-0 z-20">
+          <span className="text-base font-bold text-text-main tracking-tight">New Request</span>
+          <button
+            onClick={onClose}
+            className="flex h-8 w-8 items-center justify-center rounded-full bg-surface text-text-dim hover:text-text-main transition-colors"
+          >
+            <X size={18} />
+          </button>
+        </div>
 
-            <div className="relative z-10 flex h-full flex-col">
-              <div className="flex items-start justify-between">
-                <div>
-                  <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-[#dbe7e1] bg-white px-3 py-1 text-[11px] font-medium text-[#0f6e56]">
-                    <div className="h-2 w-2 rounded-full bg-[#0f6e56]" />
-                    NEW SUBMISSION
-                  </div>
+        {/* LEFT PANEL (Desktop Only) */}
+        <div className="hidden sm:flex w-[320px] shrink-0 flex-col relative overflow-hidden bg-surface p-8 border-r border-border/50">          
+          <div className="absolute -top-24 -left-24 w-64 h-64 bg-primary/10 rounded-full blur-3xl" />
 
-                  <h2 className="text-[28px] font-semibold leading-tight text-[#0a2e24]">
-                    New request
-                  </h2>
+          <div className="relative z-10 flex h-full flex-col">
+            <div className="mb-4 inline-flex items-center gap-2 rounded-md border border-border/60 bg-white px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-primary shadow-sm">
+              <div className="h-1.5 w-1.5 rounded-full bg-primary" />
+              New Submission
+            </div>
 
-                  <p className="mt-3 max-w-[260px] text-[14px] leading-6 text-[#6b756d]">
-                    Tell us what you need — we'll take care of the rest.
-                  </p>
-                </div>
+            <h2 className="text-3xl font-bold tracking-tight text-text-main">
+              Let's build something.
+            </h2>
 
-                <button
-                  onClick={onClose}
-                  className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/80 backdrop-blur hover:bg-white transition-colors"
-                >
-                  <X size={16} className="text-[#7c867d]" />
-                </button>
-              </div>
+            <p className="mt-4 text-sm leading-relaxed text-text-sub">
+              Tell us exactly what you need — upload references, constraints, and goals. We'll take care of the rest.
+            </p>
 
-              {/* Counter/Preview Card */}
-              <div className="mt-10 rounded-2xl border border-[#e3e7e3] bg-white p-5 shadow-sm">
-                <div className="rounded-xl bg-[#f7f8f7] px-4 py-3">
-                  <p className="text-[11px] uppercase tracking-wide text-[#9ea89e]">
-                    Queue Target
-                  </p>
-                  <p className="mt-1 break-all text-[13px] font-medium text-[#0f6e56]">
-                    {providerName} Workspace
-                  </p>
-                </div>
-
-                <div className="mt-4 space-y-2">
-                  <div className="flex justify-between text-[12px] text-[#6b756d]">
-                    <span>Attached files:</span>
-                    <span className="font-medium text-[#141a14]">
-                      {files.length} / {MAX_FILES}
-                    </span>
-                  </div>
-                  <div className="flex justify-between text-[12px] text-[#6b756d]">
-                    <span>Total size:</span>
-                    <span className="font-medium text-[#141a14]">
-                      {(totalFileSize / 1024 / 1024).toFixed(2)} MB / 200 MB
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="mt-auto pt-8">
-                <p className="text-[12px] leading-5 text-[#9ea89e]">
-                  🔒 Only {providerName} and your linked account managers can view these files and data.
+            {/* Counter/Preview Card */}
+            <div className="mt-10 rounded-2xl border border-border/60 bg-white p-5 shadow-sm">
+              <div className="rounded-xl bg-surface/50 px-4 py-3 border border-border/40">
+                <p className="text-[10px] uppercase font-bold tracking-wider text-text-dim">
+                  Routing To
+                </p>
+                <p className="mt-1 break-all text-sm font-semibold text-primary">
+                  {providerName} Workspace
                 </p>
               </div>
+
+              <div className="mt-5 space-y-3">
+                <div className="flex justify-between text-xs text-text-sub">
+                  <span className="font-medium">Attached files</span>
+                  <span className="font-semibold text-text-main">
+                    {files.length} / {MAX_FILES}
+                  </span>
+                </div>
+                <div className="flex justify-between text-xs text-text-sub">
+                  <span className="font-medium">Total payload</span>
+                  <span className="font-semibold text-text-main">
+                    {(totalFileSize / 1024 / 1024).toFixed(1)} <span className="text-text-dim font-medium">/ 200 MB</span>
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-auto pt-8">
+              <p className="text-xs leading-relaxed text-text-dim font-medium">
+                🔒 Safe & Secure. Only {providerName} and your linked account managers can view these files.
+              </p>
             </div>
           </div>
+        </div>
 
-          {/* RIGHT PANEL */}
-          <div className="overflow-y-auto p-6 lg:max-h-[85vh] lg:p-10 max-h-[calc(95vh-260px)]">
-            <div className="grid gap-6">
+        {/* RIGHT PANEL (Form Area) */}
+        {/* ADDED min-h-0 so the layout correctly constrains children inside max-h boundaries */}
+        <div className="flex-1 flex flex-col min-w-0 min-h-0 bg-white relative">          
+          
+          {/* Desktop Close Button */}
+          <button
+            onClick={onClose}
+            className="hidden sm:flex absolute right-6 top-6 z-20 h-10 w-10 items-center justify-center rounded-full bg-surface hover:bg-border/50 transition-colors"
+          >
+            <X size={18} className="text-text-dim hover:text-text-main" />
+          </button>
+
+          {/* Scrollable Form Content */}
+          {/* ADDED min-h-0 here as well to force the overflow to trigger on this specific div */}
+          <div className="flex-1 overflow-y-auto min-h-0 px-5 py-6 sm:px-10 sm:py-10">
+            <div className="max-w-2xl mx-auto space-y-8">
               
               {/* Request Title Input */}
               <Field label="What do you need help with?">
@@ -313,22 +329,22 @@ export default function NewRequestModal({ providerName, onClose, onSuccess }) {
                     }))
                   }}
                   placeholder="e.g. I need a new homepage banner"
-                  className={`h-12 w-full rounded-2xl border bg-white px-4 text-[14px] outline-none transition-all ${
+                  className={`h-12 w-full rounded-xl border bg-surface/30 px-4 text-sm outline-none transition-all shadow-sm ${
                     errors.title
-                      ? 'border-red-400 ring-4 ring-red-100'
-                      : 'border-[#e8eae8] focus:border-[#0f6e56] focus:ring-4 focus:ring-[#0f6e56]/10'
+                      ? 'border-red-300 focus:border-red-400 focus:ring-4 focus:ring-red-100 bg-red-50/30'
+                      : 'border-border/60 focus:border-primary focus:bg-white focus:ring-4 focus:ring-primary/10'
                   }`}
                 />
                 {errors.title && (
-                  <div className="flex items-center gap-1 mt-1.5 text-[12px] text-red-500">
-                    <AlertCircle size={12} />
+                  <div className="flex items-center gap-1.5 mt-2 text-xs font-medium text-red-500">
+                    <AlertCircle size={14} />
                     {errors.title}
                   </div>
                 )}
               </Field>
 
               {/* Request Description Input */}
-              <Field label="Tell us more">
+              <Field label="The Details">
                 <textarea
                   value={description}
                   onChange={(e) => {
@@ -338,24 +354,24 @@ export default function NewRequestModal({ providerName, onClose, onSuccess }) {
                       description: validateDescription(e.target.value),
                     }))
                   }}
-                  rows={5}
-                  placeholder="Add detailed parameters, criteria, references, links, or goals..."
-                  className={`w-full resize-none rounded-2xl border bg-white px-4 py-3 text-[14px] outline-none transition-all placeholder:text-[#9ea89e] ${
+                  rows={6}
+                  placeholder="Add parameters, criteria, references, links, or goals..."
+                  className={`w-full resize-none rounded-xl border bg-surface/30 px-4 py-3 text-sm outline-none transition-all shadow-sm placeholder:text-text-dim ${
                     errors.description
-                      ? 'border-red-400 ring-4 ring-red-100'
-                      : 'border-[#e8eae8] focus:border-[#0f6e56] focus:ring-4 focus:ring-[#0f6e56]/10'
+                      ? 'border-red-300 focus:border-red-400 focus:ring-4 focus:ring-red-100 bg-red-50/30'
+                      : 'border-border/60 focus:border-primary focus:bg-white focus:ring-4 focus:ring-primary/10'
                   }`}
                 />
                 {errors.description && (
-                  <div className="flex items-center gap-1 mt-1.5 text-[12px] text-red-500">
-                    <AlertCircle size={12} />
+                  <div className="flex items-center gap-1.5 mt-2 text-xs font-medium text-red-500">
+                    <AlertCircle size={14} />
                     {errors.description}
                   </div>
                 )}
               </Field>
 
               {/* Drag and Drop File Attachments Container */}
-              <Field label="Attach assets" optional hint="Images, videos and PDFs up to 50MB per file">
+              <Field label="Attach Assets" optional hint="Images, videos and PDFs up to 50MB per file">
                 <div
                   onDragOver={(e) => {
                     e.preventDefault()
@@ -368,18 +384,18 @@ export default function NewRequestModal({ providerName, onClose, onSuccess }) {
                     handleFiles(e.dataTransfer.files)
                   }}
                   onClick={() => fileInput.current?.click()}
-                  className={`rounded-2xl border-2 border-dashed p-6 text-center cursor-pointer transition-colors ${
+                  className={`rounded-2xl border-2 border-dashed p-8 text-center cursor-pointer transition-all duration-200 ${
                     dragOver
-                      ? 'border-[#0f6e56] bg-[#f0faf6]'
-                      : 'border-[#d1e8df] bg-[#f7fbf9]'
+                      ? 'border-primary bg-primary-light/50 scale-[0.99]'
+                      : 'border-border/60 bg-surface/50 hover:bg-surface hover:border-border'
                   }`}
                 >
-                  <div className="flex flex-col items-center gap-2">
-                    <div className="h-10 w-10 rounded-full bg-[#e6f5f0] flex items-center justify-center">
-                      <Upload size={18} className="text-[#0f6e56]" />
+                  <div className="flex flex-col items-center gap-3">
+                    <div className={`h-12 w-12 rounded-full flex items-center justify-center transition-colors ${dragOver ? 'bg-primary text-white' : 'bg-white border border-border/60 text-text-dim shadow-sm'}`}>
+                      <Upload size={20} />
                     </div>
-                    <p className="text-[13px] font-medium text-[#141a14]">
-                      Drag files here or <span className="text-[#0f6e56] underline">browse</span> to upload
+                    <p className="text-sm font-semibold text-text-main">
+                      Drag files here or <span className="text-primary hover:underline">browse</span>
                     </p>
                   </div>
                   <input
@@ -393,27 +409,29 @@ export default function NewRequestModal({ providerName, onClose, onSuccess }) {
                 </div>
 
                 {errors.files && (
-                  <div className="flex items-center gap-1 mt-2 text-[12px] text-red-500">
-                    <AlertCircle size={12} />
+                  <div className="flex items-center gap-1.5 mt-3 text-xs font-medium text-red-500">
+                    <AlertCircle size={14} />
                     {errors.files}
                   </div>
                 )}
 
-                {/* File List Grid Layout */}
+                {/* File List Layout */}
                 {files.length > 0 && (
-                  <div className="mt-4 grid gap-2 sm:grid-cols-2">
+                  <div className="mt-4 space-y-2">
                     {files.map((file, index) => (
                       <div
                         key={index}
-                        className="flex items-center gap-2.5 rounded-xl border border-[#e8eae8] bg-[#f7f8f7] px-3.5 py-2.5"
+                        className="flex items-center gap-3 rounded-xl border border-border/60 bg-white px-4 py-3 shadow-sm"
                       >
-                        <FileText size={14} className="text-[#9ea89e] shrink-0" />
+                        <div className="h-8 w-8 rounded-lg bg-surface flex items-center justify-center shrink-0">
+                          <FileText size={16} className="text-text-dim" />
+                        </div>
                         <div className="flex-1 min-w-0">
-                          <p className="truncate text-[13px] font-medium text-[#141a14]">
+                          <p className="truncate text-sm font-semibold text-text-main">
                             {file.name}
                           </p>
-                          <p className="text-[11px] text-[#9ea89e]">
-                            {(file.size / 1024 / 1024).toFixed(2)} MB
+                          <p className="text-xs font-medium text-text-dim mt-0.5">
+                            {(file.size / 1024 / 1024).toFixed(1)} MB
                           </p>
                         </div>
                         <button
@@ -422,9 +440,9 @@ export default function NewRequestModal({ providerName, onClose, onSuccess }) {
                             e.stopPropagation()
                             removeFile(index)
                           }}
-                          className="p-1 rounded-md hover:bg-[#eef0ee] transition-colors"
+                          className="h-8 w-8 rounded-full flex items-center justify-center text-text-dim hover:bg-surface hover:text-red-500 transition-colors"
                         >
-                          <X size={14} className="text-[#9ea89e] hover:text-[#141a14]" />
+                          <X size={16} />
                         </button>
                       </div>
                     ))}
@@ -434,39 +452,38 @@ export default function NewRequestModal({ providerName, onClose, onSuccess }) {
 
               {/* Upload Contextual Alert Notice */}
               {uploadError && (
-                <div className="rounded-2xl border border-red-200 bg-red-50/50 px-4 py-3 text-[13px] text-red-600 flex items-center gap-2">
-                  <AlertCircle size={14} className="shrink-0" />
+                <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-600 flex items-center gap-2">
+                  <AlertCircle size={16} className="shrink-0" />
                   <span>{uploadError}</span>
                 </div>
               )}
-
-              {/* FOOTER ACTIONS ROW */}
-              <div className="flex flex-col-reverse gap-3 border-t border-[#eef0ee] pt-6 sm:flex-row sm:items-center sm:justify-end">
-                <button
-                  type="button"
-                  onClick={onClose}
-                  className="h-12 rounded-2xl px-5 text-[14px] font-medium text-[#6b756d] hover:bg-[#f7f8f7] transition-colors"
-                >
-                  Cancel
-                </button>
-
-                <button
-                  onClick={handleSubmit}
-                  disabled={submitting || Object.keys(errors).some((x) => errors[x])}
-                  className="flex h-12 items-center justify-center gap-2 rounded-2xl bg-[#0f6e56] px-6 text-[14px] font-medium text-white transition-all hover:bg-[#085041] disabled:cursor-not-allowed disabled:opacity-60 shadow-sm"
-                >
-                  {submitting ? (
-                    <Loader2 size={16} className="animate-spin" />
-                  ) : (
-                    <>
-                      Send request
-                      <ArrowRight size={16} />
-                    </>
-                  )}
-                </button>
-              </div>
-
             </div>
+          </div>
+
+          {/* FOOTER ACTIONS ROW (Always sticky at the bottom) */}
+          <div className="shrink-0 border-t border-border/50 bg-white px-5 py-4 sm:px-10 sm:py-6 flex flex-col-reverse sm:flex-row gap-3 sm:justify-end z-20 pb-[max(1rem,env(safe-area-inset-bottom))]">
+            <button
+              type="button"
+              onClick={onClose}
+              className="h-12 rounded-xl px-6 text-sm font-semibold text-text-sub hover:bg-surface transition-colors"
+            >
+              Cancel
+            </button>
+
+            <button
+              onClick={handleSubmit}
+              disabled={submitting || !title.trim() || !description.trim() || !!errors.title || !!errors.description || !!errors.files}
+              className="flex h-12 w-full sm:w-auto items-center justify-center gap-2 rounded-xl bg-primary px-8 text-sm font-bold text-white transition-all hover:bg-primary-dark active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 shadow-sm"
+            >
+              {submitting ? (
+                <Loader2 size={18} className="animate-spin" />
+              ) : (
+                <>
+                  Submit Request
+                  <ArrowRight size={18} className="ml-1" />
+                </>
+              )}
+            </button>
           </div>
 
         </div>

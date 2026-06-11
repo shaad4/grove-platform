@@ -21,46 +21,46 @@ import { useBadges } from '../../hooks/useBadges'
 import ClientLayout from '../../components/layout/ClientLayout'
 import NewRequestModal from '../../components/modals/NewRequestModal'
 
-// ─── Status config ────────────────────────────────────────────
+// ─── Status config (Updated to Tailwind Semantic Tokens) ──────
 const STATUS_CONFIG = {
   received: {
     label: 'Submitted',
-    color: '#4b5563',
-    bg: '#f3f4f6',
-    border: '#e5e7eb',
-    dot: '#9ca3af',
+    text: 'text-text-sub',
+    bg: 'bg-surface',
+    border: 'border-border/60',
+    dot: 'bg-text-dim',
     step: 0,
   },
   in_review: {
     label: 'In review',
-    color: '#92400e',
-    bg: '#fffbeb',
-    border: '#fde68a',
-    dot: '#f59e0b',
+    text: 'text-amber-700',
+    bg: 'bg-amber-50',
+    border: 'border-amber-200',
+    dot: 'bg-amber-500',
     step: 1,
   },
   in_progress: {
     label: 'In progress',
-    color: '#3730a3',
-    bg: '#eef2ff',
-    border: '#c7d2fe',
-    dot: '#6366f1',
+    text: 'text-indigo-700',
+    bg: 'bg-indigo-50',
+    border: 'border-indigo-200',
+    dot: 'bg-indigo-500',
     step: 2,
   },
   delivered: {
     label: 'Action Needed',
-    color: '#065f46',
-    bg: '#ecfdf5',
-    border: '#6ee7b7',
-    dot: '#10b981',
+    text: 'text-primary-dark',
+    bg: 'bg-primary-light',
+    border: 'border-grove-200',
+    dot: 'bg-primary',
     step: 3,
   },
   closed: {
     label: 'Completed',
-    color: '#4b5563',
-    bg: '#f9fafb',
-    border: '#e5e7eb',
-    dot: '#d1d5db',
+    text: 'text-text-dim',
+    bg: 'bg-surface/50',
+    border: 'border-border/40',
+    dot: 'bg-border',
     step: 4,
   },
 }
@@ -101,7 +101,7 @@ function sortRequests(reqs) {
 
 // ─── Skeleton ─────────────────────────────────────────────────
 function Skeleton({ className = '' }) {
-  return <div className={`animate-pulse rounded-xl bg-gray-200 ${className}`} />
+  return <div className={`animate-pulse rounded-xl bg-surface border border-border/40 ${className}`} />
 }
 
 // ─── Top welcome bar ──────────────────────────────────────────
@@ -114,23 +114,23 @@ function WelcomeBar({ firstName, providerName, logoUrl, onNew }) {
     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
       <div className="flex items-center gap-4">
         {logoUrl ? (
-          <img src={logoUrl} alt={providerName} className="h-14 w-14 rounded-2xl object-cover shadow-sm" />
+          <img src={logoUrl} alt={providerName} className="h-12 w-12 rounded-xl object-cover shadow-sm border border-border/50" />
         ) : (
-          <div className="h-14 w-14 rounded-2xl bg-slate-900 flex items-center justify-center text-lg font-bold text-white shrink-0 shadow-sm">
+          <div className="h-12 w-12 rounded-xl bg-sidebar flex items-center justify-center text-sm font-bold text-white shrink-0 shadow-sm">
             {initials}
           </div>
         )}
         <div>
-          <p className="text-xs font-semibold text-gray-500 uppercase tracking-widest mb-1">{providerName}</p>
-          <h1 className="text-2xl font-bold text-gray-900 leading-none">
-            Welcome back, {firstName} 👋
+          <p className="text-[10px] font-bold text-text-dim uppercase tracking-widest mb-0.5">{providerName}</p>
+          <h1 className="text-2xl font-bold text-text-main tracking-tight leading-none">
+            Welcome back, {firstName} <span className="inline-block animate-wave origin-bottom-right">👋</span>
           </h1>
         </div>
       </div>
 
       <button
         onClick={onNew}
-        className="hidden sm:flex items-center gap-2 rounded-xl bg-[#0f6e56] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[#0c5b47] active:scale-95 transition-all shadow-md shadow-[#0f6e56]/20"
+        className="hidden sm:flex items-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-white hover:bg-primary-dark active:scale-[0.98] transition-all shadow-sm"
       >
         <Plus size={16} />
         New Request
@@ -148,23 +148,23 @@ function SummaryCards({ active, needsReview, completed, loading }) {
       icon: Clock,
       iconColor: 'text-indigo-600',
       iconBg: 'bg-indigo-50',
-      border: 'border-gray-200',
+      border: 'border-border/50',
     },
     {
       label: 'Needs Review',
       value: needsReview,
       icon: Zap,
-      iconColor: needsReview > 0 ? 'text-emerald-600' : 'text-gray-400',
-      iconBg: needsReview > 0 ? 'bg-emerald-50' : 'bg-gray-50',
-      border: needsReview > 0 ? 'border-emerald-200 ring-1 ring-emerald-50' : 'border-gray-200',
+      iconColor: needsReview > 0 ? 'text-primary' : 'text-text-dim',
+      iconBg: needsReview > 0 ? 'bg-primary-light' : 'bg-surface',
+      border: needsReview > 0 ? 'border-primary/20 ring-1 ring-primary/10 shadow-sm' : 'border-border/50',
     },
     {
       label: 'Completed',
       value: completed,
       icon: CheckCircle2,
-      iconColor: 'text-gray-500',
-      iconBg: 'bg-gray-50',
-      border: 'border-gray-200',
+      iconColor: 'text-text-dim',
+      iconBg: 'bg-surface',
+      border: 'border-border/50',
     },
   ]
 
@@ -173,21 +173,21 @@ function SummaryCards({ active, needsReview, completed, loading }) {
       {cards.map(card => (
         <div
           key={card.label}
-          className={`relative overflow-hidden rounded-2xl border bg-white p-5 shadow-sm transition-all ${card.border}`}
+          className={`relative overflow-hidden rounded-2xl border bg-white p-5 transition-all ${card.border}`}
         >
           <div className="flex items-center justify-between mb-4">
             <div className={`h-10 w-10 rounded-xl flex items-center justify-center ${card.iconBg}`}>
               <card.icon size={18} className={card.iconColor} />
             </div>
             {loading ? (
-              <Skeleton className="h-8 w-10" />
+              <Skeleton className="h-8 w-10 border-none" />
             ) : (
-              <span className="text-3xl font-bold text-gray-900 tracking-tight">
+              <span className="text-3xl font-semibold text-text-main tracking-tight">
                 {card.value}
               </span>
             )}
           </div>
-          <p className="text-sm font-medium text-gray-500">{card.label}</p>
+          <p className="text-xs font-medium text-text-sub">{card.label}</p>
         </div>
       ))}
     </div>
@@ -204,44 +204,40 @@ function RequestRow({ req, onClick, isNew }) {
       onClick={onClick}
       className={`
         group relative flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-xl border bg-white p-4 
-        cursor-pointer transition-all duration-200 hover:shadow-md
-        ${isNew ? 'animate-slide-in ring-2 ring-[#0f6e56]/20' : ''}
-        ${isDelivered ? 'border-emerald-200 hover:border-emerald-400' : 'border-gray-200 hover:border-gray-300'}
+        cursor-pointer transition-all duration-200 hover:-translate-y-[1px] hover:shadow-soft
+        ${isNew ? 'animate-slide-in ring-1 ring-primary' : ''}
+        ${isDelivered ? 'border-grove-200' : 'border-border/60 hover:border-border'}
       `}
     >
       {/* Left side: Status Dot + Title */}
       <div className="flex items-start sm:items-center gap-4 min-w-0">
-        <div
-          className="mt-1 sm:mt-0 h-3 w-3 rounded-full shrink-0 shadow-inner"
-          style={{ backgroundColor: cfg.dot }}
-        />
+        <div className={`mt-1.5 sm:mt-0 h-2.5 w-2.5 rounded-full shrink-0 ${cfg.dot}`} />
         <div className="min-w-0">
-          <div className="flex items-center gap-2 mb-1">
-            <h3 className="text-sm font-semibold text-gray-900 truncate pr-2">{req.title}</h3>
+          <div className="flex items-center gap-2.5 mb-1">
+            <h3 className="text-sm font-semibold text-text-main truncate">{req.title}</h3>
             {req._hasUnreadMessage && (
-              <span className="flex items-center gap-1 shrink-0 text-[10px] font-bold uppercase tracking-wider text-indigo-700 bg-indigo-50 border border-indigo-100 rounded px-1.5 py-0.5">
+              <span className="flex items-center gap-1 shrink-0 text-[9px] font-bold uppercase tracking-wider text-primary-dark bg-primary-light rounded px-1.5 py-0.5">
                 <MessageSquareDot size={10} /> New Message
               </span>
             )}
           </div>
-          <div className="flex items-center gap-2 text-xs font-medium text-gray-500">
-            <span>ID: #{req.id?.substring(0,6) || '---'}</span>
-            <span className="w-1 h-1 rounded-full bg-gray-300"></span>
+          <div className="flex items-center gap-2 text-[11px] font-medium text-text-dim">
+            <span className="uppercase tracking-wider">#{req.id?.substring(0,6) || '---'}</span>
+            <span className="w-1 h-1 rounded-full bg-border"></span>
             <span>Updated {timeAgo(req.updated_at)}</span>
           </div>
         </div>
       </div>
 
       {/* Right side: Pill + Arrow */}
-      <div className="flex items-center justify-between sm:justify-end gap-4 w-full sm:w-auto mt-2 sm:mt-0 pl-7 sm:pl-0">
+      <div className="flex items-center justify-between sm:justify-end gap-4 w-full sm:w-auto mt-2 sm:mt-0 pl-6 sm:pl-0">
         <span
-          className="shrink-0 text-xs font-semibold rounded-md px-3 py-1.5 border"
-          style={{ color: cfg.color, background: cfg.bg, borderColor: cfg.border }}
+          className={`shrink-0 text-[11px] font-bold tracking-wide rounded-md px-2.5 py-1 border ${cfg.bg} ${cfg.text} ${cfg.border}`}
         >
           {cfg.label}
         </span>
-        <div className="h-8 w-8 rounded-full bg-gray-50 flex items-center justify-center group-hover:bg-[#0f6e56] transition-colors shrink-0">
-          <ChevronRight size={16} className="text-gray-400 group-hover:text-white transition-colors" />
+        <div className="h-8 w-8 rounded-full bg-surface flex items-center justify-center group-hover:bg-primary transition-colors shrink-0">
+          <ChevronRight size={16} className="text-text-dim group-hover:text-white transition-colors" />
         </div>
       </div>
     </div>
@@ -254,25 +250,25 @@ function Pagination({ total, current, onChange }) {
   if (pages <= 1) return null
 
   return (
-    <div className="flex items-center justify-between border-t border-gray-200 pt-4 mt-6">
-      <span className="text-xs font-medium text-gray-500">
-        Showing {(current - 1) * ITEMS_PER_PAGE + 1} to {Math.min(current * ITEMS_PER_PAGE, total)} of {total} requests
+    <div className="flex items-center justify-between pt-4 mt-6">
+      <span className="text-xs font-medium text-text-dim">
+        Showing {(current - 1) * ITEMS_PER_PAGE + 1} to {Math.min(current * ITEMS_PER_PAGE, total)} of {total}
       </span>
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-1.5">
         <button
           onClick={() => onChange(current - 1)}
           disabled={current === 1}
-          className="p-1.5 rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          className="p-1.5 rounded-lg border border-border/50 text-text-sub hover:bg-surface disabled:opacity-30 disabled:hover:bg-transparent transition-colors"
         >
           <ChevronLeft size={16} />
         </button>
-        <span className="text-xs font-semibold text-gray-900 px-2">
+        <span className="text-xs font-semibold text-text-main px-2">
           Page {current} of {pages}
         </span>
         <button
           onClick={() => onChange(current + 1)}
           disabled={current === pages}
-          className="p-1.5 rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          className="p-1.5 rounded-lg border border-border/50 text-text-sub hover:bg-surface disabled:opacity-30 disabled:hover:bg-transparent transition-colors"
         >
           <ChevronRight size={16} />
         </button>
@@ -284,17 +280,17 @@ function Pagination({ total, current, onChange }) {
 // ─── Empty state ──────────────────────────────────────────────
 function EmptyState({ onNew, providerName }) {
   return (
-    <div className="flex flex-col items-center justify-center py-20 px-6 text-center rounded-2xl border-2 border-dashed border-gray-200 bg-white">
-      <div className="h-14 w-14 rounded-2xl bg-gray-50 border border-gray-100 flex items-center justify-center mb-5 shadow-sm">
-        <Sparkles size={24} className="text-gray-400" />
+    <div className="flex flex-col items-center justify-center py-20 px-6 text-center rounded-2xl border border-dashed border-border/60 bg-white">
+      <div className="h-14 w-14 rounded-2xl bg-surface border border-border/50 flex items-center justify-center mb-5 shadow-sm">
+        <Sparkles size={24} className="text-text-dim" />
       </div>
-      <h3 className="text-lg font-bold text-gray-900 mb-2">No requests found</h3>
-      <p className="text-sm text-gray-500 mb-6 max-w-[280px] leading-relaxed">
+      <h3 className="text-base font-semibold text-text-main mb-1.5">No requests found</h3>
+      <p className="text-sm text-text-sub mb-6 max-w-[280px] leading-relaxed">
         Submit your first request to start working with {providerName}.
       </p>
       <button
         onClick={onNew}
-        className="flex items-center gap-2 rounded-xl bg-[#0f6e56] px-5 py-2.5 text-sm font-semibold text-white hover:bg-[#0c5b47] active:scale-95 transition-all shadow-md shadow-[#0f6e56]/20"
+        className="flex items-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-white hover:bg-primary-dark active:scale-[0.98] transition-all shadow-sm"
       >
         <Plus size={16} />
         Submit a request
@@ -314,8 +310,8 @@ function StatusGuide() {
   ]
 
   return (
-    <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
-      <p className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-5">
+    <div className="rounded-2xl border border-border/60 bg-white p-5 shadow-soft">
+      <p className="text-[10px] font-bold uppercase tracking-wider text-text-dim mb-5">
         Request Lifecycle
       </p>
       <div className="space-y-4">
@@ -325,16 +321,15 @@ function StatusGuide() {
             <div key={status} className="flex items-start gap-3 relative">
               {/* Connector line */}
               {i !== steps.length - 1 && (
-                 <div className="absolute top-8 left-4 w-[2px] h-6 bg-gray-100" />
+                 <div className="absolute top-8 left-[15px] w-[2px] h-5 bg-border/50" />
               )}
               <div
-                className="h-8 w-8 rounded-lg flex items-center justify-center shrink-0 z-10"
-                style={{ background: cfg.bg, border: `1px solid ${cfg.border}` }}
+                className={`h-8 w-8 rounded-lg flex items-center justify-center shrink-0 z-10 border ${cfg.bg} ${cfg.border}`}
               >
-                <Icon size={14} style={{ color: cfg.dot }} />
+                <Icon size={14} className={cfg.text} />
               </div>
               <div className="pt-1.5">
-                <p className="text-sm font-semibold text-gray-700 leading-none">{cfg.label}</p>
+                <p className="text-xs font-semibold text-text-main leading-none">{cfg.label}</p>
               </div>
             </div>
           )
@@ -353,31 +348,31 @@ function QuickActions({ onNew, needsReview, requests, navigate }) {
       {needsReview > 0 && deliveredReq && (
         <button
           onClick={() => navigate(`/my-requests/${deliveredReq.id}`)}
-          className="w-full flex items-center gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-4 hover:bg-emerald-100 transition-colors text-left shadow-sm group"
+          className="w-full flex items-center gap-3 rounded-2xl border border-grove-200 bg-primary-light px-4 py-4 hover:bg-primary-light/80 transition-colors text-left shadow-sm group"
         >
-          <div className="h-10 w-10 rounded-xl bg-white border border-emerald-100 flex items-center justify-center shrink-0 shadow-sm">
-            <Zap size={18} className="text-emerald-600" />
+          <div className="h-10 w-10 rounded-xl bg-white border border-grove-100 flex items-center justify-center shrink-0 shadow-sm">
+            <Zap size={18} className="text-primary" />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-bold text-emerald-800">Review Delivery</p>
-            <p className="text-xs font-medium text-emerald-600 truncate mt-0.5">{deliveredReq.title}</p>
+            <p className="text-sm font-bold text-primary-dark">Review Delivery</p>
+            <p className="text-[11px] font-medium text-primary truncate mt-0.5">{deliveredReq.title}</p>
           </div>
-          <ArrowUpRight size={16} className="text-emerald-600 shrink-0 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+          <ArrowUpRight size={16} className="text-primary shrink-0 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
         </button>
       )}
 
       <button
         onClick={onNew}
-        className="w-full flex items-center gap-3 rounded-2xl border border-gray-200 bg-white px-4 py-4 hover:border-[#0f6e56] hover:shadow-md transition-all text-left group"
+        className="w-full flex items-center gap-3 rounded-2xl border border-border/60 bg-white px-4 py-4 hover:border-primary/50 hover:shadow-soft transition-all text-left group"
       >
-        <div className="h-10 w-10 rounded-xl bg-gray-50 flex items-center justify-center shrink-0 group-hover:bg-[#0f6e56]/10 transition-colors">
-          <Plus size={18} className="text-gray-400 group-hover:text-[#0f6e56]" />
+        <div className="h-10 w-10 rounded-xl bg-surface flex items-center justify-center shrink-0 group-hover:bg-primary-light transition-colors">
+          <Plus size={18} className="text-text-dim group-hover:text-primary" />
         </div>
         <div className="flex-1">
-          <p className="text-sm font-bold text-gray-900">New Request</p>
-          <p className="text-xs font-medium text-gray-500 mt-0.5">Describe what you need</p>
+          <p className="text-sm font-semibold text-text-main">New Request</p>
+          <p className="text-[11px] font-medium text-text-sub mt-0.5">Describe what you need</p>
         </div>
-        <ArrowUpRight size={16} className="text-gray-300 group-hover:text-[#0f6e56] shrink-0 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+        <ArrowUpRight size={16} className="text-text-dim group-hover:text-primary shrink-0 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
       </button>
     </div>
   )
@@ -392,9 +387,9 @@ function LiveToast({ message, onDismiss }) {
 
   return (
     <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-50 lg:bottom-8 lg:left-auto lg:right-8 lg:translate-x-0 animate-slide-in">
-      <div className="flex items-center gap-3 rounded-2xl border border-emerald-200 bg-white shadow-xl shadow-emerald-900/5 px-5 py-3.5">
-        <div className="h-2.5 w-2.5 rounded-full bg-emerald-500 animate-pulse shrink-0" />
-        <p className="text-sm font-semibold text-emerald-800">{message}</p>
+      <div className="flex items-center gap-3 rounded-2xl border border-grove-200 bg-white shadow-soft px-5 py-3.5">
+        <div className="h-2.5 w-2.5 rounded-full bg-primary animate-pulse shrink-0" />
+        <p className="text-sm font-semibold text-primary-dark">{message}</p>
       </div>
     </div>
   )
@@ -520,128 +515,136 @@ export default function ClientDashboard() {
           from { opacity: 0; transform: translateY(10px); }
           to   { opacity: 1; transform: translateY(0); }
         }
+        @keyframes wave {
+          0% { transform: rotate(0deg); }
+          10% { transform: rotate(14deg); }
+          20% { transform: rotate(-8deg); }
+          30% { transform: rotate(14deg); }
+          40% { transform: rotate(-4deg); }
+          50% { transform: rotate(10deg); }
+          60% { transform: rotate(0deg); }
+          100% { transform: rotate(0deg); }
+        }
         .animate-slide-in { animation: slideIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        .animate-wave { animation: wave 2s ease-in-out infinite; }
       `}</style>
 
-      {/* Mobile spacer for top nav */}
-      <div className="pt-[60px] lg:pt-0" />
+      {/* Mobile spacer to prevent top nav overlap */}
 
-      <div className="min-h-screen bg-[#f9fafb]">
-        <div className="max-w-7xl mx-auto px-4 py-8 lg:px-8 lg:py-10">
+      {/* Main Content Area (Layout wrapper handles centering and max width) */}
+      <div className="w-full">
+        <WelcomeBar
+          firstName={firstName}
+          providerName={providerName}
+          logoUrl={logoUrl}
+          onNew={() => setShowNew(true)}
+        />
 
-          <WelcomeBar
-            firstName={firstName}
-            providerName={providerName}
-            logoUrl={logoUrl}
-            onNew={() => setShowNew(true)}
-          />
+        <SummaryCards
+          active={activeCount}
+          needsReview={reviewCount}
+          completed={completedCount}
+          loading={loading}
+        />
 
-          <SummaryCards
-            active={activeCount}
-            needsReview={reviewCount}
-            completed={completedCount}
-            loading={loading}
-          />
-
-          <div className="flex flex-col lg:flex-row gap-8 items-start">
+        <div className="flex flex-col lg:flex-row gap-8 items-start">
+          
+          {/* Left Area — Request List */}
+          <div className="flex-1 w-full min-w-0">
             
-            {/* Left Area — Request List */}
-            <div className="flex-1 w-full min-w-0">
-              
-              {/* Controls Header */}
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-                <div className="flex items-center gap-3">
-                  <h2 className="text-lg font-bold text-gray-900">Your Requests</h2>
-                  {!loading && (
-                    <span className="bg-gray-200 text-gray-600 text-xs font-bold px-2 py-0.5 rounded-full">
-                      {filtered.length}
-                    </span>
-                  )}
-                </div>
-
-                {/* Modern Segmented Control for Filters */}
-                <div className="inline-flex bg-gray-100/80 p-1 rounded-xl border border-gray-200/60 overflow-x-auto w-full sm:w-auto">
-                  {FILTERS.map(f => (
-                    <button
-                      key={f.key}
-                      onClick={() => setFilter(f.key)}
-                      className={`flex-1 sm:flex-none px-4 py-2 text-sm font-semibold rounded-lg transition-all whitespace-nowrap ${
-                        filter === f.key
-                          ? 'bg-white text-gray-900 shadow-sm ring-1 ring-gray-900/5'
-                          : 'text-gray-500 hover:text-gray-900 hover:bg-gray-200/50'
-                      }`}
-                    >
-                      {f.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Action Banner */}
-              {reviewCount > 0 && filter !== 'closed' && filter !== 'delivered' && (
-                <div className="mb-4 flex items-center gap-3 rounded-xl border border-emerald-200 bg-emerald-50 px-5 py-4 shadow-sm">
-                  <div className="h-2.5 w-2.5 rounded-full bg-emerald-500 animate-pulse shrink-0" />
-                  <p className="text-sm font-semibold text-emerald-800 flex-1">
-                    {reviewCount === 1
-                      ? 'You have 1 delivery waiting for your review.'
-                      : `You have ${reviewCount} deliveries waiting for your review.`}
-                  </p>
-                  <button
-                    onClick={() => setFilter('delivered')}
-                    className="text-sm font-bold text-[#0f6e56] bg-white border border-emerald-200 px-3 py-1.5 rounded-lg hover:bg-emerald-100 transition-colors shrink-0 shadow-sm"
-                  >
-                    View Deliveries
-                  </button>
-                </div>
-              )}
-
-              {/* List Container */}
-              <div className="space-y-3 min-h-[400px]">
-                {loading ? (
-                  Array.from({ length: 5 }).map((_, i) => <Skeleton key={i} className="h-[84px] w-full" />)
-                ) : filtered.length === 0 ? (
-                  <EmptyState onNew={() => setShowNew(true)} providerName={providerName} />
-                ) : (
-                  <>
-                    {paginatedRequests.map((r, index) => (
-                      <div key={r.id} className="animate-slide-in" style={{ animationDelay: `${index * 50}ms` }}>
-                        <RequestRow
-                          req={r}
-                          isNew={updatedIds.has(r.id)}
-                          onClick={() => navigate(`/my-requests/${r.id}`)}
-                        />
-                      </div>
-                    ))}
-                    <Pagination 
-                      total={filtered.length} 
-                      current={currentPage} 
-                      onChange={setCurrentPage} 
-                    />
-                  </>
+            {/* Controls Header */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+              <div className="flex items-center gap-3">
+                <h2 className="text-base font-semibold text-text-main">Your Requests</h2>
+                {!loading && (
+                  <span className="bg-surface border border-border/60 text-text-sub text-[10px] font-bold px-2 py-0.5 rounded-full">
+                    {filtered.length}
+                  </span>
                 )}
               </div>
+
+              {/* Modern Segmented Control for Filters */}
+              <div className="inline-flex bg-surface p-1 rounded-xl border border-border/40 overflow-x-auto w-full sm:w-auto shadow-sm">
+                {FILTERS.map(f => (
+                  <button
+                    key={f.key}
+                    onClick={() => setFilter(f.key)}
+                    className={`flex-1 sm:flex-none px-3.5 py-1.5 text-xs font-semibold rounded-lg transition-all whitespace-nowrap ${
+                      filter === f.key
+                        ? 'bg-white text-text-main shadow-sm ring-1 ring-border/50'
+                        : 'text-text-dim hover:text-text-main hover:bg-white/50'
+                    }`}
+                  >
+                    {f.label}
+                  </button>
+                ))}
+              </div>
             </div>
 
-            {/* Right Panel (Desktop only) */}
-            <div className="hidden lg:flex flex-col gap-6 w-[280px] shrink-0 sticky top-8">
-              <QuickActions
-                onNew={() => setShowNew(true)}
-                needsReview={reviewCount}
-                requests={requests}
-                navigate={navigate}
-              />
-              <StatusGuide />
-            </div>
+            {/* Action Banner */}
+            {reviewCount > 0 && filter !== 'closed' && filter !== 'delivered' && (
+              <div className="mb-4 flex items-center gap-3 rounded-xl border border-grove-200 bg-primary-light px-5 py-3.5 shadow-sm">
+                <div className="h-2 w-2 rounded-full bg-primary animate-pulse shrink-0" />
+                <p className="text-sm font-semibold text-primary-dark flex-1">
+                  {reviewCount === 1
+                    ? 'You have 1 delivery waiting for your review.'
+                    : `You have ${reviewCount} deliveries waiting for your review.`}
+                </p>
+                <button
+                  onClick={() => setFilter('delivered')}
+                  className="text-xs font-bold text-primary bg-white border border-grove-100 px-3 py-1.5 rounded-lg hover:bg-surface transition-colors shrink-0 shadow-sm"
+                >
+                  View Deliveries
+                </button>
+              </div>
+            )}
 
+            {/* List Container */}
+            <div className="space-y-3 min-h-[400px]">
+              {loading ? (
+                Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-[76px] w-full" />)
+              ) : filtered.length === 0 ? (
+                <EmptyState onNew={() => setShowNew(true)} providerName={providerName} />
+              ) : (
+                <>
+                  {paginatedRequests.map((r, index) => (
+                    <div key={r.id} className="animate-slide-in" style={{ animationDelay: `${index * 40}ms` }}>
+                      <RequestRow
+                        req={r}
+                        isNew={updatedIds.has(r.id)}
+                        onClick={() => navigate(`/my-requests/${r.id}`)}
+                      />
+                    </div>
+                  ))}
+                  <Pagination 
+                    total={filtered.length} 
+                    current={currentPage} 
+                    onChange={setCurrentPage} 
+                  />
+                </>
+              )}
+            </div>
           </div>
+
+          {/* Right Panel (Desktop only) */}
+          <div className="hidden lg:flex flex-col gap-6 w-[280px] shrink-0 sticky top-8">
+            <QuickActions
+              onNew={() => setShowNew(true)}
+              needsReview={reviewCount}
+              requests={requests}
+              navigate={navigate}
+            />
+            <StatusGuide />
+          </div>
+
         </div>
       </div>
 
       {/* Mobile FAB */}
-      <div className="fixed bottom-[24px] right-4 z-30 lg:hidden">
+      <div className="fixed bottom-[104px] right-4 z-30 lg:hidden">
         <button
           onClick={() => setShowNew(true)}
-          className="h-14 w-14 flex items-center justify-center rounded-full bg-[#0f6e56] text-white shadow-xl shadow-[#0f6e56]/30 hover:bg-[#0c5b47] active:scale-95 transition-all"
+          className="h-14 w-14 flex items-center justify-center rounded-full bg-primary text-white shadow-soft hover:bg-primary-dark active:scale-[0.95] transition-all"
         >
           <Plus size={24} />
         </button>

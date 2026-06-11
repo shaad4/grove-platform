@@ -367,23 +367,7 @@ export default function ChatPanel({
 
   // ── Render ───────────────────────────────────────────────────
   return (
-    <div className="flex flex-col h-full bg-slate-50/60">
-
-      {/* Header bar */}
-      <div className="shrink-0 flex items-center gap-3 px-5 py-3.5 border-b border-slate-200/80 bg-white/80 backdrop-blur-md sticky top-0 z-10 shadow-sm">
-        <div className={`h-9 w-9 rounded-full flex items-center justify-center text-[11px] font-bold shrink-0 shadow-inner
-          ${getAvatarColor(clientName).bg} ${getAvatarColor(clientName).text}`}>
-          {getInitials(clientName)}
-        </div>
-        <div className="flex-1 min-w-0">
-          <p className="text-[14px] font-semibold text-slate-800 leading-tight truncate">{clientName}</p>
-          <div className="flex items-center gap-1.5 mt-1">
-            <span className={`h-2 w-2 rounded-full ring-4 ring-opacity-30 ${isClosed ? 'bg-slate-400 ring-slate-400/20' : 'bg-emerald-500 ring-emerald-500/20 animate-pulse'}`} />
-            <span className="text-[11px] font-medium text-slate-400">{isClosed ? 'Closed · Read only' : 'Live conversation'}</span>
-          </div>
-        </div>
-      </div>
-
+    <div className="flex flex-col flex-1 min-h-0 h-full bg-slate-50/60">
       {/* Messages area */}
       <div className="flex-1 overflow-y-auto overflow-x-hidden px-5 py-4 space-y-1 min-h-0 custom-scrollbar">
         {timeline.length === 0 ? (

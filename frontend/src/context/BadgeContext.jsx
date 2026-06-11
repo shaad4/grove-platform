@@ -175,7 +175,7 @@ export function BadgeProvider({ children }) {
           portalListenersRef.current.forEach((cb) => cb({
             type:       msg.event_type,
             request_id: msg.related_request_id,
-            new_status: msg.new_status,     // backend should include this on status_change
+            new_status: msg.event_type === 'files_delivered' ? 'delivered' : msg.new_status,     // backend should include this on status_change
             updated_at: msg.updated_at,
           }))
         }

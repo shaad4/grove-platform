@@ -82,47 +82,47 @@ export default function ClientSidebar({ badges = {} }) {
   const UserPopup = ({ className = '' }) => (
     <div
       className={`
-        z-50 w-[220px] rounded-[14px] border border-[#e8e8e8]
-        bg-white shadow-[0_8px_30px_rgba(0,0,0,0.10)] overflow-visible
+        z-50 w-[240px] rounded-xl border border-border/50
+        bg-white shadow-soft
         ${className}
       `}
     >
       {/* User */}
-      <div className="px-4 py-3 border-b border-[#f0f0f0]">
-        <p className="truncate text-[13px] font-semibold text-[#111]">
+      <div className="px-4 py-3 bg-surface/50 border-b border-border/50 rounded-t-xl">
+        <p className="truncate text-sm font-semibold text-text-main">
           {user?.display_name}
         </p>
-        <p className="truncate text-[11px] text-[#9b9b9b] mt-0.5">
+        <p className="truncate text-xs text-text-sub mt-0.5">
           {user?.email}
         </p>
       </div>
 
       {/* Portal switcher */}
-      <div className="px-2 py-2 border-b border-[#f0f0f0]">
+      <div className="p-2 border-b border-border/50">
         <ClientPortalSwitcher />
       </div>
 
       {/* Actions */}
-      <div className="py-1">
+      <div className="p-1">
         <NavLink
           to="/portal/settings"
           onClick={() => setIsPopupOpen(false)}
-          className="flex items-center gap-2.5 px-4 py-2.5 text-[13px] text-[#4b5563] hover:bg-[#f7f7f7] transition-colors"
+          className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-text-sub hover:bg-surface hover:text-text-main transition-colors"
         >
-          <Settings size={13} className="opacity-60" />
+          <Settings size={15} />
           Settings
         </NavLink>
 
-        <div className="mx-3 my-1 h-px bg-[#f0f0f0]" />
+        <div className="mx-2 my-1 h-px bg-border/50" />
 
         <button
           onClick={() => {
             setIsPopupOpen(false)
             logout()
           }}
-          className="flex items-center gap-2.5 w-full text-left px-4 py-2.5 text-[13px] text-red-500 hover:bg-red-50 transition-colors"
+          className="flex items-center gap-2.5 w-full text-left px-3 py-2 rounded-lg text-sm text-red-600 hover:bg-red-50 transition-colors"
         >
-          <LogOut size={13} />
+          <LogOut size={15} />
           <span className="font-medium">Sign out</span>
         </button>
       </div>
@@ -135,37 +135,37 @@ export default function ClientSidebar({ badges = {} }) {
       <aside
         className={`
           hidden lg:flex flex-col h-screen sticky top-0 shrink-0 select-none
-          transition-all duration-300 ease-out border-r border-[#ebebeb] bg-[#edf1ee]
-          ${isCollapsed ? 'w-[72px]' : 'w-[240px]'}
+          transition-all duration-300 ease-in-out border-r border-sidebar bg-sidebar
+          ${isCollapsed ? 'w-[72px]' : 'w-[260px]'}
         `}
       >
         {/* ───────────────── Header ───────────────── */}
         <div
           className={`
-            flex items-center pt-4 pb-3 border-b border-[#f0f0f0]
-            ${isCollapsed ? 'justify-center px-0' : 'justify-between px-3'}
+            flex items-center pt-6 pb-4 border-b border-white/10
+            ${isCollapsed ? 'justify-center px-0' : 'justify-between px-4'}
           `}
         >
           {/* Provider branding */}
           {!isCollapsed && (
-            <div className="flex items-center gap-2.5 min-w-0 flex-1">
+            <div className="flex items-center gap-3 min-w-0 flex-1">
               {providerLogoUrl ? (
                 <img
                   src={providerLogoUrl}
                   alt={providerName}
-                  className="h-8 w-8 rounded-[8px] object-cover shrink-0"
+                  className="h-9 w-9 rounded-lg object-cover shadow-sm shrink-0"
                 />
               ) : (
-                <div className="h-8 w-8 rounded-[8px] bg-[#111] flex items-center justify-center text-[10px] font-bold text-white shrink-0">
+                <div className="h-9 w-9 rounded-lg bg-white/10 flex items-center justify-center text-xs font-bold text-white shrink-0">
                   {providerInitials}
                 </div>
               )}
 
               <div className="min-w-0">
-                <p className="truncate text-[13px] font-semibold text-[#111] leading-tight">
+                <p className="truncate text-sm font-semibold text-white leading-tight">
                   {providerName}
                 </p>
-                <p className="text-[10px] text-[#9b9b9b]">Client portal</p>
+                <p className="text-xs text-white/60 mt-0.5">Client Portal</p>
               </div>
             </div>
           )}
@@ -174,19 +174,18 @@ export default function ClientSidebar({ badges = {} }) {
           <button
             onClick={() => setIsCollapsed(!isCollapsed)}
             title={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-            className="p-1.5 rounded-lg text-[#c0c4c0] hover:text-[#6b7280] hover:bg-[#f5f5f5] transition-all duration-200"
+            className="p-1.5 rounded-md text-white/50 hover:text-white hover:bg-white/10 transition-colors"
           >
             <PanelLeftClose
-              size={15}
+              size={16}
               className={`transition-transform duration-300 ${isCollapsed ? 'rotate-180' : ''}`}
             />
           </button>
         </div>
 
         {/* ───────────────── Navigation ───────────────── */}
-        <nav className="px-2 pt-3 flex-1 flex flex-col gap-1">
-          {/* Notification Bell moved to the absolute top of the navigation list for high visibility */}
-          <div className="mb-2">
+        <nav className="px-3 pt-6 flex-1 flex flex-col gap-1.5">
+          <div className="mb-4 px-1">
             <ClientNotificationBell collapsed={isCollapsed} />
           </div>
 
@@ -197,17 +196,19 @@ export default function ClientSidebar({ badges = {} }) {
               end={to === '/portal'}
               title={isCollapsed ? label : undefined}
               className={({ isActive }) => `
-                relative flex items-center rounded-[9px] text-[13.5px] transition-all duration-150
-                ${isCollapsed ? 'justify-center py-2.5 px-0 mx-1' : 'gap-2.5 px-3 py-[7px]'}
-                ${isActive ? 'bg-[#edf7f3] text-[#0f6e56] font-medium' : 'text-[#4a544a] hover:text-[#111] hover:bg-[#f7f7f7]'}
+                relative flex items-center rounded-lg text-sm transition-all duration-200
+                ${isCollapsed ? 'justify-center py-3 px-0 mx-auto w-10' : 'gap-3 px-3 py-2.5'}
+                ${isActive 
+                  ? 'bg-primary text-white font-medium shadow-sm' 
+                  : 'text-white/70 hover:text-white hover:bg-white/5'}
               `}
             >
-              <Icon size={16} className="shrink-0" />
+              <Icon size={18} className="shrink-0" />
 
               {!isCollapsed && <span className="flex-1">{label}</span>}
 
               {!isCollapsed && badgeKey && badges[badgeKey] > 0 && (
-                <span className="text-[10px] font-semibold bg-[#111] text-white px-1.5 py-0.5 rounded-full min-w-[18px] text-center">
+                <span className="text-[10px] font-bold bg-white text-sidebar px-2 py-0.5 rounded-full min-w-[20px] text-center">
                   {badges[badgeKey]}
                 </span>
               )}
@@ -215,124 +216,105 @@ export default function ClientSidebar({ badges = {} }) {
           ))}
         </nav>
 
-        {/* Divider */}
-        <div className="mx-3 my-1 border-t border-[#f0f0f0]" />
-
         {/* ───────────────── Footer ───────────────── */}
-        <div className="px-2 pb-3 pt-2 relative" ref={popupRef}>
+        <div className="p-3 relative border-t border-white/10" ref={popupRef}>
           {/* User row */}
           {!isCollapsed && (
             <div
               onClick={() => setIsPopupOpen(!isPopupOpen)}
               className={`
-                flex items-center justify-between gap-2.5 rounded-[9px] cursor-pointer transition-all duration-150 hover:bg-[#f5f5f5] p-2
-                ${isPopupOpen ? 'bg-[#f5f5f5]' : ''}
+                flex items-center justify-between gap-3 rounded-xl cursor-pointer transition-colors p-2.5
+                ${isPopupOpen ? 'bg-white/10' : 'hover:bg-white/5'}
               `}
             >
-              <div className="flex items-center gap-2.5 min-w-0">
-                <div className="h-7 w-7 shrink-0 rounded-full flex items-center justify-center text-[10px] font-semibold text-white bg-[#0f6e56]">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="h-8 w-8 shrink-0 rounded-full flex items-center justify-center text-xs font-bold text-sidebar bg-white">
                   {initials}
                 </div>
 
                 <div className="min-w-0">
-                  <p className="truncate text-[13px] text-[#111] font-medium leading-tight">
+                  <p className="truncate text-sm text-white font-medium leading-tight">
                     {user?.display_name || 'Client'}
                   </p>
-                  <p className="text-[11px] text-[#9b9b9b] mt-0.5 truncate">
+                  <p className="text-xs text-white/60 mt-0.5 truncate">
                     {user?.email || ''}
                   </p>
                 </div>
               </div>
 
               <ChevronDown
-                size={13}
-                className={`text-[#c0c4c0] shrink-0 transition-transform duration-200 ${isPopupOpen ? 'rotate-180' : ''}`}
+                size={14}
+                className={`text-white/50 shrink-0 transition-transform duration-200 ${isPopupOpen ? 'rotate-180' : ''}`}
               />
             </div>
           )}
 
           {/* Desktop popup */}
           {isPopupOpen && !isCollapsed && (
-            <UserPopup className="absolute left-2 bottom-[64px]" />
+            <UserPopup className="absolute left-3 bottom-[76px]" />
           )}
         </div>
       </aside>
 
-      {/* ═══════════════ MOBILE TOP BAR ════════════════════════ */}
-      <div className="lg:hidden fixed top-0 left-0 right-0 z-40 border-b border-[#ebebeb] bg-white/95 backdrop-blur-xl">
-        <div className="flex items-center justify-between px-4 py-2.5">
-          {/* Provider branding */}
-          <div className="flex items-center gap-2.5 min-w-0 flex-1">
-            {providerLogoUrl ? (
-              <img
-                src={providerLogoUrl}
-                alt={providerName}
-                className="h-7 w-7 rounded-[7px] object-cover shrink-0"
-              />
-            ) : (
-              <div className="h-7 w-7 rounded-[7px] bg-[#111] flex items-center justify-center text-[9px] font-bold text-white shrink-0">
-                {providerInitials}
-              </div>
-            )}
-
-            <div className="min-w-0">
-              <p className="truncate text-[13px] font-semibold text-[#111] leading-tight">
-                {providerName}
-              </p>
-              <p className="text-[10px] text-[#9b9b9b]">Client portal</p>
-            </div>
-          </div>
-
-          {/* Right */}
-          <div className="flex items-center gap-3 ml-3 shrink-0" ref={mobileRef}>
-            
-            {/* Using the unified notification component instead of a raw navlink */}
-            <ClientNotificationBell collapsed={true} />
-
-            <div
-              onClick={() => setIsPopupOpen(!isPopupOpen)}
-              className="h-8 w-8 shrink-0 rounded-full bg-[#0f6e56] flex items-center justify-center text-[10px] font-semibold text-white cursor-pointer"
-            >
-              {initials}
-            </div>
-
-            {/* Mobile popup */}
-            {isPopupOpen && (
-              <UserPopup className="absolute top-[54px] right-4" />
-            )}
-          </div>
-        </div>
-      </div>
-
       {/* ═══════════════ MOBILE BOTTOM NAV ═════════════════════ */}
-      <div className="fixed bottom-0 left-0 right-0 z-50 lg:hidden border-t border-[#ebebeb] bg-white/95 backdrop-blur-xl">
-        <div className="flex items-center justify-around px-1 py-1 pb-[calc(0.25rem+env(safe-area-inset-bottom))]">
+      <div className="fixed bottom-0 left-0 right-0 z-50 lg:hidden bg-white/80 backdrop-blur-md border-t border-border pb-[env(safe-area-inset-bottom)] supports-[backdrop-filter]:bg-white/60">
+        <div className="flex items-center justify-around px-2 py-2" ref={mobileRef}>
+          
+          {/* Standard Nav Items */}
           {NAV_ITEMS.map(({ to, icon: Icon, label, badgeKey }) => (
             <NavLink
               key={to}
               to={to}
               end={to === '/portal'}
               className={({ isActive }) => `
-                relative flex flex-col items-center justify-center gap-0.5 min-w-[60px] rounded-xl px-2 py-2 transition-all duration-150
-                ${isActive ? 'text-[#111]' : 'text-[#b0b0b0]'}
+                relative flex flex-col items-center justify-center gap-1 min-w-[72px] rounded-xl px-2 py-2 transition-all duration-200
+                ${isActive ? 'text-primary' : 'text-text-dim hover:text-text-sub'}
               `}
             >
               {({ isActive }) => (
                 <>
                   <div className="relative">
-                    <Icon size={19} strokeWidth={isActive ? 2.2 : 1.8} />
+                    <Icon size={22} strokeWidth={isActive ? 2.5 : 2} />
 
                     {badgeKey && badges[badgeKey] > 0 && (
-                      <span className="absolute -top-1 -right-1.5 h-[14px] min-w-[14px] px-0.5 flex items-center justify-center rounded-full bg-[#0f6e56] text-white text-[8px] font-bold">
+                      <span className="absolute -top-1.5 -right-2 h-4 min-w-[16px] px-1 flex items-center justify-center rounded-full bg-primary shadow-sm text-white text-[9px] font-bold">
                         {badges[badgeKey] > 9 ? '9+' : badges[badgeKey]}
                       </span>
                     )}
                   </div>
-                  <span className="text-[9.5px] font-medium">{label}</span>
+                  <span className="text-[10px] font-medium tracking-wide">{label}</span>
                 </>
               )}
             </NavLink>
           ))}
+
+          {/* Notification Nav Item (Handled internally by component) */}
+          <ClientNotificationBell isMobileNav={true} />
+
+          {/* Profile Nav Item */}
+          <div 
+            className={`
+              relative flex flex-col items-center justify-center gap-1 min-w-[72px] rounded-xl px-2 py-2 transition-all duration-200 cursor-pointer
+              ${isPopupOpen ? 'text-primary' : 'text-text-dim hover:text-text-sub'}
+            `}
+            onClick={(e) => {
+              e.stopPropagation()
+              setIsPopupOpen(!isPopupOpen)
+            }}
+          >
+            <div className={`h-[22px] w-[22px] rounded-full bg-primary flex items-center justify-center text-[9px] font-bold text-white shadow-sm transition-transform duration-200 ${isPopupOpen ? 'scale-110 ring-2 ring-primary/20' : ''}`}>
+              {initials}
+            </div>
+            <span className="text-[10px] font-medium tracking-wide">Profile</span>
+
+            {/* Mobile popup */}
+            {isPopupOpen && (
+              <div className="absolute bottom-[60px] right-2" onClick={e => e.stopPropagation()}>
+                <UserPopup className="shadow-2xl border-border/50 animate-in slide-in-from-bottom-4 duration-200" />
+              </div>
+            )}
+          </div>
+
         </div>
       </div>
     </>

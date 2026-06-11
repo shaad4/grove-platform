@@ -14,12 +14,13 @@ import { pre } from 'framer-motion/client'
 
 const CARDS_PER_PAGE = 4
 
+// ─── Status config (Updated to Tailwind Semantic Tokens) ──────
 const STATUS_CONFIG = {
-  received:    { label: 'Submitted',        step: 1, pill: 'bg-emerald-50 text-emerald-700 border-emerald-100',       dot: 'bg-emerald-500' },
-  in_review:   { label: "In Review",        step: 2, pill: 'bg-amber-50 text-amber-700 border-amber-100',           dot: 'bg-amber-500' },
-  in_progress: { label: 'In Progress',      step: 3, pill: 'bg-indigo-50 text-indigo-700 border-indigo-100',         dot: 'bg-indigo-500' },
-  delivered:   { label: 'Ready for Review',  step: 4, pill: 'bg-blue-50 text-blue-700 border-blue-100 animate-pulse', dot: 'bg-blue-500' },
-  closed:      { label: 'Completed',        step: 5, pill: 'bg-gray-50 text-gray-600 border-gray-100',              dot: 'bg-gray-400' },
+  received:    { label: 'Submitted',        step: 1, pill: 'bg-surface text-text-sub border-border/60', dot: 'bg-text-dim' },
+  in_review:   { label: "In Review",        step: 2, pill: 'bg-amber-50 text-amber-700 border-amber-200', dot: 'bg-amber-500' },
+  in_progress: { label: 'In Progress',      step: 3, pill: 'bg-indigo-50 text-indigo-700 border-indigo-200', dot: 'bg-indigo-500' },
+  delivered:   { label: 'Ready for Review', step: 4, pill: 'bg-primary-light text-primary-dark border-grove-200', dot: 'bg-primary' },
+  closed:      { label: 'Completed',        step: 5, pill: 'bg-surface/50 text-text-dim border-border/40', dot: 'bg-border' },
 }
 
 const STATUS_FILTER_TABS = [
@@ -34,13 +35,13 @@ const STATUS_FILTER_TABS = [
 // ── Scaled-Up Stat Card ──────────────────────────────────────
 function StatCard({ title, value, subtitle, icon: Icon, iconColor }) {
   return (
-    <div className="bg-white rounded-xl border border-gray-200/80 p-6 flex items-center justify-between shadow-sm">
-      <div className="space-y-1.5">
-        <p className="text-[12px] font-semibold text-gray-400 uppercase tracking-wider">{title}</p>
-        <p className="text-3xl font-bold text-gray-900 tracking-tight leading-none">{value}</p>
-        <p className="text-xs text-gray-400 font-medium">{subtitle}</p>
+    <div className="bg-white rounded-2xl border border-border/60 p-5 flex items-center justify-between shadow-sm transition-all hover:shadow-soft">
+      <div className="space-y-1">
+        <p className="text-[10px] font-bold text-text-dim uppercase tracking-wider">{title}</p>
+        <p className="text-3xl font-semibold text-text-main tracking-tight leading-none pt-1">{value}</p>
+        <p className="text-xs text-text-sub font-medium">{subtitle}</p>
       </div>
-      <div className={`h-12 w-12 rounded-xl flex items-center justify-center shrink-0 ${iconColor}`}>
+      <div className={`h-11 w-11 rounded-xl flex items-center justify-center shrink-0 ${iconColor}`}>
         <Icon size={20} />
       </div>
     </div>
@@ -53,15 +54,15 @@ function Pagination({ page, total, perPage, onChange }) {
   if (totalPages <= 1) return null
   
   return (
-    <div className="flex items-center justify-between pt-6 border-t border-gray-100 w-full mt-6">
-      <p className="text-sm text-gray-500">
-        Showing <span className="font-medium text-gray-800">{(page - 1) * perPage + 1}</span>–<span className="font-medium text-gray-800">{Math.min(page * perPage, total)}</span> of <span className="font-medium text-gray-800">{total}</span>
+    <div className="flex items-center justify-between pt-6 border-t border-border/40 w-full mt-6">
+      <p className="text-xs font-medium text-text-dim">
+        Showing <span className="font-semibold text-text-main">{(page - 1) * perPage + 1}</span>–<span className="font-semibold text-text-main">{Math.min(page * perPage, total)}</span> of <span className="font-semibold text-text-main">{total}</span>
       </p>
       <div className="flex items-center gap-1.5">
         <button
           onClick={() => onChange(page - 1)}
           disabled={page === 1}
-          className="h-9 w-9 flex items-center justify-center rounded-lg border border-gray-200 text-gray-500 bg-white hover:border-gray-300 disabled:opacity-40 transition-all"
+          className="h-8 w-8 flex items-center justify-center rounded-lg border border-border/60 text-text-sub bg-white hover:bg-surface disabled:opacity-40 disabled:hover:bg-white transition-all"
         >
           <ChevronLeft size={16} />
         </button>
@@ -69,8 +70,8 @@ function Pagination({ page, total, perPage, onChange }) {
           <button
             key={p}
             onClick={() => onChange(p)}
-            className={`h-9 w-9 flex items-center justify-center rounded-lg text-sm font-semibold transition-all
-              ${p === page ? 'bg-[#0f6e56] text-white' : 'bg-white border border-gray-200 text-gray-600 hover:border-gray-300'}`}
+            className={`h-8 w-8 flex items-center justify-center rounded-lg text-xs font-semibold transition-all
+              ${p === page ? 'bg-primary text-white shadow-sm' : 'bg-white border border-border/60 text-text-sub hover:bg-surface'}`}
           >
             {p}
           </button>
@@ -78,7 +79,7 @@ function Pagination({ page, total, perPage, onChange }) {
         <button
           onClick={() => onChange(page + 1)}
           disabled={page === totalPages}
-          className="h-9 w-9 flex items-center justify-center rounded-lg border border-gray-200 text-gray-500 bg-white hover:border-gray-300 disabled:opacity-40 transition-all"
+          className="h-8 w-8 flex items-center justify-center rounded-lg border border-border/60 text-text-sub bg-white hover:bg-surface disabled:opacity-40 disabled:hover:bg-white transition-all"
         >
           <ChevronRight size={16} />
         </button>
@@ -95,27 +96,27 @@ function RequestRow({ req, onClick }) {
   return (
     <div
       onClick={onClick}
-      className="group flex items-center justify-between gap-4 p-5 bg-white border border-gray-200/70 rounded-xl hover:border-gray-300 hover:shadow-md/5 transition-all duration-200 cursor-pointer"
+      className="group flex items-center justify-between gap-4 p-5 bg-white border border-border/60 rounded-xl hover:border-border hover:shadow-soft hover:-translate-y-[1px] transition-all duration-200 cursor-pointer"
     >
       {/* Left Context Group */}
       <div className="flex items-center gap-4 flex-1 min-w-0">
-        <div className="hidden sm:flex items-center justify-center h-11 w-11 rounded-xl bg-gray-50 text-gray-400 group-hover:bg-emerald-50 group-hover:text-[#0f6e56] transition-colors shrink-0">
-          <FileText size={20} />
+        <div className="hidden sm:flex items-center justify-center h-10 w-10 rounded-xl bg-surface text-text-dim group-hover:bg-primary-light group-hover:text-primary transition-colors shrink-0">
+          <FileText size={18} />
         </div>
         <div className="min-w-0 space-y-1">
           <div className="flex items-center gap-2.5 flex-wrap">
-            <h3 className="text-[15px] font-semibold text-gray-900 group-hover:text-[#0f6e56] transition-colors truncate max-w-[200px] sm:max-w-[350px] md:max-w-[550px]">
+            <h3 className="text-sm font-semibold text-text-main group-hover:text-primary transition-colors truncate max-w-[200px] sm:max-w-[350px] md:max-w-[550px]">
               {req.title}
             </h3>
             {req.category && (
-              <span className="text-[11px] font-medium text-gray-500 bg-gray-100 px-2 py-0.5 rounded">
+              <span className="text-[10px] font-bold tracking-wide text-text-sub bg-surface px-2 py-0.5 rounded-md uppercase">
                 {req.category}
               </span>
             )}
           </div>
-          <div className="flex items-center gap-3 text-sm text-gray-400">
+          <div className="flex items-center gap-3 text-xs font-medium text-text-dim">
             <span className="flex items-center gap-1.5">
-              <Clock size={13} />
+              <Clock size={12} />
               Updated {timeAgo(req.updated_at)}
             </span>
           </div>
@@ -125,29 +126,29 @@ function RequestRow({ req, onClick }) {
       {/* Right Metrics & Steppers */}
       <div className="flex items-center gap-5 shrink-0">
         {hasDeliveries && (
-          <span className="hidden md:flex items-center gap-1.5 text-xs font-semibold text-emerald-700 bg-emerald-50 border border-emerald-100 px-2.5 py-1 rounded-md">
-            <CheckCircle2 size={13} /> Files ready
+          <span className="hidden md:flex items-center gap-1.5 text-[11px] font-bold text-primary-dark bg-primary-light border border-grove-100 px-2.5 py-1 rounded-md">
+            <CheckCircle2 size={12} /> Files ready
           </span>
         )}
         
-        <span className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-sm font-medium ${cfg.pill}`}>
+        <span className={`inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1 text-[11px] font-bold tracking-wide ${cfg.pill}`}>
           <span className={`h-1.5 w-1.5 rounded-full ${cfg.dot}`} />
           {cfg.label}
         </span>
 
         {/* Scaled Step Indicators */}
-        <div className="hidden lg:flex items-center gap-1.5">
+        <div className="hidden lg:flex items-center gap-1">
           {[1, 2, 3, 4, 5].map((stepNumber) => (
             <div 
               key={stepNumber}
-              className={`h-2 w-6 rounded-full transition-all duration-300 ${
-                stepNumber <= cfg.step ? 'bg-[#0f6e56]' : 'bg-gray-100'
+              className={`h-1.5 w-5 rounded-full transition-all duration-300 ${
+                stepNumber <= cfg.step ? 'bg-primary' : 'bg-surface border border-border/40'
               }`}
             />
           ))}
         </div>
 
-        <div className="text-gray-400 group-hover:text-gray-900 transition-colors pl-1">
+        <div className="text-text-dim group-hover:text-text-main transition-colors pl-1">
           <ChevronRight size={18} className="transform group-hover:translate-x-0.5 transition-transform" />
         </div>
       </div>
@@ -211,18 +212,20 @@ export default function ClientRequestsPage() {
 
   return (
     <ClientLayout badges={{ requests: dynamicReadyCount }}>
-      {/* Max width set to 6xl to match higher display densities beautifully */}
-      <div className="p-4 sm:p-6 max-w-6xl mx-auto space-y-8 antialiased">
+      {/* Spacer for mobile fixed header */}
+      
+      {/* Max width set to 5xl/6xl to match higher display densities beautifully */}
+      <div className="p-4 sm:p-0 max-w-6xl mx-auto space-y-8 antialiased">
 
         {/* Title Block */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-gray-100 pb-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-border/40 pb-6">
           <div className="space-y-1">
-            <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Request Hub</h1>
-            <p className="text-sm text-gray-400">View updates and track work submitted to {providerName}.</p>
+            <h1 className="text-2xl font-bold text-text-main tracking-tight">Request Hub</h1>
+            <p className="text-sm font-medium text-text-sub">View updates and track work submitted to {providerName}.</p>
           </div>
           <button
             onClick={() => setShowNew(true)}
-            className="flex items-center justify-center gap-2 rounded-xl bg-[#0f6e56] px-5 h-11 text-sm font-semibold text-white hover:bg-[#085041] transition-all w-full sm:w-auto shadow-sm"
+            className="flex items-center justify-center gap-2 rounded-xl bg-primary px-5 h-10 text-sm font-semibold text-white hover:bg-primary-dark active:scale-[0.98] transition-all w-full sm:w-auto shadow-sm"
           >
             <Plus size={16} />
             New Request
@@ -231,15 +234,17 @@ export default function ClientRequestsPage() {
 
         {/* Status Metrics Deck */}
         <div className="hidden sm:grid gap-4 grid-cols-2 lg:grid-cols-4">
-          <StatCard title="Total Requests" value={totalCount} subtitle="All items created" icon={Layers} iconColor="bg-gray-50 text-gray-500" />
+          <StatCard title="Total Requests" value={totalCount} subtitle="All items created" icon={Layers} iconColor="bg-surface text-text-sub" />
           <StatCard title="In Progress" value={dynamicActiveCount} subtitle="Currently being built" icon={Clock} iconColor="bg-indigo-50 text-indigo-600" />
-          <StatCard title="Ready For Review" value={dynamicReadyCount} subtitle="Awaiting your approval" icon={CheckCircle2} iconColor="bg-emerald-50 text-[#0f6e56]" />
-          <StatCard title="Completed" value={dynamicClosedCount} subtitle="Finished requests" icon={CheckCircle} iconColor="bg-gray-100 text-gray-400" />
+          <StatCard title="Ready For Review" value={dynamicReadyCount} subtitle="Awaiting your approval" icon={CheckCircle2} iconColor="bg-primary-light text-primary" />
+          <StatCard title="Completed" value={dynamicClosedCount} subtitle="Finished requests" icon={CheckCircle} iconColor="bg-surface/50 text-text-dim" />
         </div>
 
         {/* Global Toolbar Controls */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pt-2">
-          <div className="flex items-center gap-1.5 overflow-x-auto pb-2 md:pb-0 scrollbar-none border-b md:border-0 border-gray-100">
+          
+          {/* Modern Segmented Control Style Tabs */}
+          <div className="flex items-center gap-1 overflow-x-auto pb-2 md:pb-0 scrollbar-none bg-surface/50 p-1 rounded-xl border border-border/40">
             {STATUS_FILTER_TABS.map(({ key, label }) => {
               const active = statusFilter === key
               const count = key === 'all' ? totalCount : requests.filter(r => r.status === key).length
@@ -247,12 +252,12 @@ export default function ClientRequestsPage() {
                 <button
                   key={key}
                   onClick={() => setStatusFilter(key)}
-                  className={`shrink-0 flex items-center gap-2 rounded-lg px-3.5 h-9 text-sm font-medium transition-all
-                    ${active ? 'bg-gray-900 text-white font-semibold' : 'text-gray-500 hover:bg-gray-100 hover:text-gray-900'}`}
+                  className={`shrink-0 flex items-center gap-2 rounded-lg px-3.5 py-1.5 text-xs transition-all
+                    ${active ? 'bg-white text-text-main font-semibold shadow-sm ring-1 ring-border/50' : 'text-text-dim font-medium hover:text-text-main hover:bg-white/50'}`}
                 >
                   <span>{label}</span>
                   {count > 0 && (
-                    <span className={`text-xs px-2 py-0.5 rounded-md font-bold ${active ? 'bg-white/20 text-white' : 'bg-gray-100 text-gray-400'}`}>
+                    <span className={`text-[10px] px-1.5 py-0.5 rounded-md font-bold ${active ? 'bg-surface text-text-main' : 'bg-surface text-text-sub'}`}>
                       {count}
                     </span>
                   )}
@@ -262,12 +267,12 @@ export default function ClientRequestsPage() {
           </div>
 
           <div className="relative w-full md:w-64 shrink-0">
-            <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
+            <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-text-dim" />
             <input
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
-              placeholder="Search requests by title..."
-              className="w-full h-9 rounded-lg border border-gray-200 bg-white pl-9 pr-4 text-sm outline-none focus:border-gray-900 transition-all placeholder:text-gray-400 text-gray-800"
+              placeholder="Search by title..."
+              className="w-full h-9 rounded-lg border border-border/60 bg-surface/30 pl-9 pr-4 text-sm outline-none focus:border-primary focus:bg-white transition-all placeholder:text-text-dim text-text-main shadow-sm"
             />
           </div>
         </div>
@@ -275,21 +280,21 @@ export default function ClientRequestsPage() {
         {/* Central Display Layer */}
         {loading ? (
           <div className="flex items-center justify-center py-24">
-            <Loader2 size={24} className="animate-spin text-gray-400" />
+            <Loader2 size={24} className="animate-spin text-primary" />
           </div>
         ) : filtered.length === 0 ? (
-          <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-gray-200 bg-white py-20 text-center px-4">
-            <div className="h-12 w-12 rounded-xl bg-gray-50 flex items-center justify-center mb-4">
-              <FileText size={20} className="text-gray-400" />
+          <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border/60 bg-white py-20 text-center px-4">
+            <div className="h-12 w-12 rounded-xl bg-surface flex items-center justify-center mb-4 border border-border/40">
+              <FileText size={20} className="text-text-dim" />
             </div>
-            <p className="text-base font-semibold text-gray-900">No requests found</p>
-            <p className="text-sm text-gray-400 mt-1 mb-6 max-w-xs leading-normal">
+            <p className="text-base font-semibold text-text-main">No requests found</p>
+            <p className="text-sm text-text-sub mt-1 mb-6 max-w-xs leading-normal">
               Try changing your filters or create a brand new request to get started.
             </p>
             {(statusFilter === 'all' && !searchQuery.trim()) && (
               <button
                 onClick={() => setShowNew(true)}
-                className="flex items-center gap-2 rounded-xl bg-[#0f6e56] px-5 h-10 text-sm font-semibold text-white hover:bg-[#085041] transition-all"
+                className="flex items-center gap-2 rounded-xl bg-primary px-5 h-10 text-sm font-semibold text-white hover:bg-primary-dark active:scale-[0.98] transition-all shadow-sm"
               >
                 <Plus size={16} />
                 Create a Request
@@ -298,13 +303,22 @@ export default function ClientRequestsPage() {
           </div>
         ) : (
           <div className="space-y-4">
+            <style>{`
+              @keyframes slideUpFade {
+                from { opacity: 0; transform: translateY(8px); }
+                to   { opacity: 1; transform: translateY(0); }
+              }
+              .animate-slide-up { animation: slideUpFade 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+            `}</style>
+
             <div className="flex flex-col gap-3">
-              {paginatedRequests.map(req => (
-                <RequestRow
-                  key={req.id}
-                  req={req}
-                  onClick={() => navigate(`/my-requests/${req.id}`)}
-                />
+              {paginatedRequests.map((req, i) => (
+                <div key={req.id} className="animate-slide-up" style={{ animationDelay: `${i * 40}ms` }}>
+                  <RequestRow
+                    req={req}
+                    onClick={() => navigate(`/my-requests/${req.id}`)}
+                  />
+                </div>
               ))}
             </div>
 

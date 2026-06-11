@@ -1,10 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { useSelector } from 'react-redux'
-import {
-  Check,
-  ChevronDown,
-  ExternalLink,
-} from 'lucide-react'
+import { Check, ChevronDown, ExternalLink } from 'lucide-react'
 
 import {
   selectTenant,
@@ -13,11 +9,7 @@ import {
 } from '../../features/auth/authSlice'
 
 // ───────────────── Avatar ─────────────────
-function PortalAvatar({
-  name,
-  logo,
-  size = 'sm',
-}) {
+function PortalAvatar({ name, logo, size = 'sm' }) {
   const initials =
     name
       ?.split(' ')
@@ -28,15 +20,15 @@ function PortalAvatar({
 
   const dim =
     size === 'lg'
-      ? 'h-8 w-8 rounded-[8px] text-[11px]'
-      : 'h-6 w-6 rounded-[6px] text-[9px]'
+      ? 'h-8 w-8 rounded-lg text-xs'
+      : 'h-6 w-6 rounded-md text-[10px]'
 
   if (logo) {
     return (
       <img
         src={logo}
         alt={name}
-        className={`${dim} shrink-0 object-cover`}
+        className={`${dim} shrink-0 object-cover shadow-sm`}
       />
     )
   }
@@ -45,18 +37,13 @@ function PortalAvatar({
     <div
       className={`
         ${dim}
-
         shrink-0
-
         flex items-center justify-center
-
-        bg-[#111]
-
+        bg-sidebar
         text-white
-
-        font-semibold
-
-        tracking-wide
+        font-bold
+        tracking-wider
+        shadow-sm
       `}
     >
       {initials}
@@ -67,153 +54,74 @@ function PortalAvatar({
 // ───────────────── Component ─────────────────
 export default function ClientPortalSwitcher() {
   const tenant = useSelector(selectTenant)
+  const memberships = useSelector(selectMemberships)
+  const totalPortals = useSelector(selectTotalPortalCount)
 
-  const memberships = useSelector(
-    selectMemberships
-  )
-
-  const totalPortals = useSelector(
-    selectTotalPortalCount
-  )
-
-  const [open, setOpen] =
-    useState(false)
-
+  const [open, setOpen] = useState(false)
   const ref = useRef(null)
 
   useEffect(() => {
     const handler = (e) => {
-      if (
-        ref.current &&
-        !ref.current.contains(e.target)
-      ) {
+      if (ref.current && !ref.current.contains(e.target)) {
         setOpen(false)
       }
     }
 
-    document.addEventListener(
-      'mousedown',
-      handler
-    )
-
-    return () =>
-      document.removeEventListener(
-        'mousedown',
-        handler
-      )
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
   }, [])
 
-  const providerPortals =
-    memberships?.provider_portals ??
-    []
-
-  const clientPortals =
-    memberships?.client_portals ??
-    []
-
-  const showDropdown =
-    totalPortals > 1
+  const providerPortals = memberships?.provider_portals ?? []
+  const clientPortals = memberships?.client_portals ?? []
+  const showDropdown = totalPortals > 1
 
   // ───────────────── Navigation ─────────────────
   const goTo = (slug, role) => {
     setOpen(false)
+    const path = role === 'provider' ? 'dashboard' : 'portal'
+    const domain = import.meta.env.VITE_APP_DOMAIN || 'lvh.me'
+    const port = import.meta.env.VITE_PORT || '5173'
+    
+    const base = import.meta.env.PROD
+      ? `https://${slug}.${domain}`
+      : `http://${slug}.${domain}:${port}`
 
-    const path =
-      role === 'provider'
-        ? 'dashboard'
-        : 'portal'
-
-    const domain =
-      import.meta.env
-        .VITE_APP_DOMAIN ||
-      'lvh.me'
-
-    const port =
-      import.meta.env.VITE_PORT ||
-      '5173'
-
-    const base =
-      import.meta.env.PROD
-        ? `https://${slug}.${domain}`
-        : `http://${slug}.${domain}:${port}`
-
-    window.location.replace(
-      `${base}/${path}`
-    )
+    window.location.replace(`${base}/${path}`)
   }
 
   return (
-    <div
-      className="relative"
-      ref={ref}
-    >
+    <div className="relative" ref={ref}>
       {/* ───────────────── Trigger ───────────────── */}
       <button
-        onClick={() =>
-          showDropdown &&
-          setOpen((v) => !v)
-        }
+        onClick={() => showDropdown && setOpen((v) => !v)}
         className={`
-          flex w-full items-center gap-2.5
-
-          rounded-[12px]
-
-          px-2.5 py-2
-
-          transition-all duration-150
-
-          hover:bg-[#f5f5f5]
-
-          ${
-            showDropdown
-              ? 'cursor-pointer'
-              : 'cursor-default'
-          }
+          flex w-full items-center gap-3
+          rounded-xl
+          px-2 py-2
+          transition-all duration-200
+          hover:bg-surface
+          ${showDropdown ? 'cursor-pointer' : 'cursor-default'}
         `}
       >
-        <PortalAvatar
-          name={tenant?.name}
-          logo={tenant?.logo_url}
-          size="lg"
-        />
+        <PortalAvatar name={tenant?.name} logo={tenant?.logo_url} size="lg" />
 
         <div className="min-w-0 flex-1 text-left">
-          <p
-            className="
-              truncate
-
-              text-[13px]
-              font-semibold
-
-              text-[#111]
-
-              leading-tight
-            "
-          >
-            {tenant?.name ??
-              'Portal'}
+          <p className="truncate text-sm font-semibold text-text-main leading-tight">
+            {tenant?.name ?? 'Portal'}
           </p>
-
-          <p className="text-[10px] text-[#9b9b9b] mt-0.5">
+          <p className="text-xs text-text-dim mt-0.5">
             Client portal
           </p>
         </div>
 
         {showDropdown && (
           <ChevronDown
-            size={13}
+            size={14}
             className={`
               shrink-0
-
-              text-[#c0c4c0]
-
+              text-text-dim
               transition-transform duration-200
-
-              ${
-                open
-                  ? 'rotate-180'
-                  : ''
-              }
+              ${open ? 'rotate-180' : ''}
             `}
           />
         )}
@@ -224,248 +132,106 @@ export default function ClientPortalSwitcher() {
         <div
           className="
             absolute
-
-            left-[calc(100%+12px)]
+            left-[calc(100%+8px)]
             bottom-0
-
             z-[80]
-
-            w-[260px]
-
+            w-[240px]
             overflow-hidden
-
-            rounded-[16px]
-
-            border border-[#e8e8e8]
-
-            bg-white
-
-            shadow-[0_18px_50px_rgba(0,0,0,0.14)]
-
-            animate-in
-            fade-in
-            slide-in-from-left-2
-            duration-150
+            rounded-xl
+            border border-border/50
+            bg-white/95 backdrop-blur-xl
+            shadow-soft
+            animate-in fade-in slide-in-from-left-2 duration-200
           "
         >
           {/* ───────────────── Workspaces ───────────────── */}
-          {providerPortals.length >
-            0 && (
-            <div className="p-2">
-              <p
-                className="
-                  px-2.5 py-1.5
-
-                  text-[10px]
-                  font-semibold
-
-                  uppercase
-
-                  tracking-[0.1em]
-
-                  text-[#9b9b9b]
-                "
-              >
+          {providerPortals.length > 0 && (
+            <div className="p-1.5">
+              <p className="px-2 py-1.5 text-[10px] font-bold uppercase tracking-wider text-text-dim">
                 Workspaces
               </p>
 
-              {providerPortals.map(
-                (portal) => {
-                  const isCurrent =
-                    portal.tenant_slug ===
-                    tenant?.slug
+              {providerPortals.map((portal) => {
+                const isCurrent = portal.tenant_slug === tenant?.slug
 
-                  return (
-                    <button
-                      key={
-                        portal.tenant_slug
-                      }
-                      onClick={() =>
-                        !isCurrent &&
-                        goTo(
-                          portal.tenant_slug,
-                          'provider'
-                        )
-                      }
-                      className={`
-                        flex w-full items-center gap-2.5
+                return (
+                  <button
+                    key={portal.tenant_slug}
+                    onClick={() => !isCurrent && goTo(portal.tenant_slug, 'provider')}
+                    className={`
+                      flex w-full items-center gap-2.5
+                      rounded-lg
+                      px-2.5 py-2
+                      text-left
+                      transition-all duration-150
+                      ${isCurrent ? 'bg-surface' : 'hover:bg-surface/60'}
+                    `}
+                  >
+                    <PortalAvatar name={portal.tenant_name} logo={portal.tenant_logo} />
 
-                        rounded-[10px]
+                    <span className="flex-1 truncate text-sm text-text-main font-medium">
+                      {portal.tenant_name}
+                    </span>
 
-                        px-2.5 py-2
-
-                        text-left
-
-                        transition-all duration-150
-
-                        ${
-                          isCurrent
-                            ? 'bg-[#f5f5f5]'
-                            : 'hover:bg-[#f7f7f7]'
-                        }
-                      `}
-                    >
-                      <PortalAvatar
-                        name={
-                          portal.tenant_name
-                        }
-                        logo={
-                          portal.tenant_logo
-                        }
-                      />
-
-                      <span
-                        className="
-                          flex-1 truncate
-
-                          text-[13px]
-
-                          text-[#111]
-                        "
-                      >
-                        {
-                          portal.tenant_name
-                        }
-                      </span>
-
-                      {isCurrent && (
-                        <Check
-                          size={12}
-                          className="
-                            shrink-0
-
-                            text-[#0f6e56]
-                          "
-                        />
-                      )}
-                    </button>
-                  )
-                }
-              )}
+                    {isCurrent && (
+                      <Check size={14} className="shrink-0 text-primary" />
+                    )}
+                  </button>
+                )
+              })}
             </div>
           )}
 
           {/* Divider */}
-          {providerPortals.length >
-            0 &&
-            clientPortals.length >
-              0 && (
-              <div className="mx-2 border-t border-[#f0f0f0]" />
-            )}
+          {providerPortals.length > 0 && clientPortals.length > 0 && (
+            <div className="mx-2 h-px bg-border/50" />
+          )}
 
           {/* ───────────────── Client portals ───────────────── */}
-          {clientPortals.length >
-            0 && (
-            <div className="p-2">
-              <p
-                className="
-                  px-2.5 py-1.5
-
-                  text-[10px]
-                  font-semibold
-
-                  uppercase
-
-                  tracking-[0.1em]
-
-                  text-[#9b9b9b]
-                "
-              >
+          {clientPortals.length > 0 && (
+            <div className="p-1.5">
+              <p className="px-2 py-1.5 text-[10px] font-bold uppercase tracking-wider text-text-dim">
                 Client portals
               </p>
 
-              {clientPortals.map(
-                (portal) => {
-                  const isCurrent =
-                    portal.tenant_slug ===
-                    tenant?.slug
+              {clientPortals.map((portal) => {
+                const isCurrent = portal.tenant_slug === tenant?.slug
 
-                  return (
-                    <button
-                      key={
-                        portal.tenant_slug
-                      }
-                      onClick={() =>
-                        !isCurrent &&
-                        goTo(
-                          portal.tenant_slug,
-                          'client'
-                        )
-                      }
-                      className={`
-                        flex w-full items-center gap-2.5
+                return (
+                  <button
+                    key={portal.tenant_slug}
+                    onClick={() => !isCurrent && goTo(portal.tenant_slug, 'client')}
+                    className={`
+                      flex w-full items-center gap-2.5
+                      rounded-lg
+                      px-2.5 py-2
+                      text-left
+                      transition-all duration-150
+                      ${isCurrent ? 'bg-surface' : 'hover:bg-surface/60'}
+                    `}
+                  >
+                    <PortalAvatar name={portal.tenant_name} logo={portal.tenant_logo} />
 
-                        rounded-[10px]
+                    <span className="flex-1 truncate text-sm text-text-main font-medium">
+                      {portal.tenant_name}
+                    </span>
 
-                        px-2.5 py-2
-
-                        text-left
-
-                        transition-all duration-150
-
-                        ${
-                          isCurrent
-                            ? 'bg-[#f5f5f5]'
-                            : 'hover:bg-[#f7f7f7]'
-                        }
-                      `}
-                    >
-                      <PortalAvatar
-                        name={
-                          portal.tenant_name
-                        }
-                        logo={
-                          portal.tenant_logo
-                        }
-                      />
-
-                      <span
-                        className="
-                          flex-1 truncate
-
-                          text-[13px]
-
-                          text-[#111]
-                        "
-                      >
-                        {
-                          portal.tenant_name
-                        }
-                      </span>
-
-                      {isCurrent && (
-                        <Check
-                          size={12}
-                          className="
-                            shrink-0
-
-                            text-[#0f6e56]
-                          "
-                        />
-                      )}
-                    </button>
-                  )
-                }
-              )}
+                    {isCurrent && (
+                      <Check size={14} className="shrink-0 text-primary" />
+                    )}
+                  </button>
+                )
+              })}
             </div>
           )}
 
           {/* ───────────────── Footer ───────────────── */}
-          <div className="border-t border-[#f0f0f0] p-2">
+          <div className="border-t border-border/50 p-1.5 bg-surface/30">
             <button
               onClick={() => {
                 setOpen(false)
-
-                const domain =
-                  import.meta.env
-                    .VITE_APP_DOMAIN ||
-                  'lvh.me'
-
-                const port =
-                  import.meta.env
-                    .VITE_PORT ||
-                  '5173'
-
+                const domain = import.meta.env.VITE_APP_DOMAIN || 'lvh.me'
+                const port = import.meta.env.VITE_PORT || '5173'
                 window.location.replace(
                   import.meta.env.PROD
                     ? `https://${domain}/portals`
@@ -474,24 +240,15 @@ export default function ClientPortalSwitcher() {
               }}
               className="
                 flex w-full items-center gap-2.5
-
-                rounded-[10px]
-
+                rounded-lg
                 px-2.5 py-2
-
                 text-left
-
                 transition-all duration-150
-
-                hover:bg-[#f7f7f7]
+                hover:bg-surface
               "
             >
-              <ExternalLink
-                size={12}
-                className="text-[#c0c4c0]"
-              />
-
-              <span className="text-[12px] text-[#9b9b9b]">
+              <ExternalLink size={14} className="text-text-dim" />
+              <span className="text-xs font-medium text-text-sub">
                 All portals
               </span>
             </button>

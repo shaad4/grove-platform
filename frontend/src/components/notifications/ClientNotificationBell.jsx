@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { createPortal } from 'react-dom'
 import {
   Bell,
   X,
@@ -49,19 +50,19 @@ function groupByDay(notifications) {
 // ── event config — client light theme ────────────────────────
 
 const EVENT_CONFIG = {
-  new_request:     { Icon: PlusCircle,    bg: 'bg-[#f0fdf9]', iconColor: 'text-[#0f6e56]', border: 'border-[#d1fae5]' },
-  status_change:   { Icon: RefreshCw,     bg: 'bg-[#f0fdf9]', iconColor: 'text-[#0f6e56]', border: 'border-[#d1fae5]' },
-  new_message:     { Icon: MessageSquare, bg: 'bg-[#f5f3ff]', iconColor: 'text-[#7c3aed]', border: 'border-[#ede9fe]' },
-  files_delivered: { Icon: Package,       bg: 'bg-[#fffbeb]', iconColor: 'text-[#d97706]', border: 'border-[#fde68a]' },
-  invite_accepted: { Icon: CheckCircle2,  bg: 'bg-[#f0fdf9]', iconColor: 'text-[#0f6e56]', border: 'border-[#d1fae5]' },
+  new_request:     { Icon: PlusCircle,    bg: 'bg-primary-light', iconColor: 'text-primary',      border: 'border-grove-100' },
+  status_change:   { Icon: RefreshCw,     bg: 'bg-primary-light', iconColor: 'text-primary',      border: 'border-grove-100' },
+  new_message:     { Icon: MessageSquare, bg: 'bg-purple-50',     iconColor: 'text-purple-600',   border: 'border-purple-100' },
+  files_delivered: { Icon: Package,       bg: 'bg-amber-50',      iconColor: 'text-amber-600',    border: 'border-amber-100' },
+  invite_accepted: { Icon: CheckCircle2,  bg: 'bg-primary-light', iconColor: 'text-primary',      border: 'border-grove-100' },
 }
 
 const STATUS_META = {
-  received:    { label: 'Submitted',   bg: 'bg-[#f3f4f6]',  text: 'text-[#6b7280]' },
-  in_review:   { label: 'In Review',   bg: 'bg-[#fffbeb]',  text: 'text-[#92400e]' },
-  in_progress: { label: 'In Progress', bg: 'bg-[#eef2ff]',  text: 'text-[#3730a3]' },
-  delivered:   { label: 'Ready',       bg: 'bg-[#ecfdf5]',  text: 'text-[#065f46]' },
-  closed:      { label: 'Done',        bg: 'bg-[#f9fafb]',  text: 'text-[#4b5563]' },
+  received:    { label: 'Submitted',   bg: 'bg-surface',      text: 'text-text-sub' },
+  in_review:   { label: 'In Review',   bg: 'bg-amber-50',     text: 'text-amber-700' },
+  in_progress: { label: 'In Progress', bg: 'bg-indigo-50',    text: 'text-indigo-700' },
+  delivered:   { label: 'Ready',       bg: 'bg-primary-light',text: 'text-primary-dark' },
+  closed:      { label: 'Done',        bg: 'bg-surface',      text: 'text-text-sub' },
 }
 
 function parseStatusTransition(notification) {
@@ -84,12 +85,12 @@ function StatusPills({ from, to }) {
   const toMeta   = STATUS_META[to]
   if (!fromMeta || !toMeta) return null
   return (
-    <div className="flex items-center gap-1.5 mt-1.5">
-      <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${fromMeta.bg} ${fromMeta.text}`}>
+    <div className="flex items-center gap-1.5 mt-2">
+      <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${fromMeta.bg} ${fromMeta.text}`}>
         {fromMeta.label}
       </span>
-      <span className="text-[10px] text-[#9ca3af]">→</span>
-      <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${toMeta.bg} ${toMeta.text}`}>
+      <span className="text-[10px] text-text-dim">→</span>
+      <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${toMeta.bg} ${toMeta.text}`}>
         {toMeta.label}
       </span>
     </div>
@@ -118,38 +119,36 @@ function NotificationItem({ notification, onRead }) {
   return (
     <button
       onClick={handleClick}
-      className={`w-full text-left flex items-start gap-3 px-4 py-3.5 transition-colors hover:bg-[#fafafa] border-b border-[#f5f5f5] last:border-none ${
-        !notification.is_read ? 'bg-[#fafffe]' : 'bg-white'
+      className={`w-full text-left flex items-start gap-3 px-4 py-3.5 transition-all duration-200 border-b border-border/40 last:border-none hover:bg-surface/80 ${
+        !notification.is_read ? 'bg-primary-light/20' : 'bg-transparent'
       }`}
     >
-      {/* icon */}
       <div className="relative shrink-0 mt-0.5">
-        <div className={`h-8 w-8 rounded-xl ${bg} border ${border} flex items-center justify-center`}>
+        <div className={`h-8 w-8 rounded-xl ${bg} border ${border} flex items-center justify-center shadow-sm`}>
           <Icon size={14} className={iconColor} />
         </div>
         {!notification.is_read && (
-          <span className="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-[#0f6e56] border-2 border-white" />
+          <span className="absolute -top-1 -right-1 h-2.5 w-2.5 rounded-full bg-primary border-2 border-white shadow-sm" />
         )}
       </div>
 
-      {/* content */}
       <div className="flex-1 min-w-0">
-        <p className="text-[12.5px] text-[#111] leading-snug font-medium">
+        <p className="text-[13px] text-text-main leading-snug font-medium">
           {notification.title}
         </p>
-        <p className="text-[11px] text-[#9ca3af] mt-0.5">
+        <p className="text-[11px] text-text-dim mt-0.5">
           {relativeTime(notification.created_at)}
         </p>
         {snippet && (
-          <p className="text-[11px] text-[#6b7280] italic mt-1 line-clamp-1">
+          <p className="text-[12px] text-text-sub mt-1.5 line-clamp-2 leading-relaxed">
             "{snippet}"
           </p>
         )}
         {fileCount && (
-          <p className="flex items-center gap-1 text-[11px] text-[#9ca3af] mt-1">
-            <Paperclip size={9} />
+          <div className="inline-flex items-center gap-1.5 mt-2 px-2 py-1 rounded-md bg-surface border border-border/50 text-[11px] text-text-sub font-medium">
+            <Paperclip size={10} className="text-text-dim" />
             {fileCount} file{fileCount !== 1 ? 's' : ''} delivered
-          </p>
+          </div>
         )}
         {transition && <StatusPills from={transition.from} to={transition.to} />}
       </div>
@@ -159,12 +158,14 @@ function NotificationItem({ notification, onRead }) {
 
 // ── main bell ─────────────────────────────────────────────────
 
-export default function ClientNotificationBell({ collapsed = false }) {
+export default function ClientNotificationBell({ collapsed = false, isMobileNav = false }) {
   const [open, setOpen]   = useState(false)
   const [dropdownStyle, setDropdownStyle] = useState({})
   const bellRef     = useRef(null)
   const dropdownRef = useRef(null)
   const navigate    = useNavigate()
+
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 1024
 
   const {
     unreadCount,
@@ -177,6 +178,8 @@ export default function ClientNotificationBell({ collapsed = false }) {
 
   // ── compute dropdown position from bell button's actual rect ──────────────
   const computePosition = useCallback(() => {
+    if (isMobile) return {} // Mobile relies purely on Tailwind inset-0
+
     if (!bellRef.current) return {}
     const rect = bellRef.current.getBoundingClientRect()
     const vpW  = window.innerWidth
@@ -184,23 +187,16 @@ export default function ClientNotificationBell({ collapsed = false }) {
     const dropW = 340
     const dropH = 480
 
-    // prefer opening to the right of the bell
-    let left = rect.right + 8
+    let left = rect.right + 12
     let top  = rect.top
 
-    // if it would clip the right edge, flip left
-    if (left + dropW > vpW - 8) left = rect.left - dropW - 8
-
-    // if it would clip the bottom, push up
-    if (top + dropH > vpH - 8) top = vpH - dropH - 8
-
-    // clamp top
-    if (top < 8) top = 8
+    if (left + dropW > vpW - 12) left = rect.left - dropW - 12
+    if (top + dropH > vpH - 12) top = vpH - dropH - 12
+    if (top < 12) top = 12
 
     return { position: 'fixed', top, left, width: dropW, maxHeight: dropH }
-  }, [])
+  }, [isMobile])
 
-  // recompute on open
   useEffect(() => {
     if (open) {
       setDropdownStyle(computePosition())
@@ -208,7 +204,6 @@ export default function ClientNotificationBell({ collapsed = false }) {
     }
   }, [open, computePosition, loadNotifications])
 
-  // close on outside click
   useEffect(() => {
     function handler(e) {
       if (
@@ -227,90 +222,91 @@ export default function ClientNotificationBell({ collapsed = false }) {
 
   return (
     <>
-      {/* Bell button */}
       <button
         ref={bellRef}
-        onClick={() => setOpen(o => !o)}
-        title="Notifications"
-        className={`
-          relative flex items-center justify-center rounded-xl transition-all duration-150
-          h-9 w-9
-          ${open
-            ? 'bg-[#edf7f3] text-[#0f6e56]'
-            : 'text-[#6b7280] hover:bg-[#f5f5f5] hover:text-[#111]'
-          }
-        `}
+        onClick={(e) => { e.stopPropagation(); setOpen(o => !o); }}
+        className={isMobileNav 
+          ? `relative flex flex-col items-center justify-center gap-1 min-w-[64px] rounded-xl px-1 py-2 transition-all duration-200 ${open ? 'text-primary' : 'text-text-dim hover:text-text-sub'}`
+          : `relative flex items-center justify-center rounded-xl transition-all duration-200 h-9 w-9 ${open ? 'bg-primary-light text-primary' : 'text-text-dim hover:bg-border/30 hover:text-text-main'}`
+        }
       >
-        <Bell size={16} />
-        {unreadCount > 0 && (
-          <span className="absolute -top-0.5 -right-0.5 flex h-[16px] min-w-[16px] items-center justify-center rounded-full bg-[#0f6e56] px-1 text-[9px] font-bold text-white border-2 border-white">
-            {unreadCount > 99 ? '99+' : unreadCount}
-          </span>
-        )}
+        <div className="relative">
+          <Bell size={isMobileNav ? 22 : 18} strokeWidth={2} />
+          {unreadCount > 0 && (
+            <span className={`absolute -top-1.5 -right-1.5 flex items-center justify-center rounded-full bg-red-500 text-white text-[9px] font-bold border-2 border-[#f0f9f6] ${isMobileNav ? 'h-4 w-4' : 'h-4 w-4'}`}>
+              {unreadCount > 99 ? '99+' : unreadCount}
+            </span>
+          )}
+        </div>
+        {isMobileNav && <span className="text-[9px] font-bold uppercase tracking-wide">Alerts</span>}
       </button>
 
-      {/* Dropdown — portal-rendered so it's never clipped by sidebar overflow */}
-      {open && (
+      {/* Render via Portal to escape containing blocks like backdrop-blur */}
+      {open && typeof document !== 'undefined' && createPortal(
         <div
           ref={dropdownRef}
-          className="z-[300] rounded-2xl border border-[#ebebeb] bg-white shadow-xl shadow-black/[0.07] overflow-hidden flex flex-col"
-          style={dropdownStyle}
+          className={`
+            ${isMobile 
+              ? 'fixed inset-0 z-[300] bg-white flex flex-col animate-in slide-in-from-bottom-8 duration-300' 
+              : 'z-[300] rounded-2xl border border-border/60 bg-white/95 backdrop-blur-xl shadow-soft overflow-hidden flex flex-col animate-in fade-in slide-in-from-left-2 duration-200'}
+          `}
+          style={isMobile ? {} : dropdownStyle}
         >
           {/* header */}
-          <div className="flex items-center justify-between px-4 py-3 border-b border-[#f0f0f0] shrink-0">
-            <div className="flex items-center gap-2">
-              <span className="text-[14px] font-semibold text-[#111]">Notifications</span>
+          <div className="flex items-center justify-between px-4 py-4 md:py-3.5 border-b border-border/50 shrink-0 bg-white/50 pt-[max(1rem,env(safe-area-inset-top))]">
+            <div className="flex items-center gap-2.5">
+              <span className="text-base md:text-sm font-semibold text-text-main">Notifications</span>
               {unreadCount > 0 && (
-                <span className="text-[10px] font-semibold bg-[#0f6e56] text-white px-1.5 py-0.5 rounded-full">
+                <span className="text-[10px] font-bold bg-primary text-white px-2 py-0.5 rounded-full shadow-sm">
                   {unreadCount}
                 </span>
               )}
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-3">
               {unreadCount > 0 && (
                 <button
                   onClick={markAllRead}
-                  className="text-[11.5px] font-medium text-[#0f6e56] hover:underline"
+                  className="text-xs font-medium text-primary hover:text-primary-dark transition-colors"
                 >
                   Mark all read
                 </button>
               )}
               <button
                 onClick={() => setOpen(false)}
-                className="flex h-6 w-6 items-center justify-center rounded-lg hover:bg-[#f5f5f5] transition-colors"
+                className="flex h-8 w-8 md:h-7 md:w-7 items-center justify-center rounded-full md:rounded-lg hover:bg-surface text-text-dim hover:text-text-main transition-colors bg-surface md:bg-transparent"
               >
-                <X size={13} className="text-[#9ca3af]" />
+                <X size={16} />
               </button>
             </div>
           </div>
 
           {/* body */}
-          <div className="overflow-y-auto flex-1">
+          <div className="overflow-y-auto flex-1 bg-layout-page md:bg-transparent">
             {!notifLoaded ? (
-              <div className="px-4 py-5 space-y-3">
+              <div className="px-4 py-5 space-y-4">
                 {[1, 2, 3].map(i => (
                   <div key={i} className="flex gap-3 animate-pulse">
-                    <div className="h-8 w-8 rounded-xl bg-[#f3f4f6] shrink-0" />
-                    <div className="flex-1 space-y-2 pt-1">
-                      <div className="h-3 bg-[#f3f4f6] rounded w-3/4" />
-                      <div className="h-2.5 bg-[#f3f4f6] rounded w-1/3" />
+                    <div className="h-8 w-8 rounded-xl bg-surface shrink-0" />
+                    <div className="flex-1 space-y-2.5 pt-1">
+                      <div className="h-3 bg-surface rounded w-3/4" />
+                      <div className="h-2 bg-surface rounded w-1/3" />
                     </div>
                   </div>
                 ))}
               </div>
             ) : notifications.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-12 px-6 text-center">
-                <div className="h-10 w-10 rounded-2xl bg-[#f0fdf9] border border-[#d1fae5] flex items-center justify-center mb-3">
-                  <Bell size={16} className="text-[#0f6e56]" />
+              <div className="flex flex-col items-center justify-center h-full min-h-[250px] px-6 text-center">
+                <div className="h-12 w-12 rounded-2xl bg-primary-light/50 border border-border/50 flex items-center justify-center mb-4 shadow-sm">
+                  <Bell size={20} className="text-primary" />
                 </div>
-                <p className="text-[13px] font-semibold text-[#111]">All caught up</p>
-                <p className="text-[11.5px] text-[#9ca3af] mt-1">No notifications yet.</p>
+                <p className="text-sm font-semibold text-text-main">All caught up</p>
+                <p className="text-xs text-text-sub mt-1">No notifications yet.</p>
               </div>
             ) : (
               groupKeys.map(label => (
                 <div key={label}>
-                  <div className="px-4 py-1.5 bg-[#fafafa] border-b border-[#f5f5f5]">
-                    <span className="text-[9.5px] font-bold tracking-widest text-[#9ca3af]">
+                  <div className="px-4 py-2 bg-surface/80 md:bg-surface/50 border-b border-border/50 sticky top-0 z-10 backdrop-blur-sm">
+                    <span className="text-[10px] font-bold tracking-wider uppercase text-text-dim">
                       {label}
                     </span>
                   </div>
@@ -331,19 +327,20 @@ export default function ClientNotificationBell({ collapsed = false }) {
 
           {/* footer */}
           {notifications.length > 0 && (
-            <div className="shrink-0 border-t border-[#f0f0f0] px-4 py-2.5 bg-[#fafafa]">
-              <div className="flex items-center justify-center gap-1.5">
-                <CheckCheck size={12} className="text-[#0f6e56]" />
-                <p className="text-[11.5px] text-[#6b7280]">
+            <div className="shrink-0 border-t border-border/50 px-4 py-4 md:py-3 bg-white md:bg-surface/50 pb-[max(1rem,env(safe-area-inset-bottom))] md:pb-3">
+              <div className="flex items-center justify-center gap-2">
+                <CheckCheck size={16} md:size={14} className="text-primary" />
+                <p className="text-sm md:text-xs font-medium text-text-sub">
                   {unreadCount > 0
-                    ? <><span className="font-semibold text-[#0f6e56]">{unreadCount}</span> unread</>
+                    ? <><span className="font-bold text-primary">{unreadCount}</span> unread</>
                     : 'All caught up'
                   }
                 </p>
               </div>
             </div>
           )}
-        </div>
+        </div>,
+        document.body
       )}
     </>
   )

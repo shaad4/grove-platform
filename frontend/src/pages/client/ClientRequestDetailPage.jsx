@@ -20,20 +20,21 @@ import {
   X,
   RotateCcw,
   Pencil,
+  ExternalLink
 } from 'lucide-react'
 
 import ClientLayout from '../../components/layout/ClientLayout'
 import requestsApi from '../../api/requests.api'
 import { timeAgo, formatDate } from '../../utils/clientHelpers'
 
-// ─── Status config ────────────────────────────────────────────────────────────
+// ─── Status config (Upgraded to Tailwind Tokens) ──────────────────────────────
 
 const STATUS_CONFIG = {
-  received:    { label: 'Submitted',   step: 0 },
-  in_review:   { label: 'In review',   step: 1 },
-  in_progress: { label: 'In progress', step: 2 },
-  delivered:   { label: 'Delivered',   step: 3 },
-  closed:      { label: 'Completed',   step: 4 },
+  received:    { label: 'Submitted',   step: 0, pill: 'bg-surface text-text-sub border-border/60', dot: 'bg-text-dim' },
+  in_review:   { label: 'In review',   step: 1, pill: 'bg-amber-50 text-amber-700 border-amber-200', dot: 'bg-amber-500' },
+  in_progress: { label: 'In progress', step: 2, pill: 'bg-indigo-50 text-indigo-700 border-indigo-200', dot: 'bg-indigo-500' },
+  delivered:   { label: 'Action Needed', step: 3, pill: 'bg-primary-light text-primary-dark border-grove-200 animate-pulse', dot: 'bg-primary' },
+  closed:      { label: 'Completed',   step: 4, pill: 'bg-surface/50 text-text-dim border-border/40', dot: 'bg-border' },
 }
 
 const STATUS_STEPS = ['received', 'in_review', 'in_progress', 'delivered', 'closed']
@@ -63,53 +64,53 @@ function getDueDateText(date) {
 // ─── Delivery Review Modal ────────────────────────────────────────────────────
 
 function DeliveryReviewModal({ delivery, onClose, onSubmit, loading }) {
-  const [step, setStep] = useState('choice') // 'choice' | 'rework'
+  const [step, setStep] = useState('choice') 
   const [reworkMessage, setReworkMessage] = useState('')
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center px-0 sm:px-4">
+    <div className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center px-0 sm:px-4">
 
       {/* Backdrop */}
       <div
-        className="absolute inset-0 bg-black/40 backdrop-blur-[2px]"
+        className="absolute inset-0 bg-sidebar/30 backdrop-blur-sm transition-opacity"
         onClick={() => !loading && onClose()}
       />
 
       {/* Sheet / Modal */}
-      <div className="relative w-full sm:max-w-md bg-white sm:rounded-2xl rounded-t-2xl shadow-xl overflow-hidden">
+      <div className="relative w-full sm:max-w-md bg-white sm:rounded-2xl rounded-t-3xl shadow-soft overflow-hidden animate-in slide-in-from-bottom-4 sm:slide-in-from-bottom-8 duration-300">
 
         {/* Handle (mobile) */}
         <div className="flex justify-center pt-3 pb-1 sm:hidden">
-          <div className="w-10 h-1 rounded-full bg-[#e8eae8]" />
+          <div className="w-12 h-1.5 rounded-full bg-border/60" />
         </div>
 
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-[#e8eae8]">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-border/50">
           <div>
-            <h2 className="text-[15px] font-semibold text-[#141a14]">
-              {step === 'choice' ? 'Review delivery' : 'Request rework'}
+            <h2 className="text-base font-semibold text-text-main tracking-tight">
+              {step === 'choice' ? 'Review Delivery' : 'Request Rework'}
             </h2>
-            <p className="text-[12px] text-[#9ea89e] mt-0.5">
-              Delivery #{delivery.delivery_number}
+            <p className="text-xs text-text-dim mt-0.5 font-medium">
+              Update #{delivery.delivery_number}
             </p>
           </div>
 
           <button
             onClick={onClose}
             disabled={loading}
-            className="h-8 w-8 rounded-lg border border-[#e8eae8] flex items-center justify-center text-[#9ea89e] hover:text-[#141a14] transition-colors disabled:opacity-50"
+            className="h-8 w-8 rounded-full bg-surface flex items-center justify-center text-text-dim hover:text-text-main hover:bg-border/50 transition-colors disabled:opacity-50"
           >
-            <X size={15} />
+            <X size={16} />
           </button>
         </div>
 
         {/* Body */}
-        <div className="p-5">
+        <div className="p-6">
 
           {step === 'choice' ? (
             <div className="space-y-3">
 
-              <p className="text-[13px] text-[#4a544a] leading-6 mb-4">
+              <p className="text-sm text-text-sub leading-relaxed mb-5">
                 Happy with the work? Approve to close this request. Need changes? Request a rework and leave a note for your provider.
               </p>
 
@@ -117,20 +118,20 @@ function DeliveryReviewModal({ delivery, onClose, onSubmit, loading }) {
               <button
                 onClick={() => onSubmit(delivery.id, 'approve', '')}
                 disabled={loading}
-                className="w-full flex items-center gap-4 rounded-xl border-2 border-[#0f6e56] p-4 text-left hover:bg-[#f3fbf7] transition-colors disabled:opacity-50 group"
+                className="w-full flex items-center gap-4 rounded-xl border border-grove-200 bg-primary-light/50 p-4 text-left hover:bg-primary-light transition-colors disabled:opacity-50 group shadow-sm"
               >
-                <div className="h-10 w-10 rounded-xl bg-[#edf7f3] flex items-center justify-center shrink-0">
+                <div className="h-10 w-10 rounded-xl bg-white flex items-center justify-center shrink-0 border border-grove-100 shadow-sm">
                   {loading ? (
-                    <Loader2 size={18} className="animate-spin text-[#0f6e56]" />
+                    <Loader2 size={18} className="animate-spin text-primary" />
                   ) : (
-                    <CheckCircle2 size={18} className="text-[#0f6e56]" />
+                    <CheckCircle2 size={18} className="text-primary" />
                   )}
                 </div>
                 <div>
-                  <p className="text-[13px] font-semibold text-[#141a14]">
-                    Approve & close
+                  <p className="text-sm font-semibold text-primary-dark">
+                    Approve & Close
                   </p>
-                  <p className="text-[12px] text-[#9ea89e] mt-0.5">
+                  <p className="text-xs text-primary mt-0.5 font-medium">
                     Marks this request as completed
                   </p>
                 </div>
@@ -140,16 +141,16 @@ function DeliveryReviewModal({ delivery, onClose, onSubmit, loading }) {
               <button
                 onClick={() => setStep('rework')}
                 disabled={loading}
-                className="w-full flex items-center gap-4 rounded-xl border border-[#e8eae8] p-4 text-left hover:bg-[#f7f8f7] transition-colors disabled:opacity-50"
+                className="w-full flex items-center gap-4 rounded-xl border border-border/60 p-4 text-left hover:bg-surface hover:border-border transition-all disabled:opacity-50"
               >
-                <div className="h-10 w-10 rounded-xl bg-[#f5f7f5] flex items-center justify-center shrink-0">
-                  <RotateCcw size={18} className="text-[#9ea89e]" />
+                <div className="h-10 w-10 rounded-xl bg-surface flex items-center justify-center shrink-0">
+                  <RotateCcw size={18} className="text-text-dim" />
                 </div>
                 <div>
-                  <p className="text-[13px] font-semibold text-[#141a14]">
-                    Request rework
+                  <p className="text-sm font-semibold text-text-main">
+                    Request Rework
                   </p>
-                  <p className="text-[12px] text-[#9ea89e] mt-0.5">
+                  <p className="text-xs text-text-dim mt-0.5">
                     Sends it back with a note for changes
                   </p>
                 </div>
@@ -157,9 +158,9 @@ function DeliveryReviewModal({ delivery, onClose, onSubmit, loading }) {
 
             </div>
           ) : (
-            <div className="space-y-4">
+            <div className="space-y-4 animate-in fade-in duration-200">
 
-              <p className="text-[13px] text-[#4a544a] leading-6">
+              <p className="text-sm text-text-sub leading-relaxed">
                 Let your provider know what needs to change. This is optional but helps them get it right the next time.
               </p>
 
@@ -169,15 +170,15 @@ function DeliveryReviewModal({ delivery, onClose, onSubmit, loading }) {
                 placeholder="e.g. The logo needs to be centered and the font size increased on mobile..."
                 rows={4}
                 autoFocus
-                className="w-full rounded-xl border border-[#e8eae8] bg-[#fafbfa] px-4 py-3 text-[13px] text-[#141a14] placeholder:text-[#9ea89e] resize-none focus:outline-none focus:border-[#0f6e56] transition-colors"
+                className="w-full rounded-xl border border-border/60 bg-surface/50 px-4 py-3 text-sm text-text-main placeholder:text-text-dim resize-none focus:outline-none focus:border-primary focus:bg-white focus:ring-1 focus:ring-primary/20 transition-all shadow-sm"
               />
 
-              <div className="flex gap-3">
+              <div className="flex gap-3 pt-2">
 
                 <button
                   onClick={() => setStep('choice')}
                   disabled={loading}
-                  className="h-10 px-4 rounded-xl border border-[#e8eae8] text-[13px] text-[#9ea89e] hover:text-[#141a14] transition-colors disabled:opacity-50"
+                  className="h-10 px-5 rounded-xl border border-border/60 text-sm font-medium text-text-sub hover:text-text-main hover:bg-surface transition-colors disabled:opacity-50"
                 >
                   Back
                 </button>
@@ -185,13 +186,13 @@ function DeliveryReviewModal({ delivery, onClose, onSubmit, loading }) {
                 <button
                   onClick={() => onSubmit(delivery.id, 'rework', reworkMessage)}
                   disabled={loading}
-                  className="flex-1 h-10 rounded-xl bg-[#141a14] text-white text-[13px] font-semibold flex items-center justify-center gap-2 disabled:opacity-50 hover:bg-[#1f2a1f] transition-colors"
+                  className="flex-1 h-10 rounded-xl bg-primary text-white text-sm font-semibold flex items-center justify-center gap-2 disabled:opacity-50 hover:bg-primary-dark transition-all shadow-sm active:scale-[0.98]"
                 >
                   {loading
-                    ? <Loader2 size={14} className="animate-spin" />
-                    : <RotateCcw size={14} />
+                    ? <Loader2 size={16} className="animate-spin" />
+                    : <RotateCcw size={16} />
                   }
-                  Send rework request
+                  Send Rework Request
                 </button>
 
               </div>
@@ -217,12 +218,13 @@ export default function ClientRequestDetailPage() {
   const [loading, setLoading]       = useState(true)
   const [showChat, setShowChat]     = useState(false)
 
-  const [activities, setActivities] = useState([])
+  // ── Mobile Navigation State ──
+  // 'details' | 'deliveries'
+  const [mobileView, setMobileView] = useState('details')
 
   // Review modal
   const [reviewModal, setReviewModal]   = useState(null)  // delivery object | null
   const [reviewLoading, setReviewLoading] = useState(false)
-
   
   // Edit Request
   const [isEditing, setIsEditing]   = useState(false)
@@ -249,44 +251,18 @@ export default function ClientRequestDetailPage() {
 
   const { registerPortalListener } = useBadges()
 
-  useEffect(() => {
-    const handleMouseMove = (e) => {
-      if (isResizingSidebar.current) {
-        setSidebarWidth(Math.max(280, Math.min(480, e.clientX)))
-      } else if (isResizingChat.current) {
-        setChatWidth(Math.max(300, Math.min(500, window.innerWidth - e.clientX)))
-      }
-    }
-    const handleMouseUp = () => {
-      if (isResizingSidebar.current || isResizingChat.current) {
-        isResizingSidebar.current = false
-        isResizingChat.current    = false
-        document.body.style.cursor    = ''
-        document.body.style.userSelect = ''
-      }
-    }
-    window.addEventListener('mousemove', handleMouseMove)
-    window.addEventListener('mouseup',   handleMouseUp)
-    return () => {
-      window.removeEventListener('mousemove', handleMouseMove)
-      window.removeEventListener('mouseup',   handleMouseUp)
-    }
-  }, [])
-
   // ── Data fetching ──────────────────────────────────────────────────────────
 
   const fetchAll = useCallback(async () => {
     try {
-      const [reqRes, delRes, actRes] = await Promise.all([
+      const [reqRes, delRes] = await Promise.all([
         requestsApi.get(requestId),
         requestsApi.getDeliveries(requestId),
-        requestsApi.getActivity(requestId),
       ])
       setReq(reqRes.data.data)
       setDeliveries(delRes.data.data || [])
-      setActivities(actRes.data.data || []) 
     } catch {
-      //
+      // safe fallback
     } finally {
       setLoading(false)
     }
@@ -318,7 +294,6 @@ export default function ClientRequestDetailPage() {
       if (msg.type === 'status_change' || msg.type === 'files_delivered') {
         const newStatus = msg.new_status || 'delivered'
         setReq((prev) => prev ? { ...prev, status: newStatus, updated_at: msg.updated_at || new Date().toISOString() } : prev)
-        // if a delivery just arrived, refetch to get the actual delivery card
         if (msg.type === 'files_delivered') fetchAll()
       }
 
@@ -328,8 +303,6 @@ export default function ClientRequestDetailPage() {
     })
   }, [registerPortalListener, requestId, fetchAll])
 
-  // ── Review handler ─────────────────────────────────────────────────────────
-
   const handleReview = async (deliveryId, action, message) => {
     setReviewLoading(true)
     try {
@@ -337,7 +310,7 @@ export default function ClientRequestDetailPage() {
       await fetchAll()
       setReviewModal(null)
     } catch {
-      //
+      // safe fallback
     } finally {
       setReviewLoading(false)
     }
@@ -347,9 +320,9 @@ export default function ClientRequestDetailPage() {
 
   if (loading) {
     return (
-      <ClientLayout>
+      <ClientLayout fullBleed>
         <div className="h-[calc(100vh-64px)] flex items-center justify-center">
-          <Loader2 size={22} className="animate-spin text-[#0f6e56]" />
+          <Loader2 size={24} className="animate-spin text-primary" />
         </div>
       </ClientLayout>
     )
@@ -357,20 +330,20 @@ export default function ClientRequestDetailPage() {
 
   if (!req) {
     return (
-      <ClientLayout>
+      <ClientLayout fullBleed>
         <div className="h-[calc(100vh-64px)] flex flex-col items-center justify-center text-center px-6">
-          <div className="h-16 w-16 rounded-2xl bg-[#f5f7f5] flex items-center justify-center mb-4">
-            <AlertCircle size={28} className="text-[#9ea89e]" />
+          <div className="h-16 w-16 rounded-2xl bg-surface border border-border/50 flex items-center justify-center mb-5 shadow-sm">
+            <AlertCircle size={28} className="text-text-dim" />
           </div>
-          <h2 className="text-[18px] font-semibold text-[#141a14]">Request not found</h2>
-          <p className="text-[13px] text-[#9ea89e] mt-1">
-            The request may have been removed or unavailable.
+          <h2 className="text-lg font-semibold text-text-main">Request not found</h2>
+          <p className="text-sm text-text-sub mt-1.5 max-w-xs">
+            This request may have been removed or is currently unavailable.
           </p>
           <button
             onClick={() => navigate('/my-requests')}
-            className="mt-5 h-10 px-4 rounded-xl border border-[#e8eae8] bg-white text-[13px] font-medium text-[#141a14]"
+            className="mt-6 h-10 px-5 rounded-xl border border-border/60 bg-white text-sm font-semibold text-text-main shadow-sm hover:bg-surface transition-colors"
           >
-            Back to requests
+            Back to Requests
           </button>
         </div>
       </ClientLayout>
@@ -380,7 +353,6 @@ export default function ClientRequestDetailPage() {
   const cfg         = STATUS_CONFIG[req.status] || STATUS_CONFIG.received
   const currentStep = cfg.step
 
-  // Latest delivery number — used to know which card gets the review button
   const latestDeliveryNumber = deliveries.length
     ? Math.max(...deliveries.map(d => d.delivery_number))
     : null
@@ -388,65 +360,85 @@ export default function ClientRequestDetailPage() {
   // ── Render ─────────────────────────────────────────────────────────────────
 
   return (
-    <ClientLayout>
+    <ClientLayout fullBleed>
       <style>{`
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
       `}</style>
 
-      <div className="flex flex-col h-[100dvh] overflow-hidden bg-[#fbfcfb]">
+      {/* Spacer to prevent overlap from mobile top-bar in the layout */}
+
+      <div className="flex flex-col h-[calc(100dvh-60px)] lg:h-[100dvh] overflow-hidden bg-layout-page relative">
 
         {/* ── HEADER ──────────────────────────────────────────────────────── */}
-        <div className="h-[68px] border-b border-[#e8eae8] bg-white px-4 lg:px-6 flex items-center justify-between shrink-0">
-
-          <div className="min-w-0">
-            <div className="flex items-center gap-2 text-[12px] text-[#9ea89e] mb-1">
+        <div className="h-[72px] border-b border-border/50 bg-white px-4 lg:px-6 flex items-center justify-between shrink-0 shadow-sm z-20 relative">
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-2 text-[11px] font-bold tracking-wider text-text-dim uppercase mb-1">
               <button
                 onClick={() => navigate('/my-requests')}
-                className="hover:text-[#141a14]"
+                className="hover:text-text-main transition-colors"
               >
-                My requests
+                My Requests
               </button>
-              <ChevronRight size={12} />
-              <span className="truncate max-w-[180px] lg:max-w-none">{req.title}</span>
+              <ChevronRight size={12} className="opacity-50" />
+              <span className="truncate max-w-[150px] lg:max-w-[300px]">ID: #{req.id?.substring(0,6)}</span>
             </div>
 
-            <div className="flex items-center gap-2 flex-wrap">
-              <h1 className="text-[16px] lg:text-[18px] font-semibold text-[#141a14] truncate">
+            <div className="flex items-center gap-3 flex-wrap">
+              <h1 className="text-base lg:text-lg font-semibold text-text-main tracking-tight truncate max-w-[200px] sm:max-w-[400px] lg:max-w-[500px]">
                 {req.title}
               </h1>
-              <div className="h-6 px-2.5 rounded-full bg-[#edf7f3] text-[#0f6e56] text-[11px] font-semibold flex items-center">
+              <span className={`inline-flex items-center gap-1.5 rounded-md border px-2 py-0.5 text-[10px] font-bold tracking-wide uppercase hidden sm:flex ${cfg.pill}`}>
                 {cfg.label}
-              </div>
+              </span>
             </div>
           </div>
+        </div>
 
-          {/* Mobile chat button */}
-          <button
-            onClick={() => setShowChat(true)}
-            className="lg:hidden h-10 px-3 rounded-xl border border-[#e8eae8] bg-white flex items-center gap-2"
-          >
-            <MessageSquare size={15} className="text-[#141a14]" />
-            <span className="text-[12px] font-medium text-[#141a14]">Chat</span>
-          </button>
-
+        {/* ── MOBILE TABS (Details vs Deliveries ONLY) ────────────────────── */}
+        <div className="lg:hidden flex p-3 border-b border-border/50 bg-white shrink-0 z-10">
+          <div className="flex w-full bg-surface/50 p-1.5 rounded-xl border border-border/40">
+            <button
+              onClick={() => setMobileView('details')}
+              className={`flex-1 py-2 text-xs font-semibold rounded-lg transition-all ${
+                mobileView === 'details' ? 'bg-white text-text-main shadow-sm ring-1 ring-border/50' : 'text-text-dim hover:text-text-main'
+              }`}
+            >
+              Details
+            </button>
+            <button
+              onClick={() => setMobileView('deliveries')}
+              className={`flex-1 py-2 text-xs font-semibold rounded-lg transition-all flex items-center justify-center gap-1.5 ${
+                mobileView === 'deliveries' ? 'bg-white text-text-main shadow-sm ring-1 ring-border/50' : 'text-text-dim hover:text-text-main'
+              }`}
+            >
+              Deliveries
+              {deliveries.length > 0 && (
+                <span className={`px-1.5 py-0.5 rounded-md text-[9px] ${
+                  mobileView === 'deliveries' ? 'bg-primary-light text-primary-dark' : 'bg-surface border border-border/60 text-text-sub'
+                }`}>
+                  {deliveries.length}
+                </span>
+              )}
+            </button>
+          </div>
         </div>
 
         {/* ── MAIN LAYOUT ─────────────────────────────────────────────────── */}
         <div className="flex flex-1 min-h-0 overflow-hidden h-full">
 
-          {/* LEFT SIDEBAR */}
+          {/* LEFT SIDEBAR (DETAILS) */}
           <div
-            style={{ width: window.innerWidth >= 1024 ? `${sidebarWidth}px` : '100%' }}
-            className="w-full lg:w-[340px] border-r border-[#e8eae8] bg-white overflow-y-auto no-scrollbar shrink-0 h-full"
+            style={window.innerWidth >= 1024 ? { width: `${sidebarWidth}px` } : {}}
+            className={`${mobileView === 'details' ? 'flex' : 'hidden'} lg:flex flex-col w-full lg:w-[360px] border-r border-border/50 bg-white overflow-y-auto no-scrollbar shrink-0 h-full`}
           >
-            <div className="p-4 lg:p-5 space-y-4">
+            <div className="p-5 lg:p-6 space-y-6 pb-24 lg:pb-6"> {/* Added pb-24 for mobile FAB clearance */}
 
               {/* Progress */}
-              <div className="rounded-2xl border border-[#e8eae8] bg-white p-5">
-                <div className="flex items-center justify-between mb-5">
-                  <h2 className="text-[15px] font-semibold text-[#141a14]">Progress</h2>
-                  <span className="text-[12px] font-semibold text-[#0f6e56]">{cfg.label}</span>
+              <div>
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-sm font-semibold text-text-main">Progress</h2>
+                  <span className="text-xs font-semibold text-primary">{cfg.label}</span>
                 </div>
 
                 <div className="space-y-0">
@@ -454,26 +446,26 @@ export default function ClientRequestDetailPage() {
                     const isDone    = index < currentStep
                     const isCurrent = index === currentStep
                     return (
-                      <div key={step} className="flex gap-3">
+                      <div key={step} className="flex gap-4">
                         <div className="flex flex-col items-center">
-                          <div className={`h-4 w-4 rounded-full border-2 flex items-center justify-center
-                            ${isCurrent || isDone ? 'bg-[#0f6e56] border-[#0f6e56]' : 'bg-white border-[#d9ded9]'}`}
+                          <div className={`h-5 w-5 rounded-full border-2 flex items-center justify-center transition-colors
+                            ${isCurrent || isDone ? 'bg-primary border-primary' : 'bg-surface border-border/60'}`}
                           >
-                            {isDone    && <CheckCircle2 size={8} className="text-white" />}
-                            {isCurrent && <div className="h-1.5 w-1.5 rounded-full bg-white" />}
+                            {isDone    && <CheckCircle2 size={12} className="text-white" />}
+                            {isCurrent && <div className="h-2 w-2 rounded-full bg-white shadow-sm" />}
                           </div>
                           {index < STATUS_STEPS.length - 1 && (
-                            <div className={`w-0.5 h-7 mt-1 ${isDone ? 'bg-[#0f6e56]/30' : 'bg-[#e8eae8]'}`} />
+                            <div className={`w-0.5 h-8 my-1 rounded-full ${isDone ? 'bg-primary/30' : 'bg-border/50'}`} />
                           )}
                         </div>
-                        <div className="pb-3">
-                          <p className={`text-[13px] font-medium
-                            ${isCurrent ? 'text-[#0f6e56]' : isDone ? 'text-[#141a14]' : 'text-[#9ea89e]'}`}
+                        <div className="pb-4 pt-0.5">
+                          <p className={`text-sm font-semibold
+                            ${isCurrent ? 'text-primary' : isDone ? 'text-text-main' : 'text-text-dim'}`}
                           >
                             {STATUS_CONFIG[step].label}
                           </p>
                           {isCurrent && (
-                            <p className="text-[11px] text-[#9ea89e] mt-0.5">
+                            <p className="text-xs text-text-dim mt-1 font-medium">
                               Updated {timeAgo(req.updated_at)}
                             </p>
                           )}
@@ -483,41 +475,37 @@ export default function ClientRequestDetailPage() {
                   })}
                 </div>
               </div>
+              
+              <div className="h-px bg-border/40 w-full" />
 
               {/* Meta */}
-              <div className="rounded-2xl border border-[#e8eae8] bg-white p-5">
-                <div className="space-y-4">
-
-                  <div className="flex gap-3">
-                    <div className="h-10 w-10 rounded-xl bg-[#f5f7f5] flex items-center justify-center shrink-0">
-                      <Calendar size={16} className="text-[#9ea89e]" />
-                    </div>
-                    <div>
-                      <p className="text-[11px] text-[#9ea89e] mb-1">Submitted</p>
-                      <p className="text-[13px] font-medium text-[#141a14]">{formatDate(req.created_at)}</p>
-                    </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="flex flex-col gap-1">
+                  <div className="flex items-center gap-1.5 text-text-dim mb-1">
+                    <Calendar size={14} />
+                    <p className="text-[10px] font-bold uppercase tracking-wider">Submitted</p>
                   </div>
-
-                  {req.due_date && (
-                    <div className="flex gap-3">
-                      <div className="h-10 w-10 rounded-xl bg-[#f5f7f5] flex items-center justify-center shrink-0">
-                        <Clock3 size={16} className="text-[#9ea89e]" />
-                      </div>
-                      <div>
-                        <p className="text-[11px] text-[#9ea89e] mb-1">Due date</p>
-                        <p className="text-[13px] font-medium text-[#141a14]">{formatDate(req.due_date)}</p>
-                        <p className="text-[11px] text-[#0f6e56] mt-1 font-medium">{getDueDateText(req.due_date)}</p>
-                      </div>
-                    </div>
-                  )}
-
+                  <p className="text-sm font-semibold text-text-main">{formatDate(req.created_at)}</p>
                 </div>
+
+                {req.due_date && (
+                  <div className="flex flex-col gap-1">
+                    <div className="flex items-center gap-1.5 text-text-dim mb-1">
+                      <Clock3 size={14} />
+                      <p className="text-[10px] font-bold uppercase tracking-wider">Due Date</p>
+                    </div>
+                    <p className="text-sm font-semibold text-text-main">{formatDate(req.due_date)}</p>
+                    <p className="text-[11px] text-primary font-bold">{getDueDateText(req.due_date)}</p>
+                  </div>
+                )}
               </div>
 
+              <div className="h-px bg-border/40 w-full" />
+
               {/* Description */}
-              <div className="rounded-2xl border border-[#e8eae8] bg-white p-5">
+              <div>
                 <div className="flex items-center justify-between mb-3">
-                  <h2 className="text-[15px] font-semibold text-[#141a14]">Request details</h2>
+                  <h2 className="text-sm font-semibold text-text-main">Request Details</h2>
                   {req.status === 'received' && !isEditing && (
                     <button
                       onClick={() => {
@@ -526,79 +514,81 @@ export default function ClientRequestDetailPage() {
                         setIsEditing(true)
                         setEditError(null)
                       }}
-                      className="h-7 px-2.5 rounded-lg border border-[#e8eae8] flex items-center gap-1.5 text-[11px] text-[#9ea89e] hover:text-[#141a14] hover:border-[#d0d4d0] transition-colors"
+                      className="h-7 px-3 rounded-md border border-border/60 flex items-center gap-1.5 text-xs font-semibold text-text-sub hover:text-text-main hover:bg-surface transition-colors shadow-sm"
                     >
-                      <Pencil size={11} />
+                      <Pencil size={12} />
                       Edit
                     </button>
                   )}
                 </div>
 
                 {isEditing ? (
-                  <div className="space-y-3">
+                  <div className="space-y-4 animate-in fade-in duration-200">
                     <div>
-                      <label className="text-[11px] text-[#9ea89e] mb-1.5 block">Title</label>
+                      <label className="text-xs font-semibold text-text-sub mb-1.5 block">Title</label>
                       <input
                         value={editTitle}
                         onChange={e => setEditTitle(e.target.value)}
-                        className="w-full rounded-xl border border-[#e8eae8] bg-[#fafbfa] px-4 py-2.5 text-[13px] text-[#141a14] focus:outline-none focus:border-[#0f6e56] transition-colors"
+                        className="w-full rounded-xl border border-border/60 bg-surface/30 px-4 py-2.5 text-sm text-text-main focus:outline-none focus:border-primary focus:bg-white focus:ring-1 focus:ring-primary/20 transition-all shadow-sm"
                       />
                     </div>
                     <div>
-                      <label className="text-[11px] text-[#9ea89e] mb-1.5 block">Description</label>
+                      <label className="text-xs font-semibold text-text-sub mb-1.5 block">Description</label>
                       <textarea
                         value={editDesc}
                         onChange={e => setEditDesc(e.target.value)}
                         rows={5}
-                        className="w-full rounded-xl border border-[#e8eae8] bg-[#fafbfa] px-4 py-3 text-[13px] text-[#141a14] resize-none focus:outline-none focus:border-[#0f6e56] transition-colors"
+                        className="w-full rounded-xl border border-border/60 bg-surface/30 px-4 py-3 text-sm text-text-main resize-none focus:outline-none focus:border-primary focus:bg-white focus:ring-1 focus:ring-primary/20 transition-all shadow-sm"
                       />
                     </div>
 
                     {editError && (
-                      <p className="text-[12px] text-red-500">{editError}</p>
+                      <div className="flex items-center gap-2 p-3 rounded-lg bg-red-50 border border-red-100 text-red-600 text-xs font-medium">
+                        <AlertCircle size={14} />
+                        {editError}
+                      </div>
                     )}
 
-                    <div className="flex gap-2 pt-1">
+                    <div className="flex gap-2 pt-2">
                       <button
                         onClick={() => { setIsEditing(false); setEditError(null) }}
                         disabled={editLoading}
-                        className="h-9 px-4 rounded-xl border border-[#e8eae8] text-[12px] text-[#9ea89e] hover:text-[#141a14] transition-colors disabled:opacity-50"
+                        className="flex-1 h-10 rounded-xl border border-border/60 text-sm font-semibold text-text-sub hover:text-text-main hover:bg-surface transition-colors disabled:opacity-50"
                       >
                         Cancel
                       </button>
                       <button
                         onClick={handleEditSave}
                         disabled={editLoading || !editTitle.trim() || !editDesc.trim()}
-                        className="flex-1 h-9 rounded-xl bg-[#141a14] text-white text-[12px] font-semibold flex items-center justify-center gap-2 disabled:opacity-50 hover:bg-[#1f2a1f] transition-colors"
+                        className="flex-1 h-10 rounded-xl bg-primary text-white text-sm font-semibold flex items-center justify-center gap-2 disabled:opacity-50 hover:bg-primary-dark transition-all shadow-sm active:scale-[0.98]"
                       >
-                        {editLoading
-                          ? <Loader2 size={13} className="animate-spin" />
-                          : <CheckCircle2 size={13} />
-                        }
-                        Save changes
+                        {editLoading ? <Loader2 size={16} className="animate-spin" /> : <CheckCircle2 size={16} />}
+                        Save Changes
                       </button>
                     </div>
                   </div>
                 ) : (
-                  <p className="text-[13px] leading-7 text-[#4a544a] whitespace-pre-wrap">
-                    {req.description}
-                  </p>
+                  <div className="rounded-xl bg-surface/50 border border-border/40 p-4">
+                    <p className="text-sm leading-relaxed text-text-sub whitespace-pre-wrap">
+                      {req.description}
+                    </p>
+                  </div>
                 )}
               </div>
 
               {/* Attachments */}
-              <div className="rounded-2xl border border-[#e8eae8] bg-white p-5">
-                <div className="flex items-center justify-between mb-4">
-                  <div>
-                    <h2 className="text-[15px] font-semibold text-[#141a14]">Attachments</h2>
-                    <p className="text-[12px] text-[#9ea89e] mt-0.5">{req.files?.length || 0} files</p>
-                  </div>
-                  <FileText size={16} className="text-[#9ea89e]" />
+              <div>
+                <div className="flex items-center justify-between mb-3">
+                  <h2 className="text-sm font-semibold text-text-main">Attachments</h2>
+                  <span className="text-xs font-bold text-text-dim px-2 py-0.5 rounded-md bg-surface border border-border/60">
+                    {req.files?.length || 0}
+                  </span>
                 </div>
 
                 {!req.files?.length ? (
-                  <div className="rounded-xl bg-[#f7f8f7] py-6 text-center">
-                    <p className="text-[12px] text-[#9ea89e]">No attachments</p>
+                  <div className="rounded-xl border border-dashed border-border/60 bg-surface/30 py-8 text-center flex flex-col items-center">
+                    <Paperclip size={20} className="text-text-dim mb-2" />
+                    <p className="text-xs font-medium text-text-dim">No attachments provided</p>
                   </div>
                 ) : (
                   <div className="space-y-2">
@@ -608,17 +598,17 @@ export default function ClientRequestDetailPage() {
                       href={file.download_url}
                       target="_blank"
                       rel="noreferrer"
-                      className="group flex items-center gap-3 rounded-xl border border-[#e8eae8] px-3 py-3 hover:bg-[#f7f8f7] transition-colors"
+                      className="group flex items-center gap-3 rounded-xl border border-border/60 px-3 py-3 hover:border-primary/50 hover:shadow-soft hover:-translate-y-[1px] bg-white transition-all duration-200"
                     >
-                      <div className="h-10 w-10 rounded-xl bg-[#f5f7f5] flex items-center justify-center shrink-0">
-                        <FileText size={15} className="text-[#9ea89e]" />
+                      <div className="h-10 w-10 rounded-lg bg-surface flex items-center justify-center shrink-0 group-hover:bg-primary-light transition-colors">
+                        <FileText size={18} className="text-text-dim group-hover:text-primary" />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-[13px] font-medium text-[#141a14] truncate">{file.file_name}</p>
-                        <div className="flex items-center gap-2 mt-1">
-                          <span className="text-[11px] text-[#9ea89e]">{formatFileSize(file.file_size_bytes)}</span>
-                          <span className="text-[#d6dad6]">•</span>
-                          <span className="text-[11px] text-[#9ea89e] uppercase">{file.file_extension}</span>
+                        <p className="text-sm font-semibold text-text-main truncate group-hover:text-primary transition-colors">{file.file_name}</p>
+                        <div className="flex items-center gap-2 mt-0.5">
+                          <span className="text-[11px] font-medium text-text-dim">{formatFileSize(file.file_size_bytes)}</span>
+                          <span className="text-border">•</span>
+                          <span className="text-[10px] font-bold text-text-dim uppercase tracking-wider">{file.file_extension}</span>
                         </div>
                       </div>
                       <button
@@ -638,9 +628,9 @@ export default function ClientRequestDetailPage() {
                             window.open(file.download_url, '_blank')
                           }
                         }}
-                        className="shrink-0 h-8 w-8 rounded-lg flex items-center justify-center text-[#9ea89e] hover:text-[#0f6e56] hover:bg-[#edf7f3] transition-colors"
+                        className="shrink-0 h-8 w-8 rounded-full flex items-center justify-center text-text-dim hover:text-primary hover:bg-primary-light transition-colors"
                       >
-                        <Download size={15} />
+                        <Download size={14} />
                       </button>
                     </a>
                   ))}
@@ -648,68 +638,44 @@ export default function ClientRequestDetailPage() {
                 )}
               </div>
 
-              {/* AI summary */}
-              {req.ai_summary && (
-                <div className="rounded-2xl border border-[#d8f3e8] bg-[#f3fbf7] p-5">
-                  <div className="flex items-center gap-2 mb-3">
-                    <div className="h-8 w-8 rounded-lg bg-[#e4f7ef] flex items-center justify-center">
-                      <Sparkles size={14} className="text-[#0f6e56]" />
-                    </div>
-                    <div>
-                      <h2 className="text-[14px] font-semibold text-[#141a14]">AI summary</h2>
-                      <p className="text-[11px] text-[#9ea89e]">Auto generated</p>
-                    </div>
-                  </div>
-                  <p className="text-[13px] leading-7 text-[#4a544a]">{req.ai_summary}</p>
-                </div>
-              )}
-
             </div>
           </div>
 
-          {/* Sidebar resize handle */}
+          {/* Sidebar resize handle (Desktop Only) */}
           <div
             onMouseDown={startSidebarResize}
-            className="hidden lg:flex w-[5px] shrink-0 relative cursor-col-resize group items-center justify-center bg-transparent hover:bg-[#0f6e56]/10 transition-colors z-10"
-            title="Drag to resize sidebar"
+            className="hidden lg:flex w-2 shrink-0 relative cursor-col-resize group items-center justify-center bg-transparent z-10 hover:bg-primary/5 transition-colors"
           >
-            <div className="absolute inset-y-0 left-[2px] w-px bg-[#e8eae8] group-hover:bg-[#0f6e56]/30 transition-colors" />
+            <div className="absolute inset-y-0 left-1/2 -translate-x-1/2 w-px bg-transparent group-hover:bg-primary/20 transition-colors" />
             <div className="relative z-10 flex flex-col gap-[3px] opacity-0 group-hover:opacity-100 transition-opacity">
-              {[...Array(5)].map((_, i) => (
-                <div key={i} className="w-[3px] h-[3px] rounded-full bg-[#0f6e56]/50" />
+              {[...Array(4)].map((_, i) => (
+                <div key={i} className="w-1 h-1 rounded-full bg-primary/40" />
               ))}
             </div>
           </div>
 
           {/* ── CENTER — DELIVERIES ────────────────────────────────────────── */}
-          <div className="hidden md:flex flex-1 flex-col overflow-hidden h-full">
+          <div className={`${mobileView === 'deliveries' ? 'flex' : 'hidden'} lg:flex flex-1 flex-col overflow-hidden h-full bg-layout-page`}>
 
-            <div className="h-[68px] border-b border-[#e8eae8] bg-white px-6 flex items-center justify-between shrink-0">
+            <div className="hidden lg:flex h-[72px] px-8 items-center justify-between shrink-0">
               <div>
-                <h2 className="text-[15px] font-semibold text-[#141a14]">Deliveries</h2>
-                <p className="text-[12px] text-[#9ea89e] mt-0.5">Files and updates from your provider</p>
-              </div>
-              <div className="h-8 px-3 rounded-full bg-[#f5f7f5] text-[11px] font-medium text-[#4a544a] flex items-center">
-                {deliveries.length} updates
+                <h2 className="text-base font-semibold text-text-main tracking-tight">Deliveries</h2>
+                <p className="text-xs font-medium text-text-sub mt-0.5">Files and updates from your provider</p>
               </div>
             </div>
 
-            <div className="flex-1 overflow-y-auto no-scrollbar p-6">
+            <div className="flex-1 overflow-y-auto no-scrollbar p-5 lg:px-8 lg:pb-8 pb-24"> {/* Added pb-24 for mobile FAB clearance */}
 
               {/* ── Pending review banner ──────────────────────────────────── */}
               {req.status === 'delivered' && deliveries.length > 0 && (
-                <div className="mb-5 rounded-2xl border border-[#d8f3e8] bg-[#f3fbf7] px-5 py-4 flex items-center justify-between gap-4">
-                  <div className="flex items-center gap-3">
-                    <div className="h-9 w-9 rounded-xl bg-[#edf7f3] flex items-center justify-center shrink-0">
-                      <CheckCircle2 size={16} className="text-[#0f6e56]" />
+                <div className="mb-6 rounded-2xl border border-grove-200 bg-primary-light p-4 lg:p-5 flex flex-col lg:flex-row lg:items-center justify-between gap-4 shadow-sm animate-in fade-in slide-in-from-top-2 duration-300">
+                  <div className="flex items-center gap-3 lg:gap-4">
+                    <div className="h-10 w-10 lg:h-12 lg:w-12 rounded-xl bg-white border border-grove-100 shadow-sm flex items-center justify-center shrink-0">
+                      <CheckCircle2 size={20} className="text-primary" />
                     </div>
                     <div>
-                      <p className="text-[13px] font-semibold text-[#141a14]">
-                        Your delivery is ready for review
-                      </p>
-                      <p className="text-[12px] text-[#4a544a] mt-0.5">
-                        Approve to close, or request changes if needed.
-                      </p>
+                      <p className="text-sm font-bold text-primary-dark">Your delivery is ready for review</p>
+                      <p className="text-xs font-medium text-primary mt-0.5 lg:mt-1">Approve to close, or request changes.</p>
                     </div>
                   </div>
                   <button
@@ -717,66 +683,67 @@ export default function ClientRequestDetailPage() {
                       const latest = deliveries.find(d => d.delivery_number === latestDeliveryNumber)
                       setReviewModal(latest)
                     }}
-                    className="shrink-0 h-9 px-4 rounded-xl bg-[#0f6e56] text-white text-[12px] font-semibold hover:bg-[#085041] transition-colors"
+                    className="w-full lg:w-auto shrink-0 h-10 px-6 rounded-xl bg-primary text-white text-sm font-semibold hover:bg-primary-dark shadow-sm hover:shadow-soft active:scale-[0.98] transition-all"
                   >
-                    Review
+                    Review Delivery
                   </button>
                 </div>
               )}
 
               {deliveries.length === 0 ? (
-                <div className="h-full flex items-center justify-center">
+                <div className="h-full flex items-center justify-center pb-20">
                   <div className="max-w-sm text-center">
-                    <div className="h-16 w-16 rounded-2xl bg-[#f5f7f5] flex items-center justify-center mx-auto mb-4">
-                      <Send size={24} className="text-[#9ea89e]" />
+                    <div className="h-16 w-16 rounded-2xl bg-white border border-border/60 shadow-sm flex items-center justify-center mx-auto mb-5">
+                      <Send size={24} className="text-text-dim" />
                     </div>
-                    <h3 className="text-[16px] font-semibold text-[#141a14]">No deliveries yet</h3>
-                    <p className="text-[13px] text-[#9ea89e] mt-2 leading-6">
-                      Delivered files and updates will appear here.
+                    <h3 className="text-base font-semibold text-text-main">No deliveries yet</h3>
+                    <p className="text-sm text-text-sub mt-2 leading-relaxed">
+                      When your provider finishes their work, the deliverables will appear right here.
                     </p>
                   </div>
                 </div>
               ) : (
-                <div className="space-y-5">
-                  {deliveries.map(delivery => {
+                <div className="space-y-6 max-w-3xl">
+                  {deliveries.map((delivery, idx) => {
                     const isLatest = delivery.delivery_number === latestDeliveryNumber
                     const isPendingReview = req.status === 'delivered' && isLatest
 
                     return (
                       <div
                         key={delivery.id}
-                        className={`rounded-2xl border bg-white overflow-hidden
-                          ${isPendingReview ? 'border-[#0f6e56]/30' : 'border-[#e8eae8]'}`}
+                        className={`rounded-2xl bg-white shadow-sm overflow-hidden border transition-all duration-300 animate-in slide-in-from-bottom-4
+                          ${isPendingReview ? 'border-primary/40 ring-1 ring-primary/10' : 'border-border/60 hover:shadow-soft hover:border-border'}`}
+                        style={{ animationDelay: `${idx * 100}ms` }}
                       >
                         {/* Card header */}
-                        <div className="px-5 py-4 border-b border-[#e8eae8] bg-[#fcfcfc]">
+                        <div className="px-5 lg:px-6 py-4 border-b border-border/50 bg-surface/30">
                           <div className="flex items-center justify-between">
                             <div>
-                              <div className="flex items-center gap-2 flex-wrap">
-                                <h3 className="text-[14px] font-semibold text-[#141a14]">
+                              <div className="flex items-center gap-3 flex-wrap">
+                                <h3 className="text-sm font-semibold text-text-main">
                                   Delivery #{delivery.delivery_number}
                                 </h3>
                                 {isPendingReview ? (
-                                  <div className="h-6 px-2 rounded-full bg-[#fff8e6] text-[#92500a] text-[10px] font-semibold flex items-center gap-1">
-                                    <div className="h-1.5 w-1.5 rounded-full bg-[#f59e0b]" />
-                                    Awaiting your review
+                                  <div className="h-6 px-2.5 rounded-md bg-amber-50 text-amber-700 border border-amber-200 text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5 shadow-sm">
+                                    <div className="h-1.5 w-1.5 rounded-full bg-amber-500 animate-pulse" />
+                                    Awaiting Review
                                   </div>
                                 ) : (
-                                  <div className="h-6 px-2 rounded-full bg-[#edf7f3] text-[#0f6e56] text-[10px] font-semibold flex items-center">
+                                  <div className="h-6 px-2.5 rounded-md bg-surface text-text-sub border border-border/60 text-[10px] font-bold uppercase tracking-wider flex items-center">
                                     Delivered
                                   </div>
                                 )}
                               </div>
-                              <p className="text-[12px] text-[#9ea89e] mt-1">{timeAgo(delivery.created_at)}</p>
+                              <p className="text-xs font-medium text-text-dim mt-1.5">{timeAgo(delivery.created_at)}</p>
                             </div>
 
-                            {/* Per-card review button — only on latest when delivered */}
+                            {/* Per-card review button */}
                             {isPendingReview && (
                               <button
                                 onClick={() => setReviewModal(delivery)}
-                                className="h-8 px-3 rounded-lg border border-[#0f6e56] text-[#0f6e56] text-[12px] font-semibold hover:bg-[#f3fbf7] transition-colors flex items-center gap-1.5"
+                                className="hidden lg:flex h-9 px-4 rounded-lg border border-primary text-primary text-xs font-bold hover:bg-primary hover:text-white transition-all shadow-sm items-center gap-2"
                               >
-                                <CheckCircle2 size={13} />
+                                <CheckCircle2 size={14} />
                                 Review
                               </button>
                             )}
@@ -784,67 +751,61 @@ export default function ClientRequestDetailPage() {
                         </div>
 
                         {/* Card body */}
-                        <div className="p-5">
+                        <div className="p-5 lg:p-6">
 
                           {delivery.message && (
-                            <p className="text-[13px] leading-7 text-[#4a544a] whitespace-pre-wrap mb-5">
+                            <p className="text-sm leading-relaxed text-text-sub whitespace-pre-wrap mb-6 bg-surface/50 rounded-xl p-4 border border-border/40">
                               {delivery.message}
                             </p>
                           )}
                           
                           {!!delivery.links?.length && (
-                            <div className="space-y-2 mb-5">
+                            <div className="space-y-3 mb-6">
+                              <h4 className="text-xs font-bold uppercase tracking-wider text-text-dim mb-2">Links</h4>
                               {delivery.links.map((link, i) => (
                                 <a
                                   key={i}
                                   href={link.url}
                                   target="_blank"
                                   rel="noreferrer"
-                                  className="group flex items-center gap-3 rounded-xl border border-[#e8eae8] px-4 py-3 hover:bg-[#f3fbf7] transition-colors"
+                                  className="group flex items-center gap-4 rounded-xl border border-border/60 bg-white px-4 py-3 hover:border-primary/40 hover:shadow-soft transition-all"
                                 >
-                                  <div className="h-10 w-10 rounded-xl bg-[#edf7f3] flex items-center justify-center shrink-0">
-                                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#0f6e56" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                      <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
-                                      <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
-                                    </svg>
+                                  <div className="h-10 w-10 rounded-lg bg-surface flex items-center justify-center shrink-0 group-hover:bg-primary-light transition-colors">
+                                    <ExternalLink size={18} className="text-text-dim group-hover:text-primary transition-colors" />
                                   </div>
                                   <div className="flex-1 min-w-0">
-                                    <p className="text-[13px] font-medium text-[#141a14] truncate">
+                                    <p className="text-sm font-semibold text-text-main truncate group-hover:text-primary transition-colors">
                                       {link.label || link.url}
                                     </p>
                                     {link.label && (
-                                      <p className="text-[11px] text-[#9ea89e] truncate mt-0.5">{link.url}</p>
+                                      <p className="text-[11px] font-medium text-text-dim truncate mt-0.5">{link.url}</p>
                                     )}
                                   </div>
-                                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-[#9ea89e] group-hover:text-[#0f6e56] shrink-0">
-                                    <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
-                                    <polyline points="15 3 21 3 21 9"/>
-                                    <line x1="10" y1="14" x2="21" y2="3"/>
-                                  </svg>
                                 </a>
                               ))}
                             </div>
                           )}
 
                           {!!delivery.files?.length && (
-                            <div className="space-y-2">
+                            <div className="space-y-3">
+                              <h4 className="text-xs font-bold uppercase tracking-wider text-text-dim mb-2">Attached Files</h4>
                               {delivery.files.map(file => (
                               <a
                                 key={file.id}
                                 href={file.download_url}
                                 target="_blank"
                                 rel="noreferrer"
-                                className="group flex items-center gap-3 rounded-xl border border-[#e8eae8] px-4 py-3 hover:bg-[#f7f8f7] transition-colors"
+                                className="group flex items-center gap-4 rounded-xl border border-border/60 bg-white px-4 py-3 hover:border-primary/40 hover:shadow-soft transition-all"
                               >
-                                <div className="h-10 w-10 rounded-xl bg-[#f5f7f5] flex items-center justify-center shrink-0">
-                                  <FileText size={15} className="text-[#9ea89e]" />
+                                <div className="h-10 w-10 rounded-lg bg-surface flex items-center justify-center shrink-0 group-hover:bg-primary-light transition-colors">
+                                  <FileText size={18} className="text-text-dim group-hover:text-primary" />
                                 </div>
                                 <div className="flex-1 min-w-0">
-                                  <p className="text-[13px] font-medium text-[#141a14] truncate">{file.file_name}</p>
-                                  <div className="flex items-center gap-2 mt-1">
-                                    <span className="text-[11px] text-[#9ea89e]">{formatFileSize(file.file_size_bytes)}</span>
-                                    <span className="text-[#d6dad6]">•</span>
-                                    <span className="text-[11px] text-[#9ea89e] uppercase">{file.file_extension}</span>
+                                  <p className="text-sm font-semibold text-text-main truncate group-hover:text-primary transition-colors">{file.file_name}</p>
+                                  <div className="flex items-center gap-2 mt-0.5">
+                                    <span className="text-[11px] font-medium text-text-dim">{formatFileSize(file.file_size_bytes)}</span>
+                                    <span className="text-border">•</span>
+                                    <span className="text-[10px] font-bold uppercase tracking-wider text-text-dim">{file.file_extension}</span>
                                   </div>
                                 </div>
                                 <button
@@ -864,9 +825,9 @@ export default function ClientRequestDetailPage() {
                                       window.open(file.download_url, '_blank')
                                     }
                                   }}
-                                  className="shrink-0 h-8 w-8 rounded-lg flex items-center justify-center text-[#9ea89e] hover:text-[#0f6e56] hover:bg-[#edf7f3] transition-colors"
+                                  className="shrink-0 h-9 w-9 rounded-full flex items-center justify-center text-text-dim hover:text-primary hover:bg-primary-light transition-colors"
                                 >
-                                  <Download size={15} />
+                                  <Download size={16} />
                                 </button>
                               </a>
                             ))}
@@ -883,31 +844,28 @@ export default function ClientRequestDetailPage() {
             </div>
           </div>
 
-          {/* Chat resize handle */}
+          {/* Chat resize handle (Desktop Only) */}
           <div
             onMouseDown={startChatResize}
-            className="hidden lg:flex w-[5px] shrink-0 relative cursor-col-resize group items-center justify-center bg-transparent hover:bg-[#0f6e56]/10 transition-colors z-10"
-            title="Drag to resize conversation"
+            className="hidden lg:flex w-2 shrink-0 relative cursor-col-resize group items-center justify-center bg-transparent z-10 hover:bg-primary/5 transition-colors"
           >
-            <div className="absolute inset-y-0 left-[2px] w-px bg-[#e8eae8] group-hover:bg-[#0f6e56]/30 transition-colors" />
+            <div className="absolute inset-y-0 left-1/2 -translate-x-1/2 w-px bg-transparent group-hover:bg-primary/20 transition-colors" />
             <div className="relative z-10 flex flex-col gap-[3px] opacity-0 group-hover:opacity-100 transition-opacity">
-              {[...Array(5)].map((_, i) => (
-                <div key={i} className="w-[3px] h-[3px] rounded-full bg-[#0f6e56]/50" />
+              {[...Array(4)].map((_, i) => (
+                <div key={i} className="w-1 h-1 rounded-full bg-primary/40" />
               ))}
             </div>
           </div>
 
-          {/* ── DESKTOP CHAT ───────────────────────────────────────────────── */}
-          
+          {/* ── DESKTOP CHAT COLUMN ────────────────────────────────────────── */}
           <div
             style={{ width: `${chatWidth}px` }}
-            className="hidden lg:flex border-l border-[#e8eae8] bg-white flex-col shrink-0 h-full overflow-hidden"
+            className="hidden lg:flex border-l border-border/50 bg-white flex-col shrink-0 h-full overflow-hidden shadow-[-4px_0_24px_-8px_rgba(0,0,0,0.02)]"
           >
-            {/* Chat header */}
-            <div className="h-[68px] border-b border-[#e8eae8] px-5 flex items-center justify-between shrink-0">
+            <div className="h-[72px] border-b border-border/50 px-6 flex items-center justify-between shrink-0 bg-white">
               <div>
-                <h2 className="text-[15px] font-semibold text-[#141a14]">Conversation</h2>
-                <p className="text-[12px] text-[#9ea89e] mt-0.5">with your provider</p>
+                <h2 className="text-base font-semibold text-text-main tracking-tight">Discussion</h2>
+                <p className="text-xs font-medium text-text-sub mt-0.5">Live with provider</p>
               </div>
               <ConnectionPill connectionKey={`chat-${requestId}`} />
             </div>
@@ -922,47 +880,48 @@ export default function ClientRequestDetailPage() {
 
         </div>
 
-        {/* ── MOBILE CHAT DRAWER ────────────────────────────────────────────── */}
-        {showChat && (
-          <div className="lg:hidden fixed inset-0 z-50 bg-white flex flex-col">
-            <div className="h-[64px] border-b border-[#e8eae8] px-4 flex items-center justify-between shrink-0">
-              <div>
-                <h2 className="text-[15px] font-semibold text-[#141a14]">Conversation</h2>
-                <p className="text-[12px] text-[#9ea89e]">Messaging coming soon</p>
-              </div>
-              <button
-                onClick={() => setShowChat(false)}
-                className="h-10 w-10 rounded-xl border border-[#e8eae8] flex items-center justify-center"
-              >
-                <X size={18} className="text-[#141a14]" />
-              </button>
-            </div>
-
-            <div className="flex-1 flex items-center justify-center px-8 min-h-0 overflow-y-auto no-scrollbar">
-              <div className="text-center">
-                <div className="h-14 w-14 rounded-2xl bg-[#f5f7f5] flex items-center justify-center mx-auto mb-4">
-                  <MessageSquare size={22} className="text-[#9ea89e]" />
-                </div>
-                <h3 className="text-[15px] font-semibold text-[#141a14]">Chat coming soon</h3>
-                <p className="text-[13px] text-[#9ea89e] mt-2 leading-6">Real-time conversation will appear here.</p>
-              </div>
-            </div>
-
-            <div className="border-t border-[#e8eae8] p-4 shrink-0">
-              <div className="flex items-center gap-3">
-                <div className="flex-1 h-12 rounded-xl border border-[#e8eae8] bg-[#fafbfa] px-4 flex items-center gap-3 opacity-50">
-                  <Paperclip size={15} className="text-[#9ea89e]" />
-                  <span className="text-[13px] text-[#9ea89e]">Send a message...</span>
-                </div>
-                <button disabled className="h-12 w-12 rounded-xl bg-[#0f6e56] opacity-50 flex items-center justify-center">
-                  <Send size={16} className="text-white" />
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-
       </div>
+
+      {/* ── MOBILE CHAT FAB ───────────────────────────────────────────────── */}
+      {!showChat && (
+        <div className="lg:hidden fixed bottom-[90px] right-4 z-40">
+          <button
+            onClick={() => setShowChat(true)}
+            className="h-14 w-14 rounded-full bg-primary text-white shadow-soft flex items-center justify-center hover:bg-primary-dark active:scale-95 transition-all"
+          >
+            <MessageSquare size={24} />
+          </button>
+        </div>
+      )}
+
+      {/* ── MOBILE FULLSCREEN CHAT OVERLAY ────────────────────────────────── */}
+      {showChat && (
+        <div className="lg:hidden fixed inset-0 z-50 bg-white flex flex-col animate-in slide-in-from-bottom-full duration-300">
+          {/* Header */}
+          <div className="h-[72px] border-b border-border/50 px-5 flex items-center justify-between shrink-0 bg-white/95 backdrop-blur-md">
+            <div>
+              <h2 className="text-base font-semibold text-text-main tracking-tight">Discussion</h2>
+              <p className="text-xs font-medium text-text-sub mt-0.5">Live with provider</p>
+            </div>
+            <button
+              onClick={() => setShowChat(false)}
+              className="h-10 w-10 rounded-full bg-surface flex items-center justify-center hover:bg-border/50 transition-colors"
+            >
+              <X size={18} className="text-text-main" />
+            </button>
+          </div>
+
+          {/* Actual Chat Component filling the screen */}
+          <div className="flex-1 overflow-hidden">
+            <ChatPanel
+              clientName={req?.provider_name || 'Provider'}
+              requestId={requestId}
+              requestStatus={req?.status}
+              activities={[]}
+            />
+          </div>
+        </div>
+      )}
 
       {/* ── DELIVERY REVIEW MODAL ─────────────────────────────────────────── */}
       {reviewModal && (
