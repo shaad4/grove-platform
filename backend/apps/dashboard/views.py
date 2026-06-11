@@ -321,7 +321,7 @@ class ActivityFeedView(APIView):
 
         qs = (
             RequestActivity.objects.filter(tenant_id=tid)
-            .select_related("actor", "request")
+            .select_related("actor", "request", "request__client", "request__client__user")
             .order_by("-created_at", "-id")
         )
 
@@ -337,9 +337,13 @@ class ActivityFeedView(APIView):
         if p.get("event_type"):
             qs = qs.filter(event_type=p["event_type"])
 
+        if p.get("client_id"):
+            qs = qs.filter(request__client_id=p["client_id"])
+
         return qs
     
     def _serialize(self, activities):
+        current_user_id = self.request.user.id
         return [
             {
                 "id": str(a.id),
@@ -347,10 +351,19 @@ class ActivityFeedView(APIView):
                 "description": a.description,
                 "actor_source": a.actor_source,
                 "actor": a.actor.display_name if a.actor else None,
-                "request_id": str(a.request_id),
-                "request_title": a.request.title if a.request else None,
+                "is_current_user": a.actor_id == current_user_id,
                 "metadata": a.metadata,
                 "created_at": a.created_at.isoformat(),
+                "target_info": {
+                    "request_id": str(a.request_id) if a.request_id else None,
+                    "request_title": a.request.title if a.request else None,
+                    "request_ref": f"#{str(a.request_id)[:8]}" if a.request_id else None,
+                    "client_name": (
+                        a.request.client.user.display_name
+                        if a.request and a.request.client and a.request.client.user
+                        else None
+                    ),
+                },
             }
             for a in activities
         ]
@@ -363,7 +376,7 @@ class ActivityExportView(APIView):
         if not _require_provider(request):
             return Response({"success": False, "message": "Forbidden."}, status=403)
         
-        qs = ActivityFeedView._build_queryset(self, request)
+        qs = ActivityFeedView._build_queryset(ActivityFeedView(), request)
 
         response = StreamingHttpResponse(
             self._stream_csv(qs),

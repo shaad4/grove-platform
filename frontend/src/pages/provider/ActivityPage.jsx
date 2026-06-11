@@ -9,6 +9,8 @@ import ProviderLayout from '../../components/layout/ProviderLayout'
 import ProviderTopbar from '../../components/layout/ProviderTopbar'
 import dashboardApi from '../../api/dashboard.api'
 import { getAvatarColor, getInitials, timeAgo } from '../../utils/clientHelpers'
+import clientsApi from '../../api/clients.api'
+
 
 // ── Event type config ─────────────────────────────────────────
 const EVENT_CONFIG = {
@@ -189,6 +191,22 @@ export default function ActivityPage() {
   const [eventFilter, setEventFilter] = useState('all')
   const [dateRange, setDateRange] = useState('7')
   const [visibleCount, setVisibleCount] = useState(13)
+  const [searchInput, setSearchInput] = useState('')
+  const [clients, setClients] = useState([])
+  const [clientFilter, setClientFilter] = useState(null)
+  const [clientDropdownOpen, setClientDropdownOpen] = useState(false)
+
+  useEffect(() => {
+    clientsApi.list().then(res => {
+      setClients(res.data.data?.clients || [])
+    }).catch(() => {})
+  }, [])
+
+
+  useEffect(() => {
+    const t = setTimeout(() => setSearch(searchInput), 400)
+    return () => clearTimeout(t)
+  }, [searchInput])
 
   useEffect(() => {
     const load = async () => {
@@ -200,6 +218,7 @@ export default function ActivityPage() {
         const params = { from_date }
         if (eventFilter !== 'all') params.event_type = eventFilter
         if (search) params.search = search
+        if (clientFilter) params.client_id = clientFilter
 
         const res = await dashboardApi.getActivityFeed(params)
         setActivities(res.data.data?.results || [])
@@ -207,7 +226,7 @@ export default function ActivityPage() {
       finally { setLoading(false) }
     }
     load()
-  }, [dateRange, eventFilter, search])
+  }, [dateRange, eventFilter, search, clientFilter])
 
   const handleExport = async () => {
     try {
@@ -217,8 +236,10 @@ export default function ActivityPage() {
       const params = { from_date }
       if (eventFilter !== 'all') params.event_type = eventFilter
       if (search) params.search = search
+      if (clientFilter) params.client_id = clientFilter
 
       const res = await dashboardApi.getActivityExport(params)
+
       const url = URL.createObjectURL(new Blob([res.data], { type: 'text/csv' }))
       const a = document.createElement('a')
       a.href = url
@@ -256,8 +277,8 @@ export default function ActivityPage() {
             <div className="relative flex-1">
               <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#9ea89e]" />
               <input
-                value={search}
-                onChange={e => setSearch(e.target.value)}
+                value={searchInput}
+                onChange={e => setSearchInput(e.target.value)}
                 placeholder="Search activity by client, request title, context..."
                 className="w-full h-9 rounded-xl border border-[#e8eae8] pl-9 pr-4 text-[13px] outline-none placeholder:text-[#9ea89e] focus:border-[#0f6e56] focus:ring-4 focus:ring-[#0f6e56]/10 transition-all"
               />
@@ -292,9 +313,34 @@ export default function ActivityPage() {
                 </button>
               ))}
             </div>
-            <button className="flex items-center gap-1.5 h-8 rounded-lg border border-[#e8eae8] px-3 text-[12px] font-medium text-[#4a544a] hover:border-[#0f6e56]/30 transition-colors">
-              All clients <ChevronDown size={12} className="text-[#9ea89e]" />
-            </button>
+            <div className="relative">
+              <button
+                onClick={() => setClientDropdownOpen(o => !o)}
+                className="flex items-center gap-1.5 h-8 rounded-lg border border-[#e8eae8] px-3 text-[12px] font-medium text-[#4a544a] hover:border-[#0f6e56]/30 transition-colors"
+              >
+                {clientFilter ? clients.find(c => c.id === clientFilter)?.display_name || 'Client' : 'All clients'}
+                <ChevronDown size={12} className="text-[#9ea89e]" />
+              </button>
+              {clientDropdownOpen && (
+                <div className="absolute right-0 top-10 z-20 w-52 rounded-xl border border-[#e8eae8] bg-white shadow-lg py-1">
+                  <button
+                    onClick={() => { setClientFilter(null); setClientDropdownOpen(false) }}
+                    className={`w-full text-left px-3 py-2 text-[13px] hover:bg-[#f7f8f7] ${!clientFilter ? 'font-semibold text-[#0f6e56]' : 'text-[#4a544a]'}`}
+                  >
+                    All clients
+                  </button>
+                  {clients.map(c => (
+                    <button
+                      key={c.id}
+                      onClick={() => { setClientFilter(c.id); setClientDropdownOpen(false) }}
+                      className={`w-full text-left px-3 py-2 text-[13px] hover:bg-[#f7f8f7] ${clientFilter === c.id ? 'font-semibold text-[#0f6e56]' : 'text-[#4a544a]'}`}
+                    >
+                      {c.display_name || c.client_name}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Cleaned minimalist event metadata readout block */}

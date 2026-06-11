@@ -61,8 +61,11 @@ export function BadgeProvider({ children }) {
   const portalListenersRef   = useRef([])
 
   // ── sidebar badges polling (provider only) ─────────────────────────────────
+  const userId = user?.id
+  const userRole = user?.role
+
   const loadBadges = useCallback(async () => {
-    if (!user || role === 'client') return
+    if (!userId || userRole === 'client') return
     try {
       setLoading(true)
       const res = await dashboardApi.getBadges()
@@ -72,18 +75,18 @@ export function BadgeProvider({ children }) {
     } finally {
       setLoading(false)
     }
-  }, [user, role])
+  }, [userId, userRole])
 
   useEffect(() => {
-    if (role === 'client') return
-    loadBadges()
-    const interval = setInterval(loadBadges, 30_000)
-    return () => clearInterval(interval)
-  }, [loadBadges, role])
+      if (userRole === 'client') return
+      loadBadges()
+      const interval = setInterval(loadBadges, 30_000)
+      return () => clearInterval(interval)
+  }, [loadBadges, userRole])
 
   // ── notification helpers (shared) ─────────────────────────────────────────
   const loadNotifications = useCallback(async () => {
-    if (!user) return
+    if (!userId) return
     try {
       const { default: notificationsApi } = await import('../api/notifications.api')
       const res = await notificationsApi.list()
@@ -94,7 +97,7 @@ export function BadgeProvider({ children }) {
     } catch {
       setNotifLoaded(true)
     }
-  }, [user])
+  }, [userId])
 
   const markRead = useCallback(async (id) => {
     try {
@@ -123,7 +126,7 @@ export function BadgeProvider({ children }) {
   const unmounted  = useRef(false)
 
   const connectFeed = useCallback(() => {
-    if (unmounted.current || !accessToken || !user) return
+    if (unmounted.current || !accessToken || !userId) return
 
     const wsHost = window.location.hostname
     const tenant = wsHost.split('.')[0]
@@ -192,7 +195,7 @@ export function BadgeProvider({ children }) {
     }
 
     ws.onerror = () => ws.close()
-  }, [accessToken, user, dispatch])
+  }, [accessToken, userId, dispatch])
 
   useEffect(() => {
     unmounted.current = false
@@ -206,7 +209,7 @@ export function BadgeProvider({ children }) {
       wsRef.current?.close()
       dispatch(removeConnection('feed'))
     }
-  }, [user, accessToken, connectFeed, loadNotifications, dispatch])
+  }, [userId, accessToken, connectFeed, loadNotifications, dispatch])
 
   // ── listener registration ──────────────────────────────────────────────────
   const registerActivityListener = useCallback((cb) => {

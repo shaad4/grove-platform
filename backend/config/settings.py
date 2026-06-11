@@ -327,6 +327,22 @@ LOGGING = {
             "backupCount": 5,
             "formatter": "standard",
         },
+
+        "app_file": {
+            "class": "logging.handlers.RotatingFileHandler",
+            "filename": BASE_DIR / "logs" / "grove_app.log",
+            "maxBytes": 10 * 1024 * 1024,
+            "backupCount": 5,
+            "formatter": "standard",
+        },
+    },
+
+    "loggers": {
+        "apps.common.logger": {
+            "handlers": ["console", "app_file"],
+            "level": "INFO",
+            "propagate": False,  # stops it also going into grove.log
+        },
     },
 
     "root": {
