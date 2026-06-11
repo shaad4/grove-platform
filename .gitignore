@@ -80,5 +80,5 @@ frontend/.env
 .DS_Store
 Thumbs.db
 
->>>>>>> feature/auth
+celerybeat-schedule
 structure.txt
