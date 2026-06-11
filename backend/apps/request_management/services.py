@@ -186,6 +186,7 @@ class RequestService:
                         body=f'{old_status.replace("_", " ").title()} → {new_status.replace("_", " ").title()}',
                         related_request=request_obj,
                         related_client=request_obj.client,
+                        new_status=new_status,
                     )
             except Exception as e:
                 logger.error(f"[update_status] Notification failed: {e}")
@@ -317,6 +318,7 @@ class RequestService:
                         body=f'Delivery #{delivery.delivery_number} for "{request_obj.title}" is available.',
                         related_request=request_obj,
                         related_client=request_obj.client,
+                        new_status="delivered",
                     )
             except Exception as e:
                 logger.error(f"[create_delivery] Notification failed: {e}")

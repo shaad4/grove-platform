@@ -55,6 +55,9 @@ class NotificationFeedConsumer(AsyncJsonWebsocketConsumer):
                 "related_client_id": event["related_client_id"],
                 "is_read": event["is_read"],
                 "created_at": event["created_at"],
+                "new_status": event.get("new_status"),
+                "updated_at": event.get("updated_at"),
+
             })
         except Exception as e:
             logger.error(f"[NotificationFeedConsumer.feed_notification] Error: {e}")

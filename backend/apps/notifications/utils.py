@@ -18,6 +18,7 @@ def create_notification(
         body,
         related_request=None,
         related_client=None,
+        new_status=None,
 ):
     """
     Creates a Notification record and immediately pushes it over WebSocket
@@ -46,6 +47,9 @@ def create_notification(
         "related_client_id":  str(related_client.id)  if related_client  else None,
         "is_read": False,
         "created_at": notification.created_at.isoformat(),
+        "new_status" : new_status,
+        "updated_at": related_request.updated_at.isoformat() if related_request else None,
+
     }
 
     group_name = get_feed_group_name(str(recipient.id))
