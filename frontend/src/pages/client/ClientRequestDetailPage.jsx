@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import ChatPanel from '../../components/chat/ChatPanel'
 import ConnectionPill from '../../components/ui/ConnectionPill'
 import { usePanelResize } from '../../hooks/usePanelResize'
+import { useBadges } from '../../hooks/useBadges'
 import {
   ChevronRight,
   Loader2,
@@ -246,6 +247,7 @@ export default function ClientRequestDetailPage() {
     direction: 'right',
   })
 
+  const { registerPortalListener } = useBadges()
 
   useEffect(() => {
     const handleMouseMove = (e) => {
@@ -308,6 +310,23 @@ export default function ClientRequestDetailPage() {
       setEditLoading(false)
     }
   } 
+
+  useEffect(() => {
+    return registerPortalListener((msg) => {
+      if (msg.request_id !== requestId) return
+
+      if (msg.type === 'status_change' || msg.type === 'files_delivered') {
+        const newStatus = msg.new_status || 'delivered'
+        setReq((prev) => prev ? { ...prev, status: newStatus, updated_at: msg.updated_at || new Date().toISOString() } : prev)
+        // if a delivery just arrived, refetch to get the actual delivery card
+        if (msg.type === 'files_delivered') fetchAll()
+      }
+
+      if (msg.type === 'new_message') {
+        fetchAll()
+      }
+    })
+  }, [registerPortalListener, requestId, fetchAll])
 
   // ── Review handler ─────────────────────────────────────────────────────────
 

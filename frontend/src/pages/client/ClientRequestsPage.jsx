@@ -9,6 +9,8 @@ import NewRequestModal from '../../components/modals/NewRequestModal'
 import requestsApi from '../../api/requests.api'
 import { timeAgo } from '../../utils/clientHelpers'
 import { useAuth } from '../../context/AuthContext'
+import { useBadges } from '../../hooks/useBadges'
+import { pre } from 'framer-motion/client'
 
 const CARDS_PER_PAGE = 4
 
@@ -163,6 +165,7 @@ export default function ClientRequestsPage() {
   const [statusFilter, setStatusFilter] = useState('all')
   const [searchQuery, setSearchQuery] = useState('')
   const [page, setPage] = useState(1)
+  const { registerPortalListener } = useBadges()
 
   const providerName = tenant?.name || 'your provider'
 
@@ -176,6 +179,20 @@ export default function ClientRequestsPage() {
       setLoading(false)
     }
   }, [])
+
+  useEffect(() => {
+    return registerPortalListener((msg) => {
+      if (msg.type === 'status_change' || msg.type === 'files_delivered'){
+        setRequests((prev) => 
+          prev.map((r) =>
+            r.id === msg.request_id
+              ? { ...r, status: msg.new_status || (msg.type === 'files_delivered' ? 'delivered' : r.status), updated_at: msg.updated_at || new Date().toISOString() }
+              : r
+          )
+        )
+      }
+    })
+  }, [registerPortalListener])
 
   useEffect(() => { fetchRequests() }, [fetchRequests])
   useEffect(() => { setPage(1) }, [statusFilter, searchQuery])

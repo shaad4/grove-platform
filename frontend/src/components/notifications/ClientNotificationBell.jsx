@@ -30,11 +30,11 @@ function relativeTime(iso) {
 
 function groupByDay(notifications) {
   const groups = {}
-  const today     = new Date(); today.setHours(0,0,0,0)
+  const today     = new Date(); today.setHours(0, 0, 0, 0)
   const yesterday = new Date(today); yesterday.setDate(today.getDate() - 1)
 
   for (const n of notifications) {
-    const d = new Date(n.created_at); d.setHours(0,0,0,0)
+    const d = new Date(n.created_at); d.setHours(0, 0, 0, 0)
     let label
     if (d.getTime() === today.getTime())          label = 'TODAY'
     else if (d.getTime() === yesterday.getTime()) label = 'YESTERDAY'
@@ -100,7 +100,7 @@ function StatusPills({ from, to }) {
 
 function NotificationItem({ notification, onRead }) {
   const navigate = useNavigate()
-  const cfg = EVENT_CONFIG[notification.event_type] || EVENT_CONFIG.status_change
+  const cfg        = EVENT_CONFIG[notification.event_type] || EVENT_CONFIG.status_change
   const { Icon, bg, iconColor, border } = cfg
   const transition = parseStatusTransition(notification)
 
@@ -160,9 +160,11 @@ function NotificationItem({ notification, onRead }) {
 // ── main bell ─────────────────────────────────────────────────
 
 export default function ClientNotificationBell({ collapsed = false }) {
-  const [open, setOpen]     = useState(false)
-  const dropdownRef         = useRef(null)
-  const navigate            = useNavigate()
+  const [open, setOpen]   = useState(false)
+  const [dropdownStyle, setDropdownStyle] = useState({})
+  const bellRef     = useRef(null)
+  const dropdownRef = useRef(null)
+  const navigate    = useNavigate()
 
   const {
     unreadCount,
@@ -173,10 +175,46 @@ export default function ClientNotificationBell({ collapsed = false }) {
     loadNotifications,
   } = useBadges()
 
+  // ── compute dropdown position from bell button's actual rect ──────────────
+  const computePosition = useCallback(() => {
+    if (!bellRef.current) return {}
+    const rect = bellRef.current.getBoundingClientRect()
+    const vpW  = window.innerWidth
+    const vpH  = window.innerHeight
+    const dropW = 340
+    const dropH = 480
+
+    // prefer opening to the right of the bell
+    let left = rect.right + 8
+    let top  = rect.top
+
+    // if it would clip the right edge, flip left
+    if (left + dropW > vpW - 8) left = rect.left - dropW - 8
+
+    // if it would clip the bottom, push up
+    if (top + dropH > vpH - 8) top = vpH - dropH - 8
+
+    // clamp top
+    if (top < 8) top = 8
+
+    return { position: 'fixed', top, left, width: dropW, maxHeight: dropH }
+  }, [])
+
+  // recompute on open
+  useEffect(() => {
+    if (open) {
+      setDropdownStyle(computePosition())
+      loadNotifications()
+    }
+  }, [open, computePosition, loadNotifications])
+
   // close on outside click
   useEffect(() => {
     function handler(e) {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+      if (
+        dropdownRef.current && !dropdownRef.current.contains(e.target) &&
+        bellRef.current    && !bellRef.current.contains(e.target)
+      ) {
         setOpen(false)
       }
     }
@@ -184,23 +222,19 @@ export default function ClientNotificationBell({ collapsed = false }) {
     return () => document.removeEventListener('mousedown', handler)
   }, [])
 
-  // refresh on open
-  useEffect(() => {
-    if (open) loadNotifications()
-  }, [open, loadNotifications])
-
   const grouped   = groupByDay(notifications)
   const groupKeys = Object.keys(grouped)
 
   return (
-    <div className="relative" ref={dropdownRef}>
+    <>
       {/* Bell button */}
       <button
+        ref={bellRef}
         onClick={() => setOpen(o => !o)}
         title="Notifications"
         className={`
           relative flex items-center justify-center rounded-xl transition-all duration-150
-          ${collapsed ? 'h-9 w-9' : 'h-9 w-9'}
+          h-9 w-9
           ${open
             ? 'bg-[#edf7f3] text-[#0f6e56]'
             : 'text-[#6b7280] hover:bg-[#f5f5f5] hover:text-[#111]'
@@ -215,17 +249,12 @@ export default function ClientNotificationBell({ collapsed = false }) {
         )}
       </button>
 
-      {/* Dropdown — pops to the right of sidebar */}
+      {/* Dropdown — portal-rendered so it's never clipped by sidebar overflow */}
       {open && (
         <div
-          className="fixed z-[300] w-[340px] rounded-2xl border border-[#ebebeb] bg-white shadow-xl shadow-black/[0.07] overflow-hidden"
-          style={{
-            bottom: '16px',
-            left: '256px',   // just past sidebar width
-            maxHeight: '480px',
-            display: 'flex',
-            flexDirection: 'column',
-          }}
+          ref={dropdownRef}
+          className="z-[300] rounded-2xl border border-[#ebebeb] bg-white shadow-xl shadow-black/[0.07] overflow-hidden flex flex-col"
+          style={dropdownStyle}
         >
           {/* header */}
           <div className="flex items-center justify-between px-4 py-3 border-b border-[#f0f0f0] shrink-0">
@@ -316,6 +345,6 @@ export default function ClientNotificationBell({ collapsed = false }) {
           )}
         </div>
       )}
-    </div>
+    </>
   )
 }

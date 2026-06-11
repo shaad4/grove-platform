@@ -6,22 +6,19 @@ import {
   useState,
 } from 'react'
 import { useSelector } from 'react-redux'
- 
+
 import dashboardApi from '../api/dashboard.api'
 import { useAuth } from './AuthContext'
 import { selectAccessToken } from '../features/auth/authSlice'
 
 import { useDispatch } from 'react-redux'
 import { setStatus, removeConnection } from '../features/ws/wsSlice'
- 
+
 export const BadgeContext = createContext(null)
 
-
-
-// tiny audio notify 
+// ── tiny audio notify ──────────────────────────────────────────────────────────
 function playNotificationSound() {
   try {
-    // if (document.hidden) return -- beep audio on all tabs
     const ctx = new (window.AudioContext || window.webkitAudioContext)()
     const osc = ctx.createOscillator()
     const gain = ctx.createGain()
@@ -40,29 +37,32 @@ function playNotificationSound() {
   }
 }
 
-
 export function BadgeProvider({ children }) {
   const { user } = useAuth()
   const accessToken = useSelector(selectAccessToken)
   const dispatch = useDispatch()
- 
-  // sidebar badges (clients / requests counts)
-  const [badges, setBadges] = useState({ clients: 0, requests: 0 })
+
+  // role lives on user object from the Redux store
+  const role = user?.role  // 'provider' | 'client'
+
+  // ── sidebar badges (provider only) ────────────────────────────────────────
+  const [badges, setBadges]   = useState({ clients: 0, requests: 0 })
   const [loading, setLoading] = useState(false)
- 
-  // notification bell unread count
-  const [unreadCount, setUnreadCount] = useState(0)
- 
-  // shared notification list (bell dropdown reads this)
+
+  // ── bell (shared provider + client) ───────────────────────────────────────
+  const [unreadCount,   setUnreadCount]   = useState(0)
   const [notifications, setNotifications] = useState([])
-  const [notifLoaded, setNotifLoaded] = useState(false)
- 
-  // callbacks registered by consumers (e.g. LiveFeed)
+  const [notifLoaded,   setNotifLoaded]   = useState(false)
+
+  // ── listener registries ────────────────────────────────────────────────────
+  // Provider: LiveFeed activity events
   const activityListenersRef = useRef([])
- 
-  // ── Sidebar badges polling ─────────────────────────────────────────────────
+  // Client: real-time card updates (status_change, new_message, files_delivered)
+  const portalListenersRef   = useRef([])
+
+  // ── sidebar badges polling (provider only) ─────────────────────────────────
   const loadBadges = useCallback(async () => {
-    if (!user) return
+    if (!user || role === 'client') return
     try {
       setLoading(true)
       const res = await dashboardApi.getBadges()
@@ -72,15 +72,16 @@ export function BadgeProvider({ children }) {
     } finally {
       setLoading(false)
     }
-  }, [user])
- 
+  }, [user, role])
+
   useEffect(() => {
+    if (role === 'client') return
     loadBadges()
     const interval = setInterval(loadBadges, 30_000)
     return () => clearInterval(interval)
-  }, [loadBadges])
- 
-  // ── Notification list helpers ──────────────────────────────────────────────
+  }, [loadBadges, role])
+
+  // ── notification helpers (shared) ─────────────────────────────────────────
   const loadNotifications = useCallback(async () => {
     if (!user) return
     try {
@@ -94,7 +95,7 @@ export function BadgeProvider({ children }) {
       setNotifLoaded(true)
     }
   }, [user])
- 
+
   const markRead = useCallback(async (id) => {
     try {
       const { default: notificationsApi } = await import('../api/notifications.api')
@@ -105,7 +106,7 @@ export function BadgeProvider({ children }) {
       setUnreadCount((c) => Math.max(0, c - 1))
     } catch { /* non-critical */ }
   }, [])
- 
+
   const markAllRead = useCallback(async () => {
     try {
       const { default: notificationsApi } = await import('../api/notifications.api')
@@ -114,33 +115,34 @@ export function BadgeProvider({ children }) {
       setUnreadCount(0)
     } catch { /* non-critical */ }
   }, [])
- 
-  // ── Shared WS feed connection (one socket for entire app) ──────────────────
+
+  // ── single WS connection — ws/feed/ works for both roles ──────────────────
   const wsRef      = useRef(null)
   const retryRef   = useRef(null)
   const delayRef   = useRef(1000)
   const unmounted  = useRef(false)
- 
+
   const connectFeed = useCallback(() => {
     if (unmounted.current || !accessToken || !user) return
- 
+
     const wsHost = window.location.hostname
     const tenant = wsHost.split('.')[0]
     const url = `ws://${wsHost}:8000/ws/feed/?token=${accessToken}&tenant=${tenant}`
- 
+
     const ws = new WebSocket(url)
     wsRef.current = ws
- 
+
     ws.onopen = () => {
       if (unmounted.current) return ws.close()
       delayRef.current = 1000
-      dispatch(setStatus({ key: 'feed', status: 'connected' })) 
+      dispatch(setStatus({ key: 'feed', status: 'connected' }))
     }
- 
+
     ws.onmessage = (e) => {
       try {
         const msg = JSON.parse(e.data)
- 
+
+        // ── bell notifications (both roles) ───────────────────────────────
         if (msg.type === 'notification') {
           const newNotif = {
             id:                 msg.notification_id,
@@ -156,14 +158,31 @@ export function BadgeProvider({ children }) {
           setUnreadCount((c) => c + 1)
           playNotificationSound()
         }
- 
+
+        // ── provider: live feed activity ───────────────────────────────────
         if (msg.type === 'activity') {
-          // forward to all registered listeners (e.g. LiveFeed on dashboard)
           activityListenersRef.current.forEach((cb) => cb(msg))
         }
+
+        // ── client: real-time card updates ────────────────────────────────
+        // Backend sends these as notification events with event_type field.
+        // Forward to portal listeners so ClientDashboard can update in place.
+        if (msg.type === 'notification' && (
+          msg.event_type === 'status_change' ||
+          msg.event_type === 'new_message'   ||
+          msg.event_type === 'files_delivered'
+        )) {
+          portalListenersRef.current.forEach((cb) => cb({
+            type:       msg.event_type,
+            request_id: msg.related_request_id,
+            new_status: msg.new_status,     // backend should include this on status_change
+            updated_at: msg.updated_at,
+          }))
+        }
+
       } catch { /* malformed frame */ }
     }
- 
+
     ws.onclose = () => {
       if (unmounted.current) return
       dispatch(setStatus({ key: 'feed', status: 'disconnected' }))
@@ -171,10 +190,10 @@ export function BadgeProvider({ children }) {
       delayRef.current = Math.min(delay * 2, 30000)
       retryRef.current = setTimeout(connectFeed, delay)
     }
- 
+
     ws.onerror = () => ws.close()
   }, [accessToken, user, dispatch])
- 
+
   useEffect(() => {
     unmounted.current = false
     if (user && accessToken) {
@@ -187,33 +206,42 @@ export function BadgeProvider({ children }) {
       wsRef.current?.close()
       dispatch(removeConnection('feed'))
     }
-  }, [user, accessToken, connectFeed, loadNotifications])
- 
-  // ── Activity listener registration (for LiveFeed component) ───────────────
+  }, [user, accessToken, connectFeed, loadNotifications, dispatch])
+
+  // ── listener registration ──────────────────────────────────────────────────
   const registerActivityListener = useCallback((cb) => {
     activityListenersRef.current.push(cb)
     return () => {
       activityListenersRef.current = activityListenersRef.current.filter((fn) => fn !== cb)
     }
   }, [])
- 
+
+  const registerPortalListener = useCallback((cb) => {
+    portalListenersRef.current.push(cb)
+    return () => {
+      portalListenersRef.current = portalListenersRef.current.filter((fn) => fn !== cb)
+    }
+  }, [])
+
   const value = {
-    // sidebar
+    // sidebar (provider)
     badges,
     loading,
     loadBadges,
     setBadges,
-    // bell
+    // bell (shared)
     unreadCount,
     notifications,
     notifLoaded,
     markRead,
     markAllRead,
     loadNotifications,
-    // feed forwarding
+    // provider live feed
     registerActivityListener,
+    // client portal real-time
+    registerPortalListener,
   }
- 
+
   return (
     <BadgeContext.Provider value={value}>
       {children}

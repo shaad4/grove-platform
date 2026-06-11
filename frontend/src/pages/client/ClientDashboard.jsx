@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useCallback } from 'react'
+import { useState, useMemo, useEffect, useCallback, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import requestsApi from '../../api/requests.api'
 import {
@@ -15,6 +15,7 @@ import {
 } from 'lucide-react'
 
 import { useAuth } from '../../context/AuthContext'
+import { useBadges } from '../../hooks/useBadges'
 import ClientLayout from '../../components/layout/ClientLayout'
 import NewRequestModal from '../../components/modals/NewRequestModal'
 
@@ -62,6 +63,9 @@ const STATUS_CONFIG = {
   },
 }
 
+// Statuses considered "active" — closed goes to bottom when sorting
+const STATUS_ORDER = ['in_progress', 'in_review', 'received', 'delivered', 'closed']
+
 const FILTERS = [
   { key: 'all',       label: 'All' },
   { key: 'open',      label: 'Active' },
@@ -74,26 +78,17 @@ function timeAgo(iso) {
   if (!iso) return ''
   const diff = Date.now() - new Date(iso).getTime()
   const m = Math.floor(diff / 60000)
-  if (m < 1)   return 'just now'
-  if (m < 60)  return `${m}m ago`
+  if (m < 1)  return 'just now'
+  if (m < 60) return `${m}m ago`
   const h = Math.floor(m / 60)
-  if (h < 24)  return `${h}h ago`
+  if (h < 24) return `${h}h ago`
   const d = Math.floor(h / 24)
   return d === 1 ? 'yesterday' : `${d}d ago`
 }
 
-function formatDate(iso) {
-  if (!iso) return ''
-  return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-}
-
 // ─── Skeleton ─────────────────────────────────────────────────
 function Skeleton({ className = '' }) {
-  return (
-    <div
-      className={`animate-pulse rounded-xl bg-[#f1f3f1] ${className}`}
-    />
-  )
+  return <div className={`animate-pulse rounded-xl bg-[#f1f3f1] ${className}`} />
 }
 
 // ─── Top welcome bar ──────────────────────────────────────────
@@ -166,9 +161,7 @@ function SummaryCards({ active, needsReview, completed, loading }) {
         <div
           key={card.label}
           className={`rounded-2xl border p-4 transition-all ${
-            card.accent
-              ? 'border-[#6ee7b7] bg-[#f0fdf9]'
-              : 'border-[#e8eae8] bg-white'
+            card.accent ? 'border-[#6ee7b7] bg-[#f0fdf9]' : 'border-[#e8eae8] bg-white'
           }`}
         >
           <div className="flex items-center justify-between mb-3">
@@ -194,18 +187,22 @@ function SummaryCards({ active, needsReview, completed, loading }) {
 }
 
 // ─── Request row ──────────────────────────────────────────────
-function RequestRow({ req, onClick }) {
-  const cfg = STATUS_CONFIG[req.status] || STATUS_CONFIG.received
+function RequestRow({ req, onClick, isNew }) {
+  const cfg        = STATUS_CONFIG[req.status] || STATUS_CONFIG.received
   const isDelivered = req.status === 'delivered'
 
   return (
     <button
       onClick={onClick}
-      className={`w-full text-left group flex items-center gap-4 rounded-2xl border px-4 py-3.5 bg-white transition-all duration-150 hover:shadow-sm ${
-        isDelivered
+      className={`
+        w-full text-left group flex items-center gap-4 rounded-2xl border px-4 py-3.5 bg-white
+        transition-all duration-300 hover:shadow-sm
+        ${isNew ? 'animate-slide-in' : ''}
+        ${isDelivered
           ? 'border-[#6ee7b7] hover:border-[#34d399]'
           : 'border-[#e8eae8] hover:border-[#c8cec8]'
-      }`}
+        }
+      `}
     >
       {/* Status dot */}
       <div
@@ -222,13 +219,16 @@ function RequestRow({ req, onClick }) {
               Action needed
             </span>
           )}
+          {req._hasUnreadMessage && (
+            <span className="shrink-0 h-2 w-2 rounded-full bg-[#6366f1]" title="New message" />
+          )}
         </div>
         <p className="text-[11px] text-[#9ea89e]">{timeAgo(req.updated_at)}</p>
       </div>
 
       {/* Status pill */}
       <span
-        className="shrink-0 text-[11px] font-medium rounded-full px-2.5 py-1 border"
+        className="shrink-0 text-[11px] font-medium rounded-full px-2.5 py-1 border transition-all duration-300"
         style={{ color: cfg.color, background: cfg.bg, borderColor: cfg.border }}
       >
         {cfg.label}
@@ -281,7 +281,7 @@ function StatusGuide() {
         Request lifecycle
       </p>
       <div className="space-y-1">
-        {steps.map(({ status, icon: Icon }, i) => {
+        {steps.map(({ status, icon: Icon }) => {
           const cfg = STATUS_CONFIG[status]
           return (
             <div key={status} className="flex items-center gap-3 py-2">
@@ -339,21 +339,56 @@ function QuickActions({ onNew, needsReview, requests, navigate }) {
   )
 }
 
+// ─── Live update toast ────────────────────────────────────────
+function LiveToast({ message, onDismiss }) {
+  useEffect(() => {
+    const t = setTimeout(onDismiss, 4000)
+    return () => clearTimeout(t)
+  }, [onDismiss])
+
+  return (
+    <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-50 lg:bottom-6 lg:left-auto lg:right-6 lg:translate-x-0">
+      <div className="flex items-center gap-3 rounded-2xl border border-[#6ee7b7] bg-white shadow-lg shadow-black/[0.06] px-4 py-3">
+        <div className="h-2 w-2 rounded-full bg-[#10b981] animate-pulse shrink-0" />
+        <p className="text-[13px] font-medium text-[#065f46]">{message}</p>
+      </div>
+    </div>
+  )
+}
+
+// ─── Sort helper — active requests first, closed last ─────────
+function sortRequests(reqs) {
+  return [...reqs].sort((a, b) => {
+    const ai = STATUS_ORDER.indexOf(a.status)
+    const bi = STATUS_ORDER.indexOf(b.status)
+    if (ai !== bi) return ai - bi
+    // within same status: newest updated_at first
+    return new Date(b.updated_at) - new Date(a.updated_at)
+  })
+}
+
 // ─── Page ─────────────────────────────────────────────────────
 export default function ClientDashboard() {
   const { user, tenant } = useAuth()
   const navigate = useNavigate()
+  const { registerPortalListener } = useBadges()
 
-  const [filter, setFilter]   = useState('all')
-  const [showNew, setShowNew] = useState(false)
-  const [loading, setLoading] = useState(true)
+  const [filter,   setFilter]   = useState('all')
+  const [showNew,  setShowNew]  = useState(false)
+  const [loading,  setLoading]  = useState(true)
   const [requests, setRequests] = useState([])
+
+  // tracks which request IDs were just updated (for flash animation)
+  const [updatedIds, setUpdatedIds] = useState(new Set())
+  // live toast message
+  const [toast, setToast] = useState(null)
 
   const fetchRequests = useCallback(async () => {
     try {
       setLoading(true)
       const res = await requestsApi.list()
-      setRequests(res.data.data?.requests || [])
+      const raw = res.data.data?.requests || []
+      setRequests(sortRequests(raw))
     } catch (err) {
       console.error('Failed to fetch requests:', err)
     } finally {
@@ -362,6 +397,61 @@ export default function ClientDashboard() {
   }, [])
 
   useEffect(() => { fetchRequests() }, [fetchRequests])
+
+  // ── Real-time portal listener ──────────────────────────────────────────────
+  useEffect(() => {
+    const unregister = registerPortalListener((msg) => {
+      if (msg.type === 'status_change') {
+        setRequests((prev) => {
+          const updated = prev.map((r) =>
+            r.id === msg.request_id
+              ? { ...r, status: msg.new_status, updated_at: msg.updated_at ?? new Date().toISOString() }
+              : r
+          )
+          return sortRequests(updated)
+        })
+
+        // flash the updated card
+        setUpdatedIds((s) => new Set([...s, msg.request_id]))
+        setTimeout(() => {
+          setUpdatedIds((s) => {
+            const next = new Set(s)
+            next.delete(msg.request_id)
+            return next
+          })
+        }, 2000)
+
+        // show toast
+        const cfg = STATUS_CONFIG[msg.new_status]
+        if (cfg) setToast(`Request status updated to "${cfg.label}"`)
+      }
+
+      if (msg.type === 'new_message') {
+        setRequests((prev) =>
+          prev.map((r) =>
+            r.id === msg.request_id
+              ? { ...r, _hasUnreadMessage: true, updated_at: new Date().toISOString() }
+              : r
+          )
+        )
+        setToast('New message from your provider')
+      }
+
+      if (msg.type === 'files_delivered') {
+        setRequests((prev) => {
+          const updated = prev.map((r) =>
+            r.id === msg.request_id
+              ? { ...r, status: 'delivered', updated_at: new Date().toISOString() }
+              : r
+          )
+          return sortRequests(updated)
+        })
+        setToast('Your delivery is ready for review')
+      }
+    })
+
+    return unregister
+  }, [registerPortalListener])
 
   const firstName    = user?.display_name?.split(' ')[0] || 'there'
   const providerName = tenant?.name || 'Your Portal'
@@ -372,22 +462,30 @@ export default function ClientDashboard() {
   const reviewCount    = requests.filter(r => r.status === 'delivered').length
 
   const filtered = useMemo(() => {
-    if (filter === 'all')       return requests
-    if (filter === 'open')      return requests.filter(r => !['delivered', 'closed'].includes(r.status))
-    if (filter === 'delivered') return requests.filter(r => r.status === 'delivered')
-    if (filter === 'closed')    return requests.filter(r => r.status === 'closed')
-    return requests
+    let list = requests
+    if (filter === 'open')      list = requests.filter(r => !['delivered', 'closed'].includes(r.status))
+    if (filter === 'delivered') list = requests.filter(r => r.status === 'delivered')
+    if (filter === 'closed')    list = requests.filter(r => r.status === 'closed')
+    return list
   }, [filter, requests])
 
   return (
     <ClientLayout>
+      {/* slide-in animation */}
+      <style>{`
+        @keyframes slideIn {
+          from { opacity: 0.6; transform: translateY(-4px); }
+          to   { opacity: 1;   transform: translateY(0); }
+        }
+        .animate-slide-in { animation: slideIn 0.3s ease-out; }
+      `}</style>
+
       {/* Mobile spacer for top nav */}
       <div className="pt-[57px] lg:pt-0" />
 
       <div className="min-h-screen bg-[#f7f8f7]">
         <div className="max-w-5xl mx-auto px-4 py-6 lg:px-8 lg:py-8">
 
-          {/* Welcome bar */}
           <WelcomeBar
             firstName={firstName}
             providerName={providerName}
@@ -395,7 +493,6 @@ export default function ClientDashboard() {
             onNew={() => setShowNew(true)}
           />
 
-          {/* Summary cards */}
           <SummaryCards
             active={activeCount}
             needsReview={reviewCount}
@@ -403,7 +500,6 @@ export default function ClientDashboard() {
             loading={loading}
           />
 
-          {/* Main layout */}
           <div className="flex gap-5 items-start">
 
             {/* Left — request list */}
@@ -466,6 +562,7 @@ export default function ClientDashboard() {
                     <RequestRow
                       key={r.id}
                       req={r}
+                      isNew={updatedIds.has(r.id)}
                       onClick={() => navigate(`/my-requests/${r.id}`)}
                     />
                   ))}
@@ -499,6 +596,11 @@ export default function ClientDashboard() {
         </button>
       </div>
 
+      {/* Live toast */}
+      {toast && (
+        <LiveToast message={toast} onDismiss={() => setToast(null)} />
+      )}
+
       {showNew && (
         <NewRequestModal
           providerName={providerName}
@@ -506,7 +608,7 @@ export default function ClientDashboard() {
           onSuccess={(newReq) => {
             setShowNew(false)
             fetchRequests()
-            navigate(`/my-requests/${newReq.id}`) 
+            navigate(`/my-requests/${newReq.id}`)
           }}
         />
       )}
