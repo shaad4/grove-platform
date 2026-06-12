@@ -8,6 +8,7 @@ import {
 import groveLogo from '../../assets/Grove_transparent_logo(White).png'
 import { authApi as clientApi } from '../../api/auth.api'
 import { useAuth } from '../../context/AuthContext'
+import { appUrl } from '../../utils/urls'
 
 // ─── HELPERS ──────────────────────────────────────────────────
 
@@ -28,20 +29,6 @@ function getStrength(pw) {
   return { score: s, ...levels[s] }
 }
 
-/**
- * Build the portal URL for a given tenant slug.
- * Reads VITE_APP_DOMAIN + VITE_PORT so it works across
- * local (lvh.me:5173), staging, and production without
- * any hardcoded strings.
- */
-function portalUrl(slug) {
-  const domain = import.meta.env.VITE_APP_DOMAIN || 'lvh.me'
-  const port   = import.meta.env.VITE_PORT       || '5173'
-  const base   = import.meta.env.PROD
-    ? `https://${slug}.${domain}`
-    : `http://${slug}.${domain}:${port}`
-  return `${base}/portal`
-}
 
 // ─── SUB-COMPONENTS ───────────────────────────────────────────
 
@@ -145,7 +132,7 @@ export default function AcceptInvitePage() {
 
       // Give the success screen a moment to render, then navigate.
       setTimeout(() => {
-        const url = portalUrl(tenant.slug)
+        const url = appUrl(tenant.slug, '/portal')
         console.log('→ redirecting to:', url)
         window.location.replace(url)
       }, 1500)

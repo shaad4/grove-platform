@@ -1,5 +1,6 @@
 import { setAccessToken, clearAuth } from '../../features/auth/authSlice'
 import { getSubdomain } from "../../utils/domain"
+import { appUrl } from '../../utils/urls'
 
 let isLoggingOut = false
 
@@ -64,10 +65,10 @@ export const authResponseInterceptor = async (_store, api, error) => {
 
         if (getSubdomain()) {
             window.location.replace(
-                `http://${getSubdomain()}.lvh.me:5173/client-login`
+                appUrl(getSubdomain(), '/client-login')
             )
         } else {
-            window.location.replace('http://lvh.me:5173/login')
+            window.location.replace(appUrl(null, '/login'))
         }
 
         return Promise.reject(refreshError)

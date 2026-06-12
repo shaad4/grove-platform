@@ -10,6 +10,8 @@ import {
   useAuth,
 } from '../context/AuthContext'
 
+import { appUrl } from '../utils/urls'
+
 export default function TenantRoute({ children }) {
 
   const {
@@ -26,10 +28,9 @@ export default function TenantRoute({ children }) {
 
   // not authenticated
   if (!isAuth) {
-    if (subdomain) {
-      window.location.replace(`http://${subdomain}.lvh.me:5173/client-login`)
-      return null
-    }
+    window.location.replace(
+      appUrl(subdomain, '/client-login')
+    )
     return <Navigate to="/login" replace />
   }
 
@@ -45,7 +46,7 @@ export default function TenantRoute({ children }) {
  
   if (tenant.slug !== subdomain) {
     window.location.replace(
-      `http://${tenant.slug}.lvh.me:5173${window.location.pathname}`
+      appUrl(tenant.slug, window.location.pathname)
     )
     return null
   }

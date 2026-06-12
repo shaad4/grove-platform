@@ -20,12 +20,17 @@ import {
   X,
   RotateCcw,
   Pencil,
-  ExternalLink
+  ExternalLink,
+  Video,
 } from 'lucide-react'
 
 import ClientLayout from '../../components/layout/ClientLayout'
 import requestsApi from '../../api/requests.api'
 import { timeAgo, formatDate } from '../../utils/clientHelpers'
+
+import { useWebRTC } from '../../hooks/useWebRTC'
+import VideoCall from '../../components/chat/VideoCall'
+
 
 // ─── Status config (Upgraded to Tailwind Tokens) ──────────────────────────────
 
@@ -250,6 +255,21 @@ export default function ClientRequestDetailPage() {
   })
 
   const { registerPortalListener } = useBadges()
+
+  const chatWsRef = useRef(null)
+
+  const sendSignal = useCallback((payload) => {
+    if (chatWsRef.current?.readyState === WebSocket.OPEN){
+      chatWsRef.current.send(JSON.stringify(payload))
+    }
+  })
+
+  const {
+    callState, localStream, remoteStream,
+    isMuted, isCamOff,
+    startCall, acceptCall, declineCall, hangUp,
+    handleSignal, toggleMute, toggleCam,
+  } = useWebRTC({ sendSignal, currentUserId: null })
 
   // ── Data fetching ──────────────────────────────────────────────────────────
 
@@ -867,7 +887,18 @@ export default function ClientRequestDetailPage() {
                 <h2 className="text-base font-semibold text-text-main tracking-tight">Discussion</h2>
                 <p className="text-xs font-medium text-text-sub mt-0.5">Live with provider</p>
               </div>
-              <ConnectionPill connectionKey={`chat-${requestId}`} />
+              <div className="flex items-center gap-2">
+                {req?.status !== 'closed' && (
+                  <button
+                    onClick={startCall}
+                    className="h-8 w-8 flex items-center justify-center rounded-xl text-text-dim hover:text-primary hover:bg-primary-light transition-all"
+                    title="Start video call"
+                  >
+                    <Video size={16} />
+                  </button>
+                )}
+                <ConnectionPill connectionKey={`chat-${requestId}`} />
+              </div>
             </div>
 
             <ChatPanel
@@ -875,6 +906,8 @@ export default function ClientRequestDetailPage() {
               requestId={requestId}
               requestStatus={req?.status}
               activities={[]}
+              wsRef={chatWsRef}
+              onSignal={handleSignal}
             />
           </div>
 
@@ -903,12 +936,23 @@ export default function ClientRequestDetailPage() {
               <h2 className="text-base font-semibold text-text-main tracking-tight">Discussion</h2>
               <p className="text-xs font-medium text-text-sub mt-0.5">Live with provider</p>
             </div>
-            <button
-              onClick={() => setShowChat(false)}
-              className="h-10 w-10 rounded-full bg-surface flex items-center justify-center hover:bg-border/50 transition-colors"
-            >
-              <X size={18} className="text-text-main" />
-            </button>
+            <div className="flex items-center gap-2">
+              {req?.status !== 'closed' && (
+                <button
+                  onClick={startCall}
+                  className="h-8 w-8 flex items-center justify-center rounded-xl text-text-dim hover:text-primary hover:bg-primary-light transition-all"
+                  title="Start video call"
+                >
+                  <Video size={16} />
+                </button>
+              )}
+              <button
+                onClick={() => setShowChat(false)}
+                className="h-10 w-10 rounded-full bg-surface flex items-center justify-center hover:bg-border/50 transition-colors"
+              >
+                <X size={18} className="text-text-main" />
+              </button>
+            </div>
           </div>
 
           {/* Actual Chat Component filling the screen */}
@@ -932,6 +976,20 @@ export default function ClientRequestDetailPage() {
           onSubmit={handleReview}
         />
       )}
+
+      <VideoCall
+        callState={callState}
+        localStream={localStream}
+        remoteStream={remoteStream}
+        isMuted={isMuted}
+        isCamOff={isCamOff}
+        clientName={req?.provider_name || 'Provider'}
+        onAccept={acceptCall}
+        onDecline={declineCall}
+        onHangUp={hangUp}
+        onToggleMute={toggleMute}
+        onToggleCam={toggleCam}
+      />
 
     </ClientLayout>
   )

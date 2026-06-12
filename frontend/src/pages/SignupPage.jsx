@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
+import { appUrl } from '../utils/urls'
 
 import {
   Eye,
@@ -104,10 +105,14 @@ export default function SignupPage() {
         })
 
         if (data.needs_workspace) {
-          window.location.replace('http://lvh.me:5173/setup-workspace')
+          window.location.replace(
+            appUrl(null, '/setup-workspace')
+          )
         } else {
           const slug = data.tenant?.slug
-          window.location.replace(`http://${slug}.lvh.me:5173/dashboard`)
+          window.location.replace(
+            appUrl(slug, '/dashboard')
+          )
         }
       } catch (err) {
         const msg =

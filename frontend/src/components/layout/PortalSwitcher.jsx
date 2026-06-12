@@ -13,6 +13,8 @@ import {
   selectTotalPortalCount,
 } from '../../features/auth/authSlice'
 
+import { appUrl } from '../../utils/urls'
+
 function PortalAvatar({
   name,
   logo,
@@ -115,7 +117,7 @@ export default function PortalSwitcher() {
         : 'portal'
 
     window.location.replace(
-      `http://${slug}.lvh.me:5173/${path}`
+      appUrl(slug, `/${path}`)
     )
   }
 
@@ -418,7 +420,7 @@ export default function PortalSwitcher() {
                 setOpen(false)
 
                 window.location.replace(
-                  'http://lvh.me:5173/portals'
+                  appUrl(null, '/portals')
                 )
               }}
               className="

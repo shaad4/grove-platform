@@ -74,7 +74,7 @@ export default function VideoCall({
       {remoteStream ? (
         <VideoEl
           stream={remoteStream}
-          className="absolute inset-0 w-full h-full object-cover"
+          className="absolute inset-0 w-full h-full object-contain bg-slate-900"
         />
       ) : (
         <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">

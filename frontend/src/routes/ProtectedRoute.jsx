@@ -1,17 +1,9 @@
 import { Navigate, Outlet } from 'react-router-dom'
 import { getSubdomain } from '../utils/domain'
 import { useAuth } from '../context/AuthContext'
+import { appUrl } from '../utils/urls'
 
-// ─── Helpers ──────────────────────────────────────────────────
 
-const BASE_DOMAIN = import.meta.env.VITE_APP_DOMAIN || 'lvh.me'
-const PORT        = import.meta.env.VITE_PORT        || '5173'
-const IS_PROD     = import.meta.env.PROD
-
-function subdomainUrl(slug, path) {
-  if (IS_PROD) return `https://${slug}.${BASE_DOMAIN}${path}`
-  return `http://${slug}.${BASE_DOMAIN}:${PORT}${path}`
-}
 
 // ─── ProtectedRoute ───────────────────────────────────────────
 // Requires authentication. Unauthenticated users go to the
@@ -33,9 +25,9 @@ export function ProtectedRoute() {
     if (subdomain) {
       const isClientPath = window.location.pathname.startsWith('/portal')
       if (isClientPath) {
-        window.location.replace(subdomainUrl(subdomain, '/client-login'))
+        window.location.replace(appUrl(subdomain, '/client-login'))
       } else {
-        window.location.replace(`http://${BASE_DOMAIN}:${PORT}/login`)
+        window.location.replace(appUrl(null, '/login'))
       }
       return null
     }
@@ -62,7 +54,7 @@ export function GuestRoute() {
 
   if (user?.role === 'provider') {
     if (tenant?.slug) {
-      window.location.replace(subdomainUrl(tenant.slug, '/dashboard'))
+      window.location.replace(appUrl(tenant.slug, '/dashboard'))
       return null
     }
     return <Navigate to="/setup-workspace" replace />
@@ -74,7 +66,7 @@ export function GuestRoute() {
 
     if (subdomain) {
       window.location.replace(
-        subdomainUrl(subdomain, '/portal')
+        appUrl(subdomain, '/portal')
       )
       return null
     }
@@ -109,7 +101,7 @@ export function SetupRoute() {
   if (!isAuth) {
     const subdomain = getSubdomain()
     if (subdomain) {
-      window.location.replace(subdomainUrl(subdomain, '/client-login'))
+      window.location.replace(appUrl(subdomain, '/client-login'))
       return null
     }
     return <Navigate to="/login" replace />
@@ -118,7 +110,7 @@ export function SetupRoute() {
   // Only eject if they are a provider — clients are allowed through
   // to create their own workspace regardless of tenant in Redux
   if (user?.role === 'provider' && tenant?.slug) {
-    window.location.replace(subdomainUrl(tenant.slug, '/dashboard'))
+    window.location.replace(appUrl(tenant.slug, '/dashboard'))
     return null
   }
 

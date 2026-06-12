@@ -1,5 +1,3 @@
-//(grove.co/login — global entry point)
-
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Eye, EyeOff, AlertCircle, Star } from 'lucide-react'
@@ -12,6 +10,8 @@ import { authApi } from '../api/auth.api'
 import groveLogo from '../assets/Grove_transparent_logo(Green).png'
 
 import { setLoggingOut } from '../api/interceptors/authResponseInterceptor'
+
+import { appUrl } from '../utils/urls'
 
 function GoogleIcon() {
   return (
@@ -30,7 +30,9 @@ async function redirectAfterLogin(data, dispatch, saveSession) {
   saveSession({ accessToken: access, user, tenant })
 
   if (membership_count === 1 && user.role == 'provider' && tenant?.slug) {
-    window.location.replace(`http://${tenant.slug}.lvh.me:5173/dashboard`)
+    window.location.replace(
+      appUrl(tenant.slug, '/dashboard')
+    )
     return
   }
 
@@ -40,7 +42,9 @@ async function redirectAfterLogin(data, dispatch, saveSession) {
     dispatch(setMemberships(res.data))
   } catch (_) {}
 
-  window.location.replace('http://lvh.me:5173/portals')
+  window.location.replace(
+    appUrl(null, '/portals')
+  )
 }
 
 export default function LoginPage() {
@@ -67,7 +71,9 @@ export default function LoginPage() {
 
         if (data.needs_workspace) {
           saveSession({ accessToken: data.access, user: data.user, tenant: null })
-          window.location.replace('http://lvh.me:5173/setup-workspace')
+          window.location.replace(
+            appUrl(null, '/setup-workspace')
+          )
           return
         }
 
@@ -107,7 +113,9 @@ export default function LoginPage() {
 
       if (data.needs_workspace) {
         saveSession({ accessToken: data.access, user: data.user, tenant: null })
-        window.location.replace('http://lvh.me:5173/setup-workspace')
+        window.location.replace(
+          appUrl(null, '/setup-workspace')
+        )
         return
       }
 

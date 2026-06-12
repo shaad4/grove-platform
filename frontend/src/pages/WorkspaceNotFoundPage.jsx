@@ -1,6 +1,7 @@
 import { AlertTriangle } from 'lucide-react'
 import GroveLogo from '../components/layout/GroveLogo'
 import { getSubdomain } from '../utils/domain'
+import { appUrl } from '../utils/urls'
 
 export default function WorkspaceNotFoundPage() {
   const subdomain = getSubdomain()
@@ -22,7 +23,7 @@ export default function WorkspaceNotFoundPage() {
           doesn't exist or has been deactivated.
         </p>
         
-          <a href="http://lvh.me:5173"
+          <a href={appUrl(null, '')}
           className="mt-6 inline-block rounded-xl bg-[#0f6e56] px-6 py-2.5 text-[13px] font-medium text-white hover:bg-[#0c5b47]">
           Go to Grove homepage
         </a>

@@ -12,6 +12,8 @@ import {
 import { authApi } from '../api/auth.api'
 import { getSubdomain } from '../utils/domain'
 
+import { appUrl } from '../utils/urls'
+
 const SKIP_RESTORE_PATHS = ['/accept-invite', '/client-login']
 
 const AuthContext = createContext(null)
@@ -39,9 +41,10 @@ export function AuthProvider({ children }) {
 
     dispatch(clearAuth())
 
-    const destination = role === 'client' && subdomain
-      ? `http://${subdomain}.lvh.me:5173/client-login`
-      : `http://lvh.me:5173/login`
+    const destination =
+      subdomain
+        ? appUrl(subdomain, '/client-login')
+        : appUrl(null, '/login')
 
     window.location.href = destination
   }

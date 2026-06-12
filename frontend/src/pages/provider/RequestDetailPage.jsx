@@ -5,7 +5,7 @@ import {
   Lock, Plus, X, Link2, Upload, FileText,
   CheckCircle2, Circle, Clock, Send, Paperclip,
   MoreHorizontal, Copy, ExternalLink, Download, Pencil, Check,
-  GripVertical, ArrowRight, RotateCcw,
+  GripVertical, ArrowRight, RotateCcw, Video,
 } from 'lucide-react'
 import ProviderLayout from '../../components/layout/ProviderLayout'
 import requestsApi from '../../api/requests.api'
@@ -17,6 +17,8 @@ import { useSelector } from 'react-redux'
 import { selectAccessToken, selectCurrentUser } from '../../features/auth/authSlice'
 import { useWebSocket } from '../../hooks/useWebSocket'
 import { usePanelResize } from '../../hooks/usePanelResize'
+import { useWebRTC } from '../../hooks/useWebRTC'
+import VideoCall from '../../components/chat/VideoCall'
 
 // ── Status config ─────────────────────────────────────────────
 const STATUS_ORDER = ['received', 'in_review', 'in_progress', 'delivered', 'closed']
@@ -1024,6 +1026,22 @@ export default function RequestDetailPage() {
   const [urgentLoading, setUrgentLoading] = useState(false)
   const [showActivityLog, setShowActivityLog] = useState(false)
 
+  const chatWsRef = useRef(null)
+
+  const sendSignal = useCallback((payload) => {
+    if (chatWsRef.current?.readyState === WebSocket.OPEN){
+      chatWsRef.current.send(JSON.stringify(payload))
+    }
+  }, [])
+
+  const {
+    callState, localStream, remoteStream,
+    isMuted, isCamOff,
+    startCall, acceptCall, declineCall, hangUp,
+    handleSignal, toggleMute, toggleCam,
+  } = useWebRTC({ sendSignal, currentUserId: null })
+
+
   const { width: chatWidth, onMouseDown } = usePanelResize({
     storageKey: 'provider-request-chat-width',
     initialWidth: 360,
@@ -1477,6 +1495,16 @@ export default function RequestDetailPage() {
                   <ConnectionPill connectionKey={`chat-${requestId}`} />
                 </div>
               </div>
+
+              {req.status !== 'closed' && (
+                <button
+                  onClick={startCall}
+                  className="h-8 w-8 flex items-center justify-center rounded-xl text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 transition-all"
+                  title="Start video call"
+                >
+                  <Video size={16} />
+                </button>
+              )}
             </div>
 
             {/* Chat messages + input — ChatPanel handles its own scroll */}
@@ -1485,6 +1513,8 @@ export default function RequestDetailPage() {
               requestId={requestId}
               requestStatus={req.status}
               activities={activities}
+              wsRef={chatWsRef}
+              onSignal={handleSignal}
             />
           </div>
 
@@ -1505,6 +1535,19 @@ export default function RequestDetailPage() {
           onSuccess={() => { setShowDeliver(false); fetchAll() }}
         />
       )}
+      <VideoCall
+        callState={callState}
+        localStream={localStream}
+        remoteStream={remoteStream}
+        isMuted={isMuted}
+        isCamOff={isCamOff}
+        clientName={clientName}
+        onAccept={acceptCall}
+        onDecline={declineCall}
+        onHangUp={hangUp}
+        onToggleMute={toggleMute}
+        onToggleCam={toggleCam}
+      />
     </ProviderLayout>
   )
 }

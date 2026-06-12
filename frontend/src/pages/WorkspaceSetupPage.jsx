@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
-
+import { appUrl } from '../utils/urls'
 import {
   Globe,
   Loader2,
@@ -118,7 +118,7 @@ export default function WorkspaceSetupPage() {
       })
 
       window.location.replace(
-        `http://${payload.tenant.slug}.lvh.me:5173/dashboard`
+        appUrl(payload.tenant.slug, '/dashboard')
       )
     } catch (err) {
       const errorData = err.response?.data

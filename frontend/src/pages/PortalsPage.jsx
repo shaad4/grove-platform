@@ -8,6 +8,8 @@ import { useAuth } from '../context/AuthContext'
 
 import groveLogo from '../assets/Grove_transparent_logo(Green).png'
 
+import { appUrl } from '../utils/urls'
+
 // ─────────────────────────────────────────────────────────────
 // Helpers
 // ─────────────────────────────────────────────────────────────
@@ -40,16 +42,6 @@ function getNameColor(name = '') {
   }
 }
 
-function subdomainUrl(slug, path) {
-
-  const BASE = import.meta.env.VITE_APP_DOMAIN || 'lvh.me'
-  const PORT = import.meta.env.VITE_PORT || '5173'
-  const PROD = import.meta.env.PROD
-
-  return PROD
-    ? `https://${slug}.${BASE}${path}`
-    : `http://${slug}.${BASE}:${PORT}${path}`
-}
 
 // ─────────────────────────────────────────────────────────────
 // Background
@@ -337,7 +329,7 @@ export default function PortalsPage() {
   const goToPortal = (slug, role) => {
 
     window.location.replace(
-      subdomainUrl(
+      appUrl(
         slug,
         role === 'provider'
           ? '/dashboard'

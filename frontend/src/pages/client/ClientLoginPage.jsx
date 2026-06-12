@@ -8,19 +8,14 @@ import groveLogoWhite from "../../assets/Grove_transparent_logo(White).png"
 import { authApi } from '../../api/auth.api'
 import { useAuth } from '../../context/AuthContext'
 import { getSubdomain } from '../../utils/domain'
+import { appUrl } from '../../utils/urls'
 
 // ─────────────────────────────────────────────────────────────
 // Helpers
 // ─────────────────────────────────────────────────────────────
 
-const BASE_DOMAIN = import.meta.env.VITE_APP_DOMAIN || 'lvh.me'
-const PORT        = import.meta.env.VITE_PORT || '5173'
-const IS_PROD     = import.meta.env.PROD
-
 function rootUrl(path) {
-  return IS_PROD
-    ? `https://${BASE_DOMAIN}${path}`
-    : `http://${BASE_DOMAIN}:${PORT}${path}`
+  return appUrl(null, path)
 }
 
 function getInitials(name = '') {
@@ -153,9 +148,7 @@ export default function ClientLoginPage() {
       })
 
       window.location.replace(
-        IS_PROD
-          ? `https://${t.slug}.${BASE_DOMAIN}/portal`
-          : `http://${t.slug}.${BASE_DOMAIN}:${PORT}/portal`
+        appUrl(t.slug, '/portal')
       )
     } catch (err) {
       setError(err?.response?.data?.message || 'Invalid email or password.')

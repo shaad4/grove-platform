@@ -8,6 +8,8 @@ import {
   selectTotalPortalCount,
 } from '../../features/auth/authSlice'
 
+import { appUrl } from '../../utils/urls'
+
 // ───────────────── Avatar ─────────────────
 function PortalAvatar({ name, logo, size = 'sm' }) {
   const initials =
@@ -78,15 +80,15 @@ export default function ClientPortalSwitcher() {
   // ───────────────── Navigation ─────────────────
   const goTo = (slug, role) => {
     setOpen(false)
-    const path = role === 'provider' ? 'dashboard' : 'portal'
-    const domain = import.meta.env.VITE_APP_DOMAIN || 'lvh.me'
-    const port = import.meta.env.VITE_PORT || '5173'
-    
-    const base = import.meta.env.PROD
-      ? `https://${slug}.${domain}`
-      : `http://${slug}.${domain}:${port}`
 
-    window.location.replace(`${base}/${path}`)
+    const path =
+      role === 'provider'
+        ? '/dashboard'
+        : '/portal'
+
+    window.location.replace(
+      appUrl(slug, path)
+    )
   }
 
   return (
@@ -230,12 +232,8 @@ export default function ClientPortalSwitcher() {
             <button
               onClick={() => {
                 setOpen(false)
-                const domain = import.meta.env.VITE_APP_DOMAIN || 'lvh.me'
-                const port = import.meta.env.VITE_PORT || '5173'
                 window.location.replace(
-                  import.meta.env.PROD
-                    ? `https://${domain}/portals`
-                    : `http://${domain}:${port}/portals`
+                  appUrl(null, '/portals')
                 )
               }}
               className="

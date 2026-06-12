@@ -196,16 +196,28 @@ REST_FRAMEWORK = {
 # CORS
 CORS_ALLOWED_ORIGINS = [
    "http://lvh.me:5173",
+    "https://lvh.me:5173",          
+    "http://localhost:5173",
+    "https://localhost:5173",       
 ]
 
 CORS_ALLOWED_ORIGIN_REGEXES = [
-    r"^http://.*\.lvh\.me(:\d+)?$",
+    r"^https?://.*\.lvh\.me:5173$",
 ]
 
 CORS_ALLOW_CREDENTIALS = True
 
 CORS_ALLOW_HEADERS = list(default_headers) + [
     "x-tenant-slug",
+]
+
+CSRF_TRUSTED_ORIGINS = [
+    "http://lvh.me:5173",
+    "https://lvh.me:5173",
+    "http://*.lvh.me:5173",
+    "https://*.lvh.me:5173",
+    "https://lvh.me:8443",
+    "https://*.lvh.me:8443",
 ]
 
 

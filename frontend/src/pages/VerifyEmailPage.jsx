@@ -20,6 +20,7 @@ import { authApi } from '../api/auth.api'
 import { useAuth } from '../context/AuthContext'
 
 import groveLogo from '../assets/Grove_transparent_logo(Green).png'
+import { appUrl } from '../utils/urls'
 
 export default function VerifyEmailPage() {
 
@@ -83,7 +84,7 @@ export default function VerifyEmailPage() {
         setTimeout(() => {
 
           window.location.replace(
-            'http://lvh.me:5173/setup-workspace'
+            appUrl(null, '/setup-workspace')
           )
 
         }, 1200)
@@ -126,7 +127,7 @@ export default function VerifyEmailPage() {
           setTimeout(() => {
 
             window.location.replace(
-              'http://lvh.me:5173/setup-workspace'
+              appUrl(null, '/setup-workspace')
             )
 
           }, 1200)

@@ -14,6 +14,8 @@ import { selectAccessToken } from '../features/auth/authSlice'
 import { useDispatch } from 'react-redux'
 import { setStatus, removeConnection } from '../features/ws/wsSlice'
 
+import { wsUrl } from '../utils/urls'
+
 export const BadgeContext = createContext(null)
 
 // ── tiny audio notify ──────────────────────────────────────────────────────────
@@ -128,9 +130,11 @@ export function BadgeProvider({ children }) {
   const connectFeed = useCallback(() => {
     if (unmounted.current || !accessToken || !userId) return
 
-    const wsHost = window.location.hostname
-    const tenant = wsHost.split('.')[0]
-    const url = `ws://${wsHost}:8000/ws/feed/?token=${accessToken}&tenant=${tenant}`
+    const tenant = window.location.hostname.split('.')[0]
+
+     const url = wsUrl(
+        `/ws/feed/?token=${accessToken}&tenant=${tenant}`
+      )
 
     const ws = new WebSocket(url)
     wsRef.current = ws

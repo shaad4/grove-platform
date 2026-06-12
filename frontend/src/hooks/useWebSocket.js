@@ -5,7 +5,7 @@ import { setStatus, removeConnection } from '../features/ws/wsSlice'
 const BASE_DELAY = 1000
 const MAX_DELAY  = 30000
 
-export function useWebSocket(url, onMessage, key = 'default') {
+export function useWebSocket(url, onMessage, key = 'default', socketRef = null) {
   const dispatch   = useDispatch()
   const wsRef      = useRef(null)
   const retryTimer = useRef(null)
@@ -23,6 +23,8 @@ export function useWebSocket(url, onMessage, key = 'default') {
 
     const ws = new WebSocket(url)
     wsRef.current = ws
+
+    if (socketRef) socketRef.current = ws
 
     ws.onopen = () => {
       if (unmounted.current) return ws.close()

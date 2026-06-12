@@ -9,6 +9,8 @@ import { selectAccessToken } from '../../features/auth/authSlice'
 import { useWebSocket } from '../../hooks/useWebSocket'
 import requestsApi from '../../api/requests.api'
 import { getAvatarColor, getInitials } from '../../utils/clientHelpers'
+import { wsUrl } from '../../utils/urls'
+
 
 // ── File type helpers ──────────────────────────────────────────
 function getFileIcon(fileType = '', fileName = '') {
@@ -137,6 +139,8 @@ export default function ChatPanel({
   requestId,
   requestStatus,
   activities = [],
+  wsRef,
+  onSignal,
 }) {
   const [messages,    setMessages]    = useState([])
   const [input,       setInput]       = useState('')
@@ -177,13 +181,16 @@ export default function ChatPanel({
   }, [input])
 
   // ── WebSocket ────────────────────────────────────────────────
-  const wsHost = window.location.hostname
-  const tenant = wsHost.split('.')[0]
-  const wsUrl  = accessToken
-    ? `ws://${wsHost}:8000/ws/chat/${requestId}/?token=${accessToken}&tenant=${tenant}`
+  const tenant = window.location.hostname.split('.')[0]
+  const socketUrl = accessToken
+    ? wsUrl(`/ws/chat/${requestId}/?token=${accessToken}&tenant=${tenant}`)
     : null
 
   const handleWsMessage = useCallback((msg) => {
+    if (['call_offer', 'call_answer', 'ice_candidate', 'call_end'].includes(msg.type)){
+      onSignal?.(msg)
+      return
+    }
     if (msg.type === 'message') {
       setMessages(prev => {
         const optIdx = prev.findIndex(
@@ -247,9 +254,9 @@ export default function ChatPanel({
         })
       )
     }
-  }, [currentUser?.id, requestId])
+  }, [currentUser?.id, requestId, onSignal])
 
-  useWebSocket(wsUrl, handleWsMessage, `chat-${requestId}`)
+  useWebSocket(socketUrl, handleWsMessage, `chat-${requestId}`, wsRef)
 
   // ── File attachments ─────────────────────────────────────────
   const handleAttachFiles = useCallback(async (fileList) => {
