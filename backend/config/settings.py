@@ -356,8 +356,7 @@ LOGGING = {
 
 EMAIL_FALLBACK_DELAY_MINUTES = 5  # Email Fallback Message Delay Time (notification-tasks)
 
-
-
+LOGO_URL_BRANDING = "https://grove-uploads.s3.ap-south-1.amazonaws.com/branding/grove-logo-green.png"
 
 
 

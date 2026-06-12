@@ -10,6 +10,7 @@ from django.utils import timezone
 from apps.notifications.models import Notification
 from apps.tenants.models import TenantMembership
 from apps.request_management.models import Request
+from apps.clients.models import Client
 
 @shared_task(bind=True, max_retries=3, default_retry_delay=60)
 def send_verification_email(
@@ -158,6 +159,28 @@ def send_weekly_provider_summary():
             is_deleted=False,
         ).count()
 
+        pending_requests = Request.objects.filter(
+            tenant=tenant,
+            status__in=[
+                Request.Status.RECEIVED, 
+                Request.Status.IN_REVIEW,
+                Request.Status.IN_PROGRESS, 
+            ],
+            is_deleted=False,
+        ).count()
+
+        active_clients = Client.objects.filter(
+            tenant=tenant,
+            status = Client.Status.ACTIVE,
+            is_deleted=False,
+            is_deactivated=False,
+        ).count()
+
+        completion_rate = (
+            round((requests_delivered / requests_received) * 100)
+            if requests_received else 0
+        )
+
         if requests_received == 0 and requests_delivered == 0:
             continue
         
@@ -167,6 +190,10 @@ def send_weekly_provider_summary():
                 tenant_name=tenant.name,
                 requests_received=requests_received,
                 requests_delivered=requests_delivered,
+                pending_requests=pending_requests,
+                active_clients=active_clients,
+                completion_rate=completion_rate,
+
             )
             send_email(
                 subject=email_data["subject"],
