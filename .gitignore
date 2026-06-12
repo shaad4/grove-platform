@@ -82,3 +82,4 @@ Thumbs.db
 
 celerybeat-schedule
 structure.txt
+backend/celerybeat-schedule
