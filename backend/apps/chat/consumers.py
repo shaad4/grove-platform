@@ -50,8 +50,19 @@ class RequestChatConsumer(AsyncJsonWebsocketConsumer):
     async def receive_json(self, content):
         try:
             event = content.get("type")
+
             if event == "ping":
                 await self.send_json({"type" : "pong"})
+
+            elif event in ("call_offer", "call_answer", "ice_candidate", "call_end"):
+                await self.channel_layer.group_send(
+                    self.group_name,
+                    {
+                        "type" : "call_signal",
+                        "payload" : content,
+                        "sender_id" : str(self.user.id),
+                    }
+                )
         except Exception as e:
             logger.error(f"[RequestChatConsumer.receive_json] Error: {e}")
 
@@ -85,6 +96,15 @@ class RequestChatConsumer(AsyncJsonWebsocketConsumer):
         except Exception as e:
             logger.error(f"[RequestChatConsumer.chat_read_receipt] Error: {e}")
 
+    
+    async def call_signal(self, event):
+        try:
+            if event["sender_id"] == str(self.user.id):
+                return
+            await self.send_json(event["payload"])
+        except Exception as e:
+            logger.error(f"[RequestChatConsumer.call_signal] Error: {e}")
+
 
     #DB Helper
     @database_sync_to_async
@@ -100,3 +120,5 @@ class RequestChatConsumer(AsyncJsonWebsocketConsumer):
         except Exception as e:
             logger.error(f"[RequestChatConsumer._get_request] DB error: {e}")
             return None
+        
+    
