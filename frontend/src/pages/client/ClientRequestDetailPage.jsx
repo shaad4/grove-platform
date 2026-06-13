@@ -259,9 +259,10 @@ export default function ClientRequestDetailPage() {
   const chatWsRef = useRef(null)
 
   const sendSignal = useCallback((payload) => {
-    if (chatWsRef.current?.readyState === WebSocket.OPEN){
+     if (chatWsRef.current?.readyState === WebSocket.OPEN){
+      console.log('ACTUALLY SENDING')
       chatWsRef.current.send(JSON.stringify(payload))
-    }
+    } 
   })
 
   const {
