@@ -353,7 +353,6 @@ function DeliverModal({ request, onClose, onSuccess }) {
         file_ids: fileIds,
       })
 
-      await requestsApi.updateStatus(request.id, 'delivered')
       await loadBadges()
 
       onSuccess()
