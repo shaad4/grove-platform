@@ -259,10 +259,11 @@ export default function ClientRequestDetailPage() {
   const chatWsRef = useRef(null)
 
   const sendSignal = useCallback((payload) => {
-     if (chatWsRef.current?.readyState === WebSocket.OPEN){
-      console.log('ACTUALLY SENDING')
+   
+    if (chatWsRef.current?.readyState === WebSocket.OPEN){
       chatWsRef.current.send(JSON.stringify(payload))
     } 
+
   })
 
   const {
@@ -312,10 +313,16 @@ export default function ClientRequestDetailPage() {
     return registerPortalListener((msg) => {
       if (msg.request_id !== requestId) return
 
-      if (msg.type === 'status_change' || msg.type === 'files_delivered') {
-        const newStatus = msg.new_status || 'delivered'
-        setReq((prev) => prev ? { ...prev, status: newStatus, updated_at: msg.updated_at || new Date().toISOString() } : prev)
-        if (msg.type === 'files_delivered') fetchAll()
+      if (msg.type === 'files_delivered' || msg.type === 'status_change') {
+        const newStatus = msg.new_status
+        if (newStatus) {
+          setReq((prev) =>
+            prev ? { ...prev, status: newStatus, updated_at: msg.updated_at || new Date().toISOString() } : prev
+          )
+        }
+        if (msg.type === 'files_delivered') {
+          setTimeout(() => fetchAll(), 1500)  
+        }
       }
 
       if (msg.type === 'new_message') {
