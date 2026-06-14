@@ -137,41 +137,7 @@ class DashboardStatsView(APIView):
             for r in raw_recent
         ]
 
-        #30-Day volume chart
-
-        received_by_day = (
-            Request.objects.filter(
-                tenant_id = tid, is_deleted=False,
-                created_at__gte=thirty_days_ago,
-            )
-            .annotate(day=TruncDate("created_at"))
-            .values("day")
-            .annotate(count=Count("id"))
-        )
-
-        delivered_by_day = (
-            RequestActivity.objects.filter(
-                tenant_id=tid,
-                event_type=RequestActivity.EventType.STATUS_CHANGE,
-                metadata__to__in=["delivered", "closed"],
-                created_at__gte=thirty_days_ago,
-            )
-            .annotate(day=TruncDate("created_at"))
-            .values("day")
-            .annotate(count=Count("id"))
-        )
-
-        received_map = {r["day"]: r["count"] for r in received_by_day}
-        delivered_map = {r["day"]: r["count"] for r in delivered_by_day}
-
-        volume_chart = [
-            {
-                "date" : (now - timedelta(days=29 -i)).date().isoformat(),
-                "received": received_map.get((now - timedelta(days=29 -i )).date(),0),
-                "delivered": delivered_map.get((now - timedelta(days=29 -i )).date(), 0)
-            }
-            for i in range(30)
-        ]
+        
 
         #Busiest Time Heatmap
 
@@ -213,7 +179,6 @@ class DashboardStatsView(APIView):
             },
             "status_breakdown": status_breakdown,
             "recent_requests": recent_requests,
-            "volume_chart": volume_chart,
             "heatmap": heatmap,
         }
 

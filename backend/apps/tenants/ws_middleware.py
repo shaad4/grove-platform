@@ -43,9 +43,6 @@ class JWTTenantAuthMiddleware(BaseMiddleware):
     3. Validates the token via simplejwt
     4. Confirms the user has an active membership in that tenant
     5. Attaches scope["user"], scope["tenant"], scope["tenant_membership"]
-
-    Consumers can then trust scope["user"] is authenticated and
-    scope["tenant_membership"] confirms their role in this tenant.
     """
 
     async def __call__(self, scope, receive, send):

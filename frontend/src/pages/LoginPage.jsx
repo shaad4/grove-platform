@@ -62,10 +62,12 @@ export default function LoginPage() {
   //Google OAuth
   const googleLogin = useGoogleLogin({
     onSuccess: async (tokenResponse) => {
+      console.log('Google token response:', tokenResponse) // ← add this
       setGoogleLoading(true)
       setError('')
       try {
         const { data } = await authApi.googleAuth(tokenResponse.access_token)
+        console.log('Backend response:', data)
 
         setLoggingOut(false)
 
@@ -79,12 +81,16 @@ export default function LoginPage() {
 
         await redirectAfterLogin(data, dispatch, saveSession)
       } catch (err) {
+        console.log('Error response:', err.response) // add this
         setError(err.response?.data?.message || 'Google sign-in failed. Please try again.')
       } finally {
         setGoogleLoading(false)
       }
     },
-    onError: () => setError('Google sign-in failed. Please try again.'),
+    onError: (err) => {
+      console.log('Google onError:', err) // ← add this
+      setError('Google sign-in failed. Please try again.')
+    },
     flow: 'implicit',
   })
 

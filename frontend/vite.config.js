@@ -2,7 +2,6 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import basicSsl from '@vitejs/plugin-basic-ssl'
 
-
 export default defineConfig({
   plugins: [react(), basicSsl()],
 
@@ -15,10 +14,16 @@ export default defineConfig({
       '.lvh.me',
     ],
 
+    headers: {
+      'Cross-Origin-Opener-Policy': 'unsafe-none',
+      'Cross-Origin-Embedder-Policy': 'unsafe-none',
+    },
+
     proxy: {
       '/api': {
-        target: 'http://localhost:8000',
+        target: 'https://api.lvh.me:8443',  
         changeOrigin: true,
+        secure: false,  
       },
     },
   },

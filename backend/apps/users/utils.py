@@ -5,8 +5,8 @@ def set_auth_cookies(response, refresh_token, cookie_name="refresh_token"):
         value=str(refresh_token),
 
         httponly=True,
-        secure=False,
-        samesite="Lax",
+        secure=True,
+        samesite="None",
 
         domain=".lvh.me",
         path="/",

@@ -183,102 +183,6 @@ function RecentRequestCard({ req, onClick }) {
   )
 }
 
-function RequestVolumeChart({ data }) {
-  if (!data?.length) return null
-
-  const recent = data.slice(-10)
-
-  const max = Math.max(
-    ...recent.map((d) =>
-      Math.max(d.received, d.delivered)
-    ),
-    1
-  )
-
-  return (
-    <div>
-      <div className="mb-5 flex items-center justify-between">
-        <div>
-          <p className="text-[28px] font-semibold text-[#141a14]">
-            {recent.reduce((a, b) => a + b.received, 0)}
-          </p>
-
-          <p className="text-[12px] text-[#9ea89e]">
-            Requests in last 10 days
-          </p>
-        </div>
-
-        <div className="flex gap-4">
-          <div className="flex items-center gap-1.5 text-[11px] text-[#4a544a]">
-            <span className="h-2.5 w-2.5 rounded-full bg-[#b7ead8]" />
-            Received
-          </div>
-
-          <div className="flex items-center gap-1.5 text-[11px] text-[#4a544a]">
-            <span className="h-2.5 w-2.5 rounded-full bg-[#0f6e56]" />
-            Delivered
-          </div>
-        </div>
-      </div>
-
-      <div className="flex items-end gap-3 h-[180px]">
-        {recent.map((d, i) => {
-          const receivedHeight =
-            (d.received / max) * 140
-
-          const deliveredHeight =
-            (d.delivered / max) * 140
-
-          return (
-            <div
-              key={i}
-              className="group flex flex-1 flex-col items-center"
-            >
-              <div className="relative flex items-end gap-[4px] h-[140px]">
-
-                <div className="absolute -top-14 hidden rounded-xl bg-[#141a14] px-3 py-2 text-[10px] text-white shadow-xl group-hover:block">
-                  <div>{d.date}</div>
-
-                  <div className="mt-1 text-[#b7ead8]">
-                    {d.received} received
-                  </div>
-
-                  <div className="text-[#d1fae5]">
-                    {d.delivered} delivered
-                  </div>
-                </div>
-
-                <div
-                  className="w-[10px] rounded-t-full bg-[#b7ead8]"
-                  style={{
-                    height: `${receivedHeight}px`,
-                  }}
-                />
-
-                <div
-                  className="w-[10px] rounded-t-full bg-[#0f6e56]"
-                  style={{
-                    height: `${deliveredHeight}px`,
-                  }}
-                />
-              </div>
-
-              <span className="mt-2 text-[10px] text-[#9ea89e]">
-                {new Date(d.date).toLocaleDateString(
-                  'en',
-                  {
-                    day: 'numeric',
-                  }
-                )}
-              </span>
-            </div>
-          )
-        })}
-      </div>
-    </div>
-  )
-}
-
 
 // ─── Busiest Times Heatmap ────────────────────────────────────────────────────
 
@@ -472,35 +376,6 @@ export default function ProviderDashboard() {
                loading={loadingStats} 
               />
             </div>
-
-            {/* Request Volume Chart
-            
-            <div className="rounded-2xl border border-[#e8eae8] bg-white p-5">
-              <div className="flex items-center gap-2 mb-5">
-                <TrendingUp
-                  size={15}
-                  className="text-[#0f6e56]"
-                />
-
-                <div>
-                  <h3 className="text-[14px] font-semibold text-[#141a14]">
-                    Request Volume
-                  </h3>
-
-                  <p className="text-[11px] text-[#9ea89e] mt-0.5">
-                    Request activity overview
-                  </p>
-                </div>
-              </div>
-
-              {loadingStats ? (
-                <Skeleton className="h-[220px]" />
-              ) : (
-                <RequestVolumeChart
-                  data={stats?.volume_chart}
-                />
-              )}
-            </div> */}
 
 
             {/* Clients */}
