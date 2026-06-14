@@ -370,9 +370,9 @@ EMAIL_FALLBACK_DELAY_MINUTES = 5  # Email Fallback Message Delay Time (notificat
 
 LOGO_URL_BRANDING = "https://grove-uploads.s3.ap-south-1.amazonaws.com/branding/grove-logo-green.png"
 
+CACHE_TTL = 120 #Dashboard stats cash timeout (Dashboard - views)
 
-
-
+PAGE_SIZE = 500 #Activity Page size
 
 
 

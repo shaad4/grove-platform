@@ -15,6 +15,8 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 
+from django.conf import settings
+
 from apps.tenants.models import TenantMembership
 from apps.clients.models import Client
 from apps.request_management.models import Request, RequestActivity
@@ -35,7 +37,7 @@ class DashboardStatsView(APIView):
     """
     
     permission_classes = [IsAuthenticated]
-    CACHE_TTL = 120 #add to env
+    CACHE_TTL = settings.CACHE_TTL 
 
     def get(self, request):
         if not _require_provider(request):
@@ -273,7 +275,7 @@ class SidebarBadgesView(APIView):
 
 class ActivityFeedView(APIView):
     permission_classes = [IsAuthenticated]
-    PAGE_SIZE = 500
+    PAGE_SIZE = settings.PAGE_SIZE
 
     def get(self, request):
         if not _require_provider(request):
