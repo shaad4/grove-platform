@@ -296,7 +296,30 @@ class RequestService:
                 is_deleted=False,
             )
             files.update(delivery=delivery, is_delivery_file=True)
+
+        old_status = request_obj.status
+        RequestRepository.update_status(request_obj, Request.Status.DELIVERED)
+
  
+        RequestActivityRepository.log(
+            request_obj=request_obj,
+            event_type=RequestActivity.EventType.STATUS_CHANGE,
+            description=f"Status changed from '{old_status}' to 'delivered'.",
+            actor=provider,
+            actor_source=RequestActivity.ActorSource.USER,
+            metadata={"from": old_status, "to": Request.Status.DELIVERED},
+        )
+
+        usage = TenantUsage.objects.get(tenant=tenant)
+        if usage.active_request_count > 0:
+            TenantUsage.objects.filter(tenant=tenant).update(
+                active_request_count=usage.active_request_count - 1,
+                total_delivered_lifetime=usage.total_delivered_lifetime + 1,
+            )
+
+        cache.delete(f"dashboard_stats:{tenant.id}")
+        cache.delete(f"sidebar_badges:{tenant.id}")
+
         RequestActivityRepository.log(
             request_obj=request_obj,
             event_type=RequestActivity.EventType.DELIVERY_CREATED,
@@ -305,6 +328,7 @@ class RequestService:
             actor_source=RequestActivity.ActorSource.USER,
             metadata={"delivery_id": str(delivery.id)},
         )
+
 
         def _notify_delivery():
             try:

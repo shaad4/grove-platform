@@ -21,7 +21,7 @@ def send_client_invite_email(
 ):
     
     frontend_base = getattr(settings, "FRONTEND_BASE_URL", "http://lvh.me:5173")
-    accept_url = f"http://{tenant_slug}.{frontend_base.replace('http://', '')}/accept-invite?token={invite_token}"
+    accept_url = f"https://{tenant_slug}.{frontend_base.replace('http://', '')}/accept-invite?token={invite_token}"
 
     subject = f"You've been invited to {provider_name}'s workspace on Grove"
 
