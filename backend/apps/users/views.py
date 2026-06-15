@@ -577,10 +577,21 @@ class GoogleAuthView(APIView):
             "membership_count": membership_count, 
         })
  
-        cookie_name = f"provider_refresh_{tenant.slug}" if tenant else "refresh_token"
-        set_auth_cookies(response, refresh, cookie_name=cookie_name)
+        if tenant:
+            # Single provider — one cookie
+            set_auth_cookies(response, refresh, cookie_name=f"provider_refresh_{tenant.slug}")
+        else:
+            # Multiple memberships — set a cookie per tenant, same pattern as LoginView
+            all_memberships = TenantMembership.objects.filter(
+                user=user, is_active=True
+            ).select_related("tenant")
+            for m in all_memberships:
+                role_prefix = "provider" if m.role == TenantMembership.Role.PROVIDER else "client"
+                set_auth_cookies(response, refresh, cookie_name=f"{role_prefix}_refresh_{m.tenant.slug}")
+            set_auth_cookies(response, refresh, cookie_name="refresh_token")
+
         return response
-    
+            
 
 class MembershipsView(APIView):
     """
