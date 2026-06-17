@@ -64,6 +64,7 @@ INSTALLED_APPS = [
     "apps.request_management",
     "apps.dashboard",
     "apps.chat",
+    "apps.settings",
 
 
 
