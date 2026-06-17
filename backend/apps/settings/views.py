@@ -266,7 +266,35 @@ class NotificationSettingsView(APIView):
         })
     
 
+# Delete Account (Leave Membership)
 
+class DeleteAccountView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        tenant, err = _require_tenant(request)
+        if err:
+            return err
+        
+        confirm = request.data.get("confirm", False)
+        if not confirm:
+            return Response(
+                {"success": False, "message": "Please confirm by sending confirm: true."},
+                status=400,
+            )
+        
+        success = DeleteAccountService.leave_workspace(request.user, tenant)
+
+        if not success:
+            return Response(
+                {"success": False, "message": "No active membership found."},
+                status=404,
+            )
+        
+        return Response({
+            "success": True,
+            "message": "You have left this workspace. Your account remains active.",
+        })
 
 
     
