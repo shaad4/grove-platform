@@ -188,3 +188,39 @@ class WorkspaceSettingsView(APIView):
                 "slug_changed": slug_changed,
             },
         })
+
+#Logo Upload
+class LogoUploadView(APIView):
+    permission_classes = [IsAuthenticated]
+    parser_classes = [MultiPartParser, FormParser]
+
+    def post(self, request):
+        denied = _require_provider(request)
+        if denied:
+            return denied
+        
+        tenant, err = _require_provider(request)
+        if err:
+            return err
+        
+        file = request.FILES.get("logo")
+        if not file:
+            return Response(
+                {"success": False, "message": "No file provided."},
+                status=400,
+            )
+        
+        try:
+            url = WorkspaceService.upload_logo(tenant, file)
+        except InvalidFileType as e:
+            return Response({"success": False, "message": str(e)}, status=400)
+        except FileTooLarge as e:
+            return Response({"success": False, "message": str(e)}, status=400)
+        except S3UploadError as e:
+            return Response({"success": False, "message": str(e)}, status=500)
+        
+        return Response({
+            "success": True,
+            "message": "Logo updated.",
+            "data": {"logo_url": url},
+        })
