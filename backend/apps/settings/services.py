@@ -101,5 +101,15 @@ class ProfileService:
         UserSettingsRepository.update_password(user, new_password)
         logger.info("profile_password_changed user_id=%s", user.id)
 
-        
+
+    @staticmethod
+    def upload_avatar(user, file):
+        _validate_image(file)
+        url = _upload_to_s3(file, folder="avatars")
+        UserSettingsRepository.update_avatar(user, url)
+        logger.info("profile_avatar_uploaded user_id=%s", user.id)
+        return url
+    
+    
+
 

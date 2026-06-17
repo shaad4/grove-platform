@@ -1,13 +1,19 @@
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.parsers import MultiPartParser, FormParser
+
 
 from apps.tenants.models import TenantMembership
 
 
 from .services import (
     ProfileService,
-    WrongCurrentPassword
+    WrongCurrentPassword,
+    InvalidFileType,
+    FileTooLarge,
+    S3UploadError,
+
 )
 
 from .serializers import (
@@ -100,3 +106,35 @@ class ProfileSettingsView(APIView):
             "message": "Profile updated.",
             "data": updated,
         })
+    
+
+
+# Avatar Upload View
+
+class AvatarUploadView(APIView):
+    permission_classes = [IsAuthenticated]
+    parser_classes = [MultiPartParser, FormParser]
+
+    def post(self, request):
+        file = request.FILES.get("avatar")
+        if not file:
+            return Response(
+                {"success": False, "message": "No file provided."},
+                status=400,
+            )
+        try:
+            url = ProfileService.upload_avatar(request.user, file)
+        except InvalidFileType as e:
+            return Response({"success": False, "message": str(e)}, status=400)
+        except FileTooLarge as e:
+            return Response({"success": False, "message": str(e)}, status=400)
+        except S3UploadError as e:
+            return Response({"success": False, "message": str(e)}, status=500) 
+        
+        return Response({
+            "success": True,
+            "message": "Avatar updated.",
+            "data": {"avatar_url": url},
+        })
+    
+    
