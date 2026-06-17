@@ -155,7 +155,7 @@ class WorkspaceSettingsView(APIView):
         if denied:
             return denied
         
-        tenant, err = _require_provider(request)
+        tenant, err = _require_tenant(request)
         if err:
             return err
         
@@ -167,7 +167,7 @@ class WorkspaceSettingsView(APIView):
         if denied:
             return denied
         
-        tenant, err = _require_provider(request)
+        tenant, err = _require_tenant(request)
         if err:
             return err
         
@@ -203,7 +203,7 @@ class LogoUploadView(APIView):
         if denied:
             return denied
         
-        tenant, err = _require_provider(request)
+        tenant, err = _require_tenant(request)
         if err:
             return err
         
