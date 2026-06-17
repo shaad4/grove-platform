@@ -176,8 +176,88 @@ class WorkspaceService:
         return url
     
 
+
     
+# Notificiaction Service
+
+PROVIDER_NOTIFICATION_DEFAULTS = {
+    "in_app": {
+        "new_request": True,
+        "client_reply": True,
+        "client_viewed_delivery": True,
+        "client_accepted_invite": True,
+        "request_overdue": True,
+    },
+    "email": {
+        "new_request": True,
+        "client_reply": True,
+        "client_viewed_delivery": False,
+        "client_accepted_invite": True,
+        "weekly_summary": True,
+        "weekly_summary_day": "Mon",
+    },
+}
+
+CLIENT_NOTIFICATION_DEFAULTS = {
+    "email": {
+        "status_change": True,
+        "new_message": True,
+        "files_delivered": False,
+    },
+}
+
+class NotificationService:
+
+    @staticmethod
+    def get_preferences(user, role):
+        stored = UserSettingsRepository.get_notification_settings(user)
+
+        if role == "provider":
+            defaults = PROVIDER_NOTIFICATION_DEFAULTS
+        else:
+            defaults = CLIENT_NOTIFICATION_DEFAULTS
+
+        merged = {}
+        for section, prefs in defaults.items():
+            stored_section = stored.get(section, {})
+            merged[section] = {**prefs, **stored_section}
+
+        return merged
     
+    @staticmethod
+    def update_preferences(user, role, data):
+
+        if role == "provider":
+            allowed_sections = {"in_app", "email"}
+        else:
+            allowed_sections = {"email"}
+
+
+        clean = {k: v for k, v in data.items() if k in allowed_sections}
+        UserSettingsRepository.update_notification_settings(user, clean)
+        logger.info("notification_prefs_updated user_id=%s role=%s", user.id, role)
+        return NotificationService.get_preferences(user, role) 
+    
+
+# Delete Account
+
+class DeleteAccountService:
+
+    @staticmethod
+    def leave_workspace(user, tenant):
+        """
+        Soft-delete: deactivates membership in this tenant only.
+        User's global account and other memberships are untouched.
+        """
+
+        success = UserSettingsRepository.deactivate_membership(user, tenant)
+        if success:
+            logger.info(
+                "membership_deactivated user_id=%s tenant_id=%s",
+                user.id, tenant.id,
+            )
+            return success
+
    
 
 

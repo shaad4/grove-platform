@@ -10,6 +10,8 @@ from apps.tenants.models import TenantMembership
 from .services import (
     ProfileService,
     WorkspaceService,
+    NotificationService,
+    DeleteAccountService,
     WrongCurrentPassword,
     InvalidFileType,
     FileTooLarge,
@@ -22,6 +24,8 @@ from .serializers import (
     DisplayNameSerializer,
     PasswordChangeSerializer,
     WorkspaceUpdateSerializer,
+    ProviderNotificationSerializer,
+    ClientNotificationSerializer,
     
 )
 
@@ -224,3 +228,46 @@ class LogoUploadView(APIView):
             "message": "Logo updated.",
             "data": {"logo_url": url},
         })
+    
+
+# Notification Settings
+class NotificationSettingsView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def _get_role(self, request):
+        membership = getattr(request, "tenant_membership", None)
+        return membership.role if membership else "client"
+    
+    def get(self, request):
+        role = self._get_role(request)
+        data = NotificationService.get_preferences(request.user, role)
+        return Response({"success": True, "data": data})
+        
+
+    def patch(self, request):
+        role = self._get_role(request)
+
+        if role == TenantMembership.Role.PROVIDER:
+            serializer = ProviderNotificationSerializer(data=request.data)
+        else:
+            serializer = ClientNotificationSerializer(data=request.data)
+
+        if not serializer.is_valid():
+            return Response({"success": False, "errors": serializer.errors}, status=400)
+        
+        data = NotificationService.update_preferences(
+            request.user, role, serializer.validated_data
+        )
+
+        return Response({
+            "success": True,
+            "message": "Notification preferences saved.",
+            "data": data,
+        })
+    
+
+
+
+
+    
+        

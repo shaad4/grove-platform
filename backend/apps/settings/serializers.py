@@ -81,3 +81,67 @@ class WorkspaceUpdateSerializer(serializers.Serializer):
                 f"Allowed: {', '.join(STATUS_KEYS)}."
             )
         return value
+
+
+#Notification
+
+class ProviderInAppNotificationSerializer(serializers.Serializer):
+    new_request = serializers.BooleanField(required=False)
+    client_reply = serializers.BooleanField(required=False)
+    client_viewed_delivery = serializers.BooleanField(required=False)
+    client_accepted_invite = serializers.BooleanField(required=False)
+    request_overdue = serializers.BooleanField(required=False)
+ 
+    
+class ProviderEmailNotificationSerializer(serializers.Serializer):
+    new_request = serializers.BooleanField(required=False)
+    client_reply = serializers.BooleanField(required=False)
+    client_viewed_delivery = serializers.BooleanField(required=False)
+    client_accepted_invite = serializers.BooleanField(required=False)
+    weekly_summary = serializers.BooleanField(required=False)
+    weekly_summary_day = serializers.ChoiceField(
+        choices=list(VALID_SUMMARY_DAYS), required=False
+    )
+
+class ProviderNotificationSerializer(serializers.Serializer):
+    in_app = ProviderInAppNotificationSerializer(required=False)
+    email = ProviderEmailNotificationSerializer(required=False)
+
+    def validate(self, data):
+        if not data:
+            raise serializers.ValidationError("No notification preferences provided.")
+        return data
+    
+
+    def to_internal_value(self, data):
+        result = super().to_internal_value(data)
+        flat = {}
+        if "in_app" in result:
+            flat["in_app"] = dict(result["in_app"])
+        if "email" in result:
+            flat["email"] = dict(result["email"])
+        return flat
+    
+
+class ClientEmailNotificationSerializer(serializers.Serializer):
+    status_change = serializers.BooleanField(required=False)
+    new_message = serializers.BooleanField(required=False)
+    files_delivered = serializers.BooleanField(required=False)
+ 
+
+class ClientNotificationSerializer(serializers.Serializer):
+    email = ClientEmailNotificationSerializer(required=False)
+ 
+    def validate(self, data):
+        if not data:
+            raise serializers.ValidationError("No notification preferences provided.")
+        return data
+ 
+    def to_internal_value(self, data):
+        result = super().to_internal_value(data)
+        flat = {}
+        if "email" in result:
+            flat["email"] = dict(result["email"])
+        return flat
+    
+    

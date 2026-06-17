@@ -32,6 +32,37 @@ class UserSettingsRepository:
         user.save(update_fields=["password", "updated_at"])
         return user
     
+    @staticmethod
+    def update_notification_settings(user, settings_patch):
+        """
+        Merge settings_patch into users.settings jsonb.
+        Creates the key if it doesn't exist yet.
+        """
+        current = user.settings or {}
+        notifications = current.get("notifications", {})
+        notifications.update(settings_patch)
+        current["notifications"] = notifications
+        user.settings = current
+        user.save(update_fields=["settings", "updated_at"])
+        return user
+    
+    @staticmethod
+    def get_notification_settings(user):
+        settings = user.settings or {}
+        return settings.get("notifications", {})
+    
+
+    @staticmethod
+    def deactivate_membership(user, tenant):
+        """Soft-delete: mark membership inactive for this tenant only."""
+        updated = TenantMembership.objects.filter(
+            user=user,
+            tenant=tenant,
+            is_active=True,
+        ).update(is_active=False)
+        return updated > 0
+
+    
 
 
 class TenantSettingsRepository:
