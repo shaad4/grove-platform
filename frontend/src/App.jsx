@@ -47,38 +47,38 @@ export default function App() {
     <ErrorBoundary>
       <BrowserRouter>
         <AuthProvider>
-          <BadgeProvider>
-            <TenantGuard>
-              <Routes>
+          <TenantGuard>
+            <Routes>
 
-                {/* Public */}
-                <Route path="/" element={<LandingPage />} />
+              {/* Public */}
+              <Route path="/" element={<LandingPage />} />
 
-                {/* Pre-auth — no session needed */}
-                <Route path="/accept-invite" element={<AcceptInvitePage />} />
-                <Route path="/client-login"  element={<ClientLoginPage />} />
+              {/* Pre-auth — no session needed */}
+              <Route path="/accept-invite" element={<AcceptInvitePage />} />
+              <Route path="/client-login"  element={<ClientLoginPage />} />
 
-                {/* Guest only */}
-                <Route element={<GuestRoute />}>
-                  <Route path="/signup"          element={<SignupPage />} />
-                  <Route path="/login"           element={<LoginPage />} />
-                  <Route path="/verify-email"    element={<VerifyEmailPage />} />
-                  <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-                  <Route path="/reset-password"  element={<ResetPasswordPage />} />
-                </Route>
+              {/* Guest only */}
+              <Route element={<GuestRoute />}>
+                <Route path="/signup"          element={<SignupPage />} />
+                <Route path="/login"           element={<LoginPage />} />
+                <Route path="/verify-email"    element={<VerifyEmailPage />} />
+                <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+                <Route path="/reset-password"  element={<ResetPasswordPage />} />
+              </Route>
 
-                {/* Portal picker (root domain, authenticated) */}
-                <Route element={<ProtectedRoute />}>
-                  <Route path="/portals" element={<PortalsPage />} />
-                </Route>
+              {/* Portal picker (root domain, authenticated) — BadgeProvider intentionally excluded */}
+              <Route element={<ProtectedRoute />}>
+                <Route path="/portals" element={<PortalsPage />} />
+              </Route>
 
-                {/* Setup (authenticated but no portal yet) */}
-                <Route element={<SetupRoute />}>
-                  <Route path="/setup-workspace" element={<WorkspaceSetupPage />} />
-                </Route>
+              {/* Setup (authenticated but no portal yet) */}
+              <Route element={<SetupRoute />}>
+                <Route path="/setup-workspace" element={<WorkspaceSetupPage />} />
+              </Route>
 
-                {/* Protected tenant routes */}
-                <Route element={<ProtectedRoute />}>
+              {/* Protected tenant routes — BadgeProvider only mounts here, inside a real tenant subdomain */}
+              <Route element={<ProtectedRoute />}>
+                <Route element={<BadgeProvider />}>
 
                   {/* Dashboard */}
                   <Route
@@ -129,14 +129,14 @@ export default function App() {
                   />
 
                 </Route>
+              </Route>
 
-                {/* Misc */}
-                <Route path="/workspace-not-found" element={<WorkspaceNotFoundPage />} />
-                <Route path="*" element={<Navigate to="/" replace />} />
+              {/* Misc */}
+              <Route path="/workspace-not-found" element={<WorkspaceNotFoundPage />} />
+              <Route path="*" element={<Navigate to="/" replace />} />
 
-              </Routes>
-            </TenantGuard>
-          </BadgeProvider>
+            </Routes>
+          </TenantGuard>
         </AuthProvider>
       </BrowserRouter>
     </ErrorBoundary>

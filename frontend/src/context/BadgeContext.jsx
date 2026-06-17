@@ -6,6 +6,8 @@ import {
   useState,
 } from 'react'
 import { useSelector } from 'react-redux'
+import { Outlet } from 'react-router-dom'
+
 
 import dashboardApi from '../api/dashboard.api'
 import { useAuth } from './AuthContext'
@@ -44,8 +46,6 @@ export function BadgeProvider({ children }) {
   const accessToken = useSelector(selectAccessToken)
   const dispatch = useDispatch()
 
-  // role lives on user object from the Redux store
-  const role = user?.role  // 'provider' | 'client'
 
   // ── sidebar badges (provider only) ────────────────────────────────────────
   const [badges, setBadges]   = useState({ clients: 0, requests: 0 })
@@ -80,11 +80,14 @@ export function BadgeProvider({ children }) {
   }, [userId, userRole])
 
   useEffect(() => {
-      if (userRole === 'client') return
-      loadBadges()
-      const interval = setInterval(loadBadges, 30_000)
-      return () => clearInterval(interval)
-  }, [loadBadges, userRole])
+    if (userRole === 'client') return
+    const hostname = window.location.hostname
+    const isSubdomain = hostname.split('.').length >= 3
+    if (!isSubdomain) return  
+    loadBadges()
+    const interval = setInterval(loadBadges, 30_000)
+    return () => clearInterval(interval)
+}, [loadBadges, userRole])
 
   // ── notification helpers (shared) ─────────────────────────────────────────
   const loadNotifications = useCallback(async () => {
@@ -130,11 +133,17 @@ export function BadgeProvider({ children }) {
   const connectFeed = useCallback(() => {
     if (unmounted.current || !accessToken || !userId) return
 
-    const tenant = window.location.hostname.split('.')[0]
+    const hostname = window.location.hostname
+    const parts = hostname.split('.')
 
-     const url = wsUrl(
-        `/ws/feed/?token=${accessToken}&tenant=${tenant}`
-      )
+    const isSubdomain = parts.length >= 3 
+    if (!isSubdomain) return
+
+    const tenant = parts[0]
+
+    const url = wsUrl(
+      `/ws/feed/?token=${accessToken}&tenant=${tenant}`
+    )
 
     const ws = new WebSocket(url)
     wsRef.current = ws
@@ -203,7 +212,8 @@ export function BadgeProvider({ children }) {
 
   useEffect(() => {
     unmounted.current = false
-    if (user && accessToken) {
+    const isSubdomain = window.location.hostname.split('.').length >= 3
+    if (user && accessToken && isSubdomain) {
       connectFeed()
       loadNotifications()
     }
@@ -251,7 +261,7 @@ export function BadgeProvider({ children }) {
 
   return (
     <BadgeContext.Provider value={value}>
-      {children}
+      {children ?? <Outlet />}
     </BadgeContext.Provider>
   )
 }
