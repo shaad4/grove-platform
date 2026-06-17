@@ -32,6 +32,8 @@ class Tenant(models.Model):
     name = models.CharField(max_length=255)
     slug = models.SlugField(max_length=63, unique=True)
     logo_url = models.TextField(null=True, blank=True)
+    tagline = models.CharField(max_length=255, null=True, blank=True)
+    accent_color = models.CharField(max_length=7, null=True, blank=True , default="#0F8536")
     is_active = models.BooleanField(default=True)
     is_suspended = models.BooleanField(default=False)
     white_label_enabled = models.BooleanField(default=False)
