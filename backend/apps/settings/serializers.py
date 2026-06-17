@@ -42,4 +42,42 @@ class PasswordChangeSerializer(serializers.Serializer):
                 {"confirm_password": "Passwords do not match."}
             )
         return data
+    
+#Workspace 
 
+class WorkspaceUpdateSerializer(serializers.Serializer):
+    name = serializers.CharField(min_length=2, max_length=255, required=False)
+    tagline = serializers.CharField(max_length=255, required=False, allow_blank=True)
+    slug = serializers.CharField(min_length=3, max_length=63, required=False)
+    accent_color = serializers.CharField(max_length=7, required=False)
+    white_label_enabled = serializers.BooleanField(required=False)
+    custom_status_labels = serializers.DictField(
+        child=serializers.CharField(max_length=50),
+        required=False,
+    )
+
+    def validate_slug(self, value):
+        value = value.lower().strip()
+        if not SLUG_PATTERN.match(value):
+            raise serializers.ValidationError(
+                "Slug must contain only lowercase letters, numbers and hyphens."
+            )
+        if value in RESERVED_SLUGS:
+            raise serializers.ValidationError("This slug is reserved.")
+        return value
+ 
+    def validate_accent_color(self, value):
+        if not HEX_COLOR_PATTERN.match(value):
+            raise serializers.ValidationError(
+                "Accent color must be a valid hex code (e.g. #0F6E56)."
+            )
+        return value
+ 
+    def validate_custom_status_labels(self, value):
+        invalid = set(value.keys()) - STATUS_KEYS
+        if invalid:
+            raise serializers.ValidationError(
+                f"Invalid status keys: {', '.join(invalid)}. "
+                f"Allowed: {', '.join(STATUS_KEYS)}."
+            )
+        return value

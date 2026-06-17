@@ -4,7 +4,7 @@ from botocore.exceptions import ClientError
 from django.conf import settings
 
 from apps.common.logger import logger
-from .repositories import UserSettingsRepository
+from .repositories import UserSettingsRepository, TenantSettingsRepository
 
 
 #custom Exceptions
@@ -110,6 +110,75 @@ class ProfileService:
         logger.info("profile_avatar_uploaded user_id=%s", user.id)
         return url
     
+
+# Workspace Services
+
+DEFAULT_STATUS_LABELS = {
+    "received": "Received",
+    "in_review": "In Review",
+    "in_progress": "In Progress",
+    "delivered": "Delivered",
+    "closed": "Closed",
+}
+
+
+class WorkspaceService:
     
+    @staticmethod
+    def get_workspace(tenant):
+        usage = getattr(tenant, "usage", None)
+        plan = tenant.plan
+
+        effective_client_limit = (
+            tenant.client_limit_override
+            if tenant.client_limit_override is not None
+            else plan.client_limit
+        )
+
+        return {
+            "name": tenant.name,
+            "tagline": tenant.tagline or "",
+            "slug": tenant.slug,
+            "logo_url": tenant.logo_url,
+            "accent_color": tenant.accent_color or "#0F6E56",
+            "white_label_enabled": tenant.white_label_enabled,
+            "custom_status_labels": tenant.custom_status_labels or DEFAULT_STATUS_LABELS,
+            "plan": {
+                "name": plan.name,
+                "client_limit": effective_client_limit,
+                "request_limit": plan.request_limit,
+            },
+            "usage": {
+                "client_count": usage.client_count if usage else 0,
+                "active_request_count": usage.active_request_count if usage else 0,
+            },
+        }
+    
+    @staticmethod
+    def update_workspace(tenant, validated_data: dict):
+        if "slug" in validated_data and validated_data["slug"] != tenant.slug:
+            if TenantSettingsRepository.slug_taken(validated_data["slug"], exclude_tenant_id=tenant.id):
+                raise SlugAlreadyTaken("This workspace URL is already taken.")
+ 
+        tenant, slug_changed = TenantSettingsRepository.update_workspace(tenant, validated_data)
+        logger.info(
+            "workspace_updated tenant_id=%s slug_changed=%s",
+            tenant.id, slug_changed,
+        )
+        return tenant, slug_changed
+    
+    @staticmethod
+    def upload_logo(tenant, file):
+        _validate_image(file)
+        url = _upload_to_s3(file, folder="logos")
+        TenantSettingsRepository.update_logo(tenant, url)
+        logger.info("workspace_logo_uploaded tenant_id=%s", tenant.id)
+        return url
+    
+
+    
+    
+   
+
 
 

@@ -9,16 +9,19 @@ from apps.tenants.models import TenantMembership
 
 from .services import (
     ProfileService,
+    WorkspaceService,
     WrongCurrentPassword,
     InvalidFileType,
     FileTooLarge,
     S3UploadError,
+    SlugAlreadyTaken,
 
 )
 
 from .serializers import (
     DisplayNameSerializer,
     PasswordChangeSerializer,
+    WorkspaceUpdateSerializer,
     
 )
 
@@ -137,4 +140,51 @@ class AvatarUploadView(APIView):
             "data": {"avatar_url": url},
         })
     
+
+# Workspace Settings
+
+class WorkspaceSettingsView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        denied = _require_provider(request)
+        if denied:
+            return denied
+        
+        tenant, err = _require_provider(request)
+        if err:
+            return err
+        
+        data = WorkspaceService.get_workspace(tenant)
+        return Response({"success" : True, "data" : data })
     
+    def patch(self, request):
+        denied = _require_provider(request)
+        if denied:
+            return denied
+        
+        tenant, err = _require_provider(request)
+        if err:
+            return err
+        
+        serializer = WorkspaceUpdateSerializer(data=request.data)
+        if not serializer.is_valid():
+            return  Response({"success": False, "errors": serializer.errors}, status=400)
+            
+
+        try:
+            tenant, slug_changed = WorkspaceService.update_workspace(
+                tenant, serializer.validated_data
+            )
+        except SlugAlreadyTaken as e:
+            return Response({"success": False, "message": str(e)}, status=409)
+        
+
+        return Response({
+            "success": True,
+            "message": "Workspace updated.",
+            "data": {
+                **WorkspaceService.get_workspace(tenant),
+                "slug_changed": slug_changed,
+            },
+        })

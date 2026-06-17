@@ -32,3 +32,55 @@ class UserSettingsRepository:
         user.save(update_fields=["password", "updated_at"])
         return user
     
+
+
+class TenantSettingsRepository:
+    """All tenant-related settings DB queries"""
+
+    @staticmethod
+    def get_by_id(tenant_id):
+        try:
+            return Tenant.objects.select_related("plan", "usage").get(
+                id=tenant_id, is_active=True
+            )
+        except Tenant.DoesNotExist:
+            return None
+        
+
+    @staticmethod
+    def slug_taken(slug, exclude_tenant_id=None):
+        qs = Tenant.objects.filter(slug=slug)
+        if exclude_tenant_id:
+            qs = qs.exclude(id=exclude_tenant_id)
+        return qs.exists()
+    
+    @staticmethod
+    def update_workspace(tenant, fields):
+        """
+        Partial update — only saves fields that are in the dict.
+        Returns (tenant, slug_changed: bool).
+        """
+
+        slug_changed = False
+        allowed = [
+            "name", "tagline", "slug", "accent_color",
+            "white_label_enabled", "custom_status_labels",
+        ]
+        update_fields = ["updated_at"]
+
+        for field in allowed:
+            if field in fields:
+                if field == "slug" and fields["slug"] != tenant.slug:
+                    slug_changed = True
+                setattr(tenant, field, fields[field])
+                update_fields.append(field)
+ 
+        tenant.save(update_fields=update_fields)
+        return tenant, slug_changed
+    
+
+    @staticmethod
+    def update_logo(tenant, logo_url):
+        tenant.logo_url = logo_url
+        tenant.save(update_fields=["logo_url", "updated_at"])
+        return tenant
