@@ -13,6 +13,9 @@ import {
   Camera,
 } from 'lucide-react'
 
+import { authApi } from '../../api/auth.api'
+
+
 // ─── Nav config ───────────────────────────────────────────────────────────────
 
 const NAV = [
@@ -276,6 +279,7 @@ function BusinessProfileSection({ ws, setWs, logoPreview, handleLogoSelect }) {
 }
 
 function PortalBrandingSection({ ws, setWs }) {
+  const { logout } = useAuth()
   const [loading, setLoading] = useState(false)
   const [status, setStatus] = useState(null)
   const [slugLocked, setSlugLocked] = useState(true)
@@ -284,11 +288,45 @@ function PortalBrandingSection({ ws, setWs }) {
   const [pendingSlug, setPendingSlug] = useState('')
   const originalSlug = useRef(ws?.slug)
 
+  const [slugStatus, setSlugStatus] = useState('idle')
+
+  useEffect(() => {
+    if (
+      !ws?.slug ||
+      ws.slug.length < 3 ||
+      ws.slug === originalSlug.current ||
+      slugLocked
+    ) {
+      setSlugStatus('idle')
+      return
+    }
+    const timeout = setTimeout(async () => {
+      try {
+        setSlugStatus('checking')
+        const res = await authApi.checkSlug(ws.slug)
+        setSlugStatus(
+          res.data.available
+            ? 'available'
+            : 'taken'
+        )
+      }
+      catch {
+        setSlugStatus('taken')
+      }
+    }, 500)
+
+    return () => clearTimeout(timeout)
+
+  }, [ws?.slug, slugLocked])
+
   const doSave = async () => {
     setLoading(true); setStatus(null); setSlugWarning(false); setShowSlugConfirm(false)
     try {
       const res = await updateWorkspace({ slug: ws.slug, accent_color: ws.accent_color, white_label_enabled: ws.white_label_enabled })
-      if (res.data.data.slug_changed) { setSlugWarning(true); originalSlug.current = ws.slug }
+      if (res.data.data.slug_changed) { 
+        await logout()
+        return
+      }
       setStatus({ type: 'success', message: 'Branding saved.' })
     } catch (err) {
       setStatus({ type: 'error', message: err?.response?.data?.message || 'Could not save.' })
@@ -314,7 +352,17 @@ function PortalBrandingSection({ ws, setWs }) {
               type="text"
               value={ws.slug}
               readOnly={slugLocked}
-              onChange={(e) => setWs(p => ({ ...p, slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '') }))}
+              onChange={(e) => {
+                const slug = e.target.value
+                  .toLowerCase()
+                  .replace(/[^a-z0-9-]/g, '')
+
+                setWs(p => ({
+                  ...p,
+                  slug,
+                }))
+
+              }}
               className={`flex-1 h-full px-2.5 text-[13px] font-mono focus:outline-none transition-colors ${slugLocked ? 'bg-[#F7F8F7] text-[#9EA89E] cursor-not-allowed' : 'bg-white text-[#141A14]'}`}
             />
             <button
@@ -325,6 +373,25 @@ function PortalBrandingSection({ ws, setWs }) {
               {slugLocked ? <><Lock size={11} /><span>Edit</span></> : <><Unlock size={11} /><span>Cancel</span></>}
             </button>
           </div>
+          
+          {slugStatus === 'checking' && (
+            <p className="mt-2 text-[11px] text-[#9EA89E]">
+              Checking availability...
+            </p>
+          )}
+
+          {slugStatus === 'available' && (
+            <p className="mt-2 text-[11px] text-green-600 font-medium">
+              URL path available
+            </p>
+          )}
+
+          {slugStatus === 'taken' && (
+            <p className="mt-2 text-[11px] text-red-500 font-medium">
+              URL path taken
+            </p>
+          )}
+          
           {!slugLocked && (
             <div className="mt-2 flex items-start gap-2 px-3 py-2.5 rounded-lg bg-amber-50 border border-amber-200">
               <AlertTriangle size={13} className="text-amber-600 mt-0.5 flex-shrink-0" />
@@ -369,7 +436,10 @@ function PortalBrandingSection({ ws, setWs }) {
 
         <SectionFooter>
           <Toast type={status?.type} message={status?.message} />
-          <Btn onClick={handleSave} loading={loading}>Save changes</Btn>
+          <Btn onClick={handleSave} loading={loading} disabled={
+            slugStatus === 'taken' ||
+            slugStatus === 'checking'
+          }>Save changes</Btn>
         </SectionFooter>
       </div>
 
