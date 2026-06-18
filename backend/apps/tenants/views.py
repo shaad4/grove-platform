@@ -1,4 +1,3 @@
-from django.shortcuts import render
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny
@@ -31,4 +30,7 @@ class TenantPublicInfoView(APIView):
             'name':     tenant.name,
             'slug':     tenant.slug,
             'logo_url': tenant.logo_url,
+            'tagline': tenant.tagline,
+            'accent_color': tenant.accent_color,
+            'white_label_enabled': tenant.white_label_enabled,
         })

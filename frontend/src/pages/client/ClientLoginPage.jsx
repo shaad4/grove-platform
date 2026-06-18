@@ -10,6 +10,8 @@ import { useAuth } from '../../context/AuthContext'
 import { getSubdomain } from '../../utils/domain'
 import { appUrl } from '../../utils/urls'
 
+import { getBrandColors } from '../../utils/branding'
+
 // ─────────────────────────────────────────────────────────────
 // Helpers
 // ─────────────────────────────────────────────────────────────
@@ -28,22 +30,12 @@ function getInitials(name = '') {
     .toUpperCase()
 }
 
-function getWorkspaceHue(name = '') {
-  return name
-    ? name.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0) % 360
-    : 152
-}
-
 // ─────────────────────────────────────────────────────────────
 // Dynamic Left Panel Background
 // ─────────────────────────────────────────────────────────────
 
-function LeftPanelBg({ name }) {
-  const hue = getWorkspaceHue(name)
-  const c1 = `hsl(${hue}, 52%, 24%)`
-  const c2 = `hsl(${(hue + 25) % 360}, 50%, 16%)`
-  const c3 = `hsl(${(hue + 15) % 360}, 45%, 20%)`
-
+function LeftPanelBg({ bg1, bg2, bg3 }) {
+  
   return (
     <div
       className="absolute inset-0 z-0 overflow-hidden"
@@ -51,7 +43,7 @@ function LeftPanelBg({ name }) {
         background: `
           radial-gradient(circle at top left, rgba(255,255,255,0.06), transparent 40%),
           radial-gradient(circle at bottom right, rgba(255,255,255,0.04), transparent 40%),
-          linear-gradient(145deg, ${c1}, ${c2} 58%, ${c3})
+          linear-gradient(145deg, ${bg1}, ${bg2} 58%, ${bg3})
         `,
       }}
     >
@@ -161,11 +153,16 @@ export default function ClientLoginPage() {
     subdomain ? subdomain.charAt(0).toUpperCase() + subdomain.slice(1) : 'Your Portal'
   )
 
-  // Dynamic branding colors based on workspace name
-  const hue = getWorkspaceHue(workspaceName)
-  const accent = `hsl(${hue}, 65%, 40%)`
-  const accentDark = `hsl(${hue}, 60%, 28%)`
-  const accentSoft = `hsla(${hue}, 65%, 45%, 0.08)`
+  const {
+    accent,
+    accentDark,
+    accentSoft,
+    bg1,
+    bg2,
+    bg3,
+  } = getBrandColors(
+    tenant?.accent_color
+  )
 
   return (
     <>
@@ -178,7 +175,11 @@ export default function ClientLoginPage() {
         
         {/* ─── LEFT PANEL (DESKTOP) ─── */}
         <div className="hidden md:flex flex-col justify-between relative w-[45%] max-w-[540px] shrink-0 p-10 lg:p-14 overflow-hidden">
-          <LeftPanelBg name={workspaceName} />
+          <LeftPanelBg
+            bg1={bg1}
+            bg2={bg2}
+            bg3={bg3}
+          />
           
           {/* Top: Grove Branding */}
           <a href={rootUrl('/')} className="relative z-10 block w-fit hover:opacity-80 transition-opacity">
@@ -201,7 +202,11 @@ export default function ClientLoginPage() {
               <span className="text-white/70 font-serif-italic font-normal">client portal</span>
             </h1>
             <p className="text-white/60 text-sm leading-relaxed max-w-[320px]">
-              Sign in to manage requests, collaborate with your provider, and stay synced with your workflow.
+
+              {tenant?.tagline ||
+
+              'Sign in to manage requests, collaborate with your provider, and stay synced with your workflow.'}
+
             </p>
           </div>
 
