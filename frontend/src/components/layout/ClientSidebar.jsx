@@ -249,8 +249,35 @@ export default function ClientSidebar({ badges = {} }) {
               `}
             >
               <div className="flex items-center gap-3 min-w-0">
-                <div className="h-8 w-8 shrink-0 rounded-full flex items-center justify-center text-xs font-bold text-sidebar bg-white">
-                  {initials}
+                <div
+                  className="
+                    h-8 w-8
+                    shrink-0
+                    rounded-full
+                    overflow-hidden
+                    bg-white
+                  "
+                >
+                  {user?.avatar_url ? (
+                    <img
+                      src={user.avatar_url}
+                      alt={user.display_name}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div
+                      className="
+                        w-full h-full
+                        flex items-center justify-center
+                        text-xs
+                        font-bold
+                        text-sidebar
+                      "
+                    >
+                      {initials}
+                    </div>
+                  )}
+
                 </div>
 
                 <div className="min-w-0">
@@ -323,8 +350,42 @@ export default function ClientSidebar({ badges = {} }) {
               setIsPopupOpen(!isPopupOpen)
             }}
           >
-            <div className={`h-[22px] w-[22px] rounded-full bg-primary flex items-center justify-center text-[9px] font-bold text-white shadow-sm transition-transform duration-200 ${isPopupOpen ? 'scale-110 ring-2 ring-primary/20' : ''}`}>
-              {initials}
+            <div
+              className={`
+                h-[22px]
+                w-[22px]
+                rounded-full
+                overflow-hidden
+                bg-primary
+                shadow-sm
+                transition-transform duration-200
+                ${
+                  isPopupOpen
+                    ? 'scale-110 ring-2 ring-primary/20'
+                    : ''
+                }
+              `}
+            >
+              {user?.avatar_url ? (
+                <img
+                  src={user.avatar_url}
+                  alt={user.display_name}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <div
+                  className="
+                    w-full h-full
+                    flex items-center justify-center
+                    text-[9px]
+                    font-bold
+                    text-white
+                  "
+                >
+                  {initials}
+                </div>
+              )}
+
             </div>
             <span className="text-[10px] font-medium tracking-wide">Profile</span>
 
