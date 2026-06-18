@@ -418,22 +418,6 @@ function PortalBrandingSection({ ws, setWs }) {
           </div>
         </FormRow>
 
-        <Divider />
-
-        <div className="flex items-center justify-between gap-4">
-          <div>
-            <p className="text-[13px] font-medium text-[#141A14]">White-label mode</p>
-            <p className="text-[12px] text-[#9EA89E] mt-0.5">Your clients see your brand, not Grove, on their portal.</p>
-          </div>
-          <Toggle checked={ws.white_label_enabled} onChange={(v) => setWs(p => ({ ...p, white_label_enabled: v }))} />
-        </div>
-
-        <div className="mt-4">
-          <a href={`https://${ws.slug}.grove.co`} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-[12px] text-[#0F6E56] hover:underline font-medium">
-            Preview your portal <ChevronRight size={12} />
-          </a>
-        </div>
-
         <SectionFooter>
           <Toast type={status?.type} message={status?.message} />
           <Btn onClick={handleSave} loading={loading} disabled={

@@ -135,7 +135,7 @@ export default function ProviderSidebar({
           }
         `}
       >
-        {/* ───────────────── Header ───────────────── */}
+       {/* ───────────────── Header ───────────────── */}
         <div
           className={`flex items-center pt-5 pb-6 ${
             isCollapsed
@@ -150,11 +150,7 @@ export default function ProviderSidebar({
           )}
 
           <button
-            onClick={() =>
-              setIsCollapsed(
-                !isCollapsed
-              )
-            }
+            onClick={() => setIsCollapsed(!isCollapsed)}
             title={
               isCollapsed
                 ? 'Expand sidebar'
@@ -185,7 +181,6 @@ export default function ProviderSidebar({
             />
           </button>
         </div>
-
         {/* ───────────────── Navigation ───────────────── */}
         <nav className="px-3 flex-1 space-y-1.5">
           {NAV_ITEMS.map(
@@ -326,18 +321,32 @@ export default function ProviderSidebar({
             <div className="flex items-center gap-3 min-w-0">
               <div
                 className="
-                  h-8 w-8 shrink-0 rounded-full
-
-                  flex items-center justify-center
-
-                  text-[11px]
-                  font-semibold
-                  text-white
-
+                  h-8 w-8
+                  shrink-0
+                  rounded-full
+                  overflow-hidden
                   bg-[#0f6e56]
                 "
               >
-                {initials}
+                {user?.avatar_url ? (
+                  <img
+                    src={user.avatar_url}
+                    alt={user.display_name}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div
+                    className="
+                      w-full h-full
+                      flex items-center justify-center
+                      text-[11px]
+                      font-semibold
+                      text-white
+                    "
+                  >
+                    {initials}
+                  </div>
+                )}
               </div>
 
               {!isCollapsed && (
@@ -345,9 +354,7 @@ export default function ProviderSidebar({
                   <p
                     className="
                       truncate text-[13px]
-
                       text-white/90
-
                       font-medium leading-tight
                     "
                   >
@@ -515,23 +522,34 @@ export default function ProviderSidebar({
             }
             className="
               ml-3
-
               h-9 w-9
-
               shrink-0
-
               rounded-full
-
+              overflow-hidden
               bg-[#0f6e56]
-
-              flex items-center justify-center
-
-              text-[11px]
-              font-semibold
-              text-white
+              cursor-pointer
             "
           >
-            {initials}
+            {user?.avatar_url ? (
+              <img
+                src={user.avatar_url}
+                alt={user.display_name}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <div
+                className="
+                  w-full h-full
+                  flex items-center justify-center
+                  text-[11px]
+                  font-semibold
+                  text-white
+                "
+              >
+                {initials}
+              </div>
+            )}
+
           </div>
         </div>
       </div>

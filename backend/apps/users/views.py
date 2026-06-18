@@ -41,6 +41,7 @@ def _build_user_payload(user, membership):
         "id" : str(user.id),
         "email": user.email,
         "display_name": user.display_name,
+        "avatar_url" : user.avatar_url,
     }
     if membership:
         payload["role"] = membership.role
@@ -55,6 +56,7 @@ def _build_tenant_payload(tenant):
         "id" : str(tenant.id),
         "name" : tenant.name,
         "slug" : tenant.slug,
+        "logo_url" : tenant.logo_url,
     } 
 
 
