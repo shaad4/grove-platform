@@ -1,0 +1,476 @@
+import { useState, useEffect, useRef } from 'react'
+import { createPortal } from 'react-dom'
+import { useAuth } from '../../context/AuthContext'
+import {
+  getProfile, updateProfile, changePassword, uploadAvatar,
+  getNotifications, updateNotifications,
+} from '../../api/settings.api'
+import {
+  User, Bell, X, Eye, EyeOff, Check, Loader2, Camera, Info,
+} from 'lucide-react'
+
+// ─── Nav ──────────────────────────────────────────────────────────────────────
+
+const NAV = [
+  { id: 'profile',       label: 'Profile',       icon: User  },
+  { id: 'notifications', label: 'Notifications', icon: Bell  },
+]
+
+// ─── Primitives ───────────────────────────────────────────────────────────────
+
+function Spinner({ size = 14 }) {
+  return <Loader2 size={size} className="animate-spin" />
+}
+
+function Toggle({ checked, onChange, disabled }) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={checked}
+      disabled={disabled}
+      onClick={() => !disabled && onChange(!checked)}
+      className={`relative inline-flex h-[22px] w-10 flex-shrink-0 items-center rounded-full transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#0F6E56] focus-visible:ring-offset-2 ${
+        checked ? 'bg-[#0F6E56]' : 'bg-[#D1D5D1]'
+      } ${disabled ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'}`}
+    >
+      <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform duration-200 ${checked ? 'translate-x-5' : 'translate-x-0.5'}`} />
+    </button>
+  )
+}
+
+function Input({ value, onChange, placeholder, maxLength, readOnly, className = '' }) {
+  return (
+    <input
+      type="text"
+      value={value}
+      onChange={(e) => onChange?.(e.target.value)}
+      placeholder={placeholder}
+      maxLength={maxLength}
+      readOnly={readOnly}
+      className={`w-full h-9 px-3 rounded-lg border text-[13px] transition-all focus:outline-none ${
+        readOnly
+          ? 'border-[#E8EAE8] bg-[#F7F8F7] text-[#9EA89E] cursor-not-allowed'
+          : 'border-[#E0E4E0] bg-white text-[#141A14] placeholder:text-[#C5CAC5] focus:border-[#0F6E56] focus:ring-2 focus:ring-[#0F6E56]/10'
+      } ${className}`}
+    />
+  )
+}
+
+function PasswordInput({ label, value, onChange, placeholder }) {
+  const [show, setShow] = useState(false)
+  return (
+    <div>
+      <label className="block text-[11px] font-medium text-[#6B756B] uppercase tracking-wide mb-1.5">{label}</label>
+      <div className="relative">
+        <input
+          type={show ? 'text' : 'password'}
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder={placeholder}
+          className="w-full h-9 px-3 pr-9 rounded-lg border border-[#E0E4E0] bg-white text-[13px] text-[#141A14] placeholder:text-[#C5CAC5] focus:outline-none focus:border-[#0F6E56] focus:ring-2 focus:ring-[#0F6E56]/10 transition-all"
+        />
+        <button type="button" onClick={() => setShow(!show)} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#9EA89E] hover:text-[#4A544A] transition-colors">
+          {show ? <EyeOff size={14} /> : <Eye size={14} />}
+        </button>
+      </div>
+    </div>
+  )
+}
+
+function Label({ children }) {
+  return <label className="block text-[11px] font-medium text-[#6B756B] uppercase tracking-wide mb-1.5">{children}</label>
+}
+
+function FormRow({ label, hint, children }) {
+  return (
+    <div>
+      {label && <Label>{label}</Label>}
+      {children}
+      {hint && <p className="text-[11px] text-[#9EA89E] mt-1.5 leading-relaxed">{hint}</p>}
+    </div>
+  )
+}
+
+function Toast({ type, message }) {
+  if (!message) return null
+  return (
+    <div className={`inline-flex items-center gap-1.5 text-[12px] px-2.5 py-1.5 rounded-lg border ${
+      type === 'success' ? 'bg-[#E8F5F0] border-[#B3DDD1] text-[#0F6E56]' : 'bg-red-50 border-red-200 text-red-700'
+    }`}>
+      {type === 'success' ? <Check size={12} /> : <X size={12} />}
+      {message}
+    </div>
+  )
+}
+
+function Btn({ children, onClick, loading, variant = 'primary', size = 'md', disabled, className = '' }) {
+  const sizes = { sm: 'px-3 py-1.5 text-[12px]', md: 'px-3.5 py-2 text-[13px]' }
+  const variants = {
+    primary: 'bg-[#0F6E56] text-white hover:bg-[#0A5A44] shadow-sm',
+    ghost: 'bg-transparent text-[#4A544A] hover:bg-[#F2F4F2] border border-[#E0E4E0]',
+  }
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={loading || disabled}
+      className={`inline-flex items-center justify-center gap-1.5 rounded-lg font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed ${sizes[size]} ${variants[variant]} ${className}`}
+    >
+      {loading ? <Spinner size={13} /> : children}
+    </button>
+  )
+}
+
+function Divider() {
+  return <div className="border-t border-[#F0F2F0] my-5" />
+}
+
+function SectionTitle({ title, description }) {
+  return (
+    <div className="mb-6">
+      <h3 className="text-[15px] font-semibold text-[#141A14]">{title}</h3>
+      {description && <p className="text-[12px] text-[#9EA89E] mt-0.5">{description}</p>}
+    </div>
+  )
+}
+
+function InfoBox({ children }) {
+  return (
+    <div className="flex items-start gap-2.5 p-3 rounded-lg bg-[#F7F8F7] border border-[#E8EAE8]">
+      <Info size={13} className="text-[#9EA89E] mt-0.5 flex-shrink-0" />
+      <p className="text-[12px] text-[#9EA89E] leading-relaxed">{children}</p>
+    </div>
+  )
+}
+
+// ─── Password Strength ────────────────────────────────────────────────────────
+
+function passwordStrength(pw) {
+  if (!pw) return { score: 0, label: '', color: '' }
+  let s = 0
+  if (pw.length >= 8) s++
+  if (pw.length >= 12) s++
+  if (/[A-Z]/.test(pw)) s++
+  if (/[0-9]/.test(pw)) s++
+  if (/[^a-zA-Z0-9]/.test(pw)) s++
+  if (s <= 1) return { score: s, label: 'Weak', color: 'bg-red-400' }
+  if (s <= 3) return { score: s, label: 'Fair', color: 'bg-amber-400' }
+  return { score: s, label: 'Strong', color: 'bg-[#0F6E56]' }
+}
+
+// ─── Sections ─────────────────────────────────────────────────────────────────
+
+function ProfileSection({ user, tenant }) {
+  const [displayName, setDisplayName] = useState('')
+  const [avatarPreview, setAvatarPreview] = useState(null)
+  const [profileLoading, setProfileLoading] = useState(false)
+  const [profileStatus, setProfileStatus] = useState(null)
+  const [currentPw, setCurrentPw] = useState('')
+  const [newPw, setNewPw] = useState('')
+  const [confirmPw, setConfirmPw] = useState('')
+  const [pwLoading, setPwLoading] = useState(false)
+  const [pwStatus, setPwStatus] = useState(null)
+  const avatarRef = useRef()
+
+  useEffect(() => {
+    getProfile().then(r => { setDisplayName(r.data.data.display_name); setAvatarPreview(r.data.data.avatar_url) })
+  }, [])
+
+  const initials = (displayName || user?.display_name || 'U').split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2)
+  const strength = passwordStrength(newPw)
+  const passwordsMatch = newPw && confirmPw && newPw === confirmPw
+
+  const handleAvatarSelect = async (e) => {
+    const file = e.target.files[0]
+    if (!file) return
+    setAvatarPreview(URL.createObjectURL(file))
+    try {
+      const res = await uploadAvatar(file)
+      setAvatarPreview(res.data.data.avatar_url)
+    } catch { setProfileStatus({ type: 'error', message: 'Upload failed.' }) }
+  }
+
+  const handleSaveProfile = async () => {
+    setProfileLoading(true); setProfileStatus(null)
+    try { await updateProfile({ display_name: displayName }); setProfileStatus({ type: 'success', message: 'Profile saved.' }) }
+    catch { setProfileStatus({ type: 'error', message: 'Could not save.' }) }
+    finally { setProfileLoading(false) }
+  }
+
+  const handleChangePassword = async () => {
+    setPwLoading(true); setPwStatus(null)
+    try {
+      await changePassword({ currentPassword: currentPw, newPassword: newPw, confirmPassword: confirmPw })
+      setPwStatus({ type: 'success', message: 'Password updated.' })
+      setCurrentPw(''); setNewPw(''); setConfirmPw('')
+    } catch (err) {
+      const e = err?.response?.data?.errors || {}
+      setPwStatus({ type: 'error', message: e.current_password?.[0] || e.new_password?.[0] || 'Could not update password.' })
+    } finally { setPwLoading(false) }
+  }
+
+  return (
+    <div>
+      <SectionTitle title="Profile" description="Your name and photo visible to others." />
+
+      {/* Avatar row */}
+      <div className="flex items-center gap-4 mb-5">
+        <div className="relative group flex-shrink-0">
+          <button
+            type="button"
+            onClick={() => avatarRef.current?.click()}
+            className="w-14 h-14 rounded-full border-2 border-dashed border-[#0F6E56]/30 overflow-hidden flex items-center justify-center bg-[#F2F4F2] group-hover:border-[#0F6E56] transition-colors"
+          >
+            {avatarPreview
+              ? <img src={avatarPreview} alt="avatar" className="w-full h-full object-cover" />
+              : <span className="text-base font-semibold text-[#0F6E56]">{initials}</span>
+            }
+            <div className="absolute inset-0 rounded-full bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+              <Camera size={16} className="text-white" />
+            </div>
+          </button>
+          <input ref={avatarRef} type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={handleAvatarSelect} />
+        </div>
+        <div>
+          <p className="text-[14px] font-medium text-[#141A14]">{user?.display_name || displayName}</p>
+          <p className="text-[12px] text-[#9EA89E] mt-0.5">{user?.email}</p>
+        </div>
+      </div>
+
+      <div className="space-y-4 mb-5">
+        <FormRow label="Display name" hint="How your name appears on messages.">
+          <div className="relative">
+            <Input value={displayName} onChange={setDisplayName} maxLength={60} />
+            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[11px] text-[#C5CAC5]">{displayName.length}/60</span>
+          </div>
+        </FormRow>
+        <FormRow label="Email address">
+          <Input value={user?.email || ''} readOnly />
+          <p className="text-[11px] text-[#9EA89E] mt-1.5">
+            Contact <span className="text-[#0F6E56] font-medium">{tenant?.name || 'your provider'}</span> to change your email.
+          </p>
+        </FormRow>
+      </div>
+
+      <div className="flex items-center justify-end gap-3 pt-4 border-t border-[#F0F2F0]">
+        <Toast type={profileStatus?.type} message={profileStatus?.message} />
+        <Btn onClick={handleSaveProfile} loading={profileLoading}>Save profile</Btn>
+      </div>
+
+      {/* Password */}
+      <div className="mt-8">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <p className="text-[13px] font-semibold text-[#141A14]">Change password</p>
+            <p className="text-[11px] text-[#9EA89E] mt-0.5">Use a strong, unique password.</p>
+          </div>
+          <a href="/forgot-password" className="text-[12px] text-[#0F6E56] hover:underline">Forgot password?</a>
+        </div>
+
+        <div className="space-y-3.5">
+          <PasswordInput label="Current password" value={currentPw} onChange={setCurrentPw} placeholder="••••••••" />
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <PasswordInput label="New password" value={newPw} onChange={setNewPw} placeholder="••••••••" />
+              {newPw && (
+                <div className="mt-2">
+                  <div className="h-1 rounded-full bg-[#EEF0EE] overflow-hidden">
+                    <div className={`h-full rounded-full transition-all ${strength.color}`} style={{ width: `${(strength.score / 5) * 100}%` }} />
+                  </div>
+                  <p className={`text-[11px] mt-1 font-medium ${strength.score >= 4 ? 'text-[#0F6E56]' : 'text-[#9EA89E]'}`}>{strength.label}</p>
+                </div>
+              )}
+            </div>
+            <div>
+              <PasswordInput label="Confirm new password" value={confirmPw} onChange={setConfirmPw} placeholder="••••••••" />
+              {confirmPw && (
+                <p className={`text-[11px] mt-1.5 font-medium ${passwordsMatch ? 'text-[#0F6E56]' : 'text-red-500'}`}>
+                  {passwordsMatch ? '✓ Match' : '✗ No match'}
+                </p>
+              )}
+            </div>
+          </div>
+          <p className="text-[11px] text-[#9EA89E]">At least 8 characters with letters and numbers.</p>
+        </div>
+
+        <div className="flex items-center justify-end gap-3 pt-4 mt-4 border-t border-[#F0F2F0]">
+          <Toast type={pwStatus?.type} message={pwStatus?.message} />
+          <Btn onClick={handleChangePassword} loading={pwLoading} disabled={!passwordsMatch || !currentPw}>Update password</Btn>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function NotificationsSection({ tenant }) {
+  const [notifPrefs, setNotifPrefs] = useState(null)
+  const [savingKey, setSavingKey] = useState(null)
+  const [error, setError] = useState(null)
+
+  useEffect(() => { getNotifications().then(r => setNotifPrefs(r.data.data)) }, [])
+
+  const handleToggle = async (section, key, value) => {
+    const k = `${section}.${key}`
+    setSavingKey(k)
+    const prev = notifPrefs
+    setNotifPrefs(p => ({ ...p, [section]: { ...p[section], [key]: value } }))
+    try { await updateNotifications({ [section]: { [key]: value } }) }
+    catch { setNotifPrefs(prev); setError('Could not save preference.') }
+    finally { setSavingKey(null) }
+  }
+
+  const providerName = tenant?.name || 'your provider'
+
+  const notifItems = [
+    { key: 'status_change', label: 'Request status changes', desc: `Get notified when ${providerName} updates your request stage.` },
+    { key: 'new_message',   label: `New message from ${providerName}`, desc: `Get notified when ${providerName} sends a message on your request.` },
+    { key: 'files_delivered', label: 'Files delivered', desc: `Get notified when ${providerName} delivers files or a link.` },
+  ]
+
+  if (!notifPrefs) return <div className="flex items-center justify-center h-48"><Spinner size={20} /></div>
+
+  return (
+    <div>
+      <SectionTitle title="Notifications" description="Choose when you want to be notified by email." />
+
+      <InfoBox>
+        In-app notifications are always on — you'll see updates in the bell menu at all times.
+      </InfoBox>
+
+      <div className="mt-5">
+        <p className="text-[11px] font-semibold text-[#9EA89E] uppercase tracking-wider mb-3.5">Email me when…</p>
+        <div className="space-y-4">
+          {notifItems.map(({ key, label, desc }) => (
+            <div key={key} className="flex items-start justify-between gap-4">
+              <div>
+                <p className="text-[13px] text-[#141A14]">{label}</p>
+                <p className="text-[11px] text-[#9EA89E] mt-0.5">{desc}</p>
+              </div>
+              <Toggle
+                checked={notifPrefs?.email?.[key] ?? false}
+                onChange={(v) => handleToggle('email', key, v)}
+                disabled={savingKey === `email.${key}`}
+              />
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="mt-6">
+        <InfoBox>
+          Emails are sent from {providerName} via Grove. You can unsubscribe at any time from within any email.
+        </InfoBox>
+      </div>
+
+      {error && <p className="text-[12px] text-red-600 mt-3">{error}</p>}
+      <p className="text-[11px] text-[#9EA89E] mt-4">Changes are saved automatically.</p>
+    </div>
+  )
+}
+
+// ─── Main Modal ───────────────────────────────────────────────────────────────
+
+function ClientSettingsModalInner({ onClose }) {
+  const { user, tenant } = useAuth()
+  const [activeSection, setActiveSection] = useState('profile')
+  const contentRef = useRef(null)
+
+  useEffect(() => {
+    if (contentRef.current) contentRef.current.scrollTop = 0
+  }, [activeSection])
+
+  useEffect(() => {
+    document.body.style.overflow = 'hidden'
+    return () => { document.body.style.overflow = '' }
+  }, [])
+
+  const SECTIONS = {
+    'profile':       <ProfileSection user={user} tenant={tenant} />,
+    'notifications': <NotificationsSection tenant={tenant} />,
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
+      {/* Backdrop */}
+      <div className="absolute inset-0 bg-black/50 backdrop-blur-[2px]" onClick={onClose} />
+
+      {/* Modal shell */}
+      <div
+        className="relative flex bg-white rounded-2xl shadow-2xl overflow-hidden"
+        style={{
+          width: 'min(640px, calc(100vw - 32px))',
+          height: 'min(520px, calc(100vh - 48px))',
+          animation: 'modalIn 0.18s cubic-bezier(0.16,1,0.3,1)',
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* ── Sidebar nav ── */}
+        <aside className="hidden sm:flex flex-col w-[180px] flex-shrink-0 border-r border-[#F0F2F0] bg-[#FAFBFA] overflow-y-auto">
+          <div className="px-4 pt-5 pb-3 border-b border-[#F0F2F0]">
+            <p className="text-[13px] font-semibold text-[#141A14]">Account</p>
+          </div>
+          <nav className="flex-1 px-2 py-3 space-y-0.5">
+            {NAV.map(({ id, label, icon: Icon }) => (
+              <button
+                key={id}
+                type="button"
+                onClick={() => setActiveSection(id)}
+                className={`w-full text-left flex items-center gap-2.5 text-[13px] px-2.5 py-2 rounded-lg transition-colors ${
+                  activeSection === id
+                    ? 'bg-[#EAF5EF] text-[#0F6E56] font-medium'
+                    : 'text-[#4A544A] hover:bg-[#F2F4F2] hover:text-[#141A14]'
+                }`}
+              >
+                <Icon size={14} className="flex-shrink-0" />
+                {label}
+              </button>
+            ))}
+          </nav>
+        </aside>
+
+        {/* ── Content ── */}
+        <div className="flex flex-col flex-1 min-w-0">
+          {/* Header bar */}
+          <div className="flex items-center justify-between px-5 py-3.5 border-b border-[#F0F2F0] flex-shrink-0">
+            <div className="sm:hidden flex-1 mr-3">
+              <select
+                value={activeSection}
+                onChange={(e) => setActiveSection(e.target.value)}
+                className="w-full h-8 px-2.5 rounded-lg border border-[#E0E4E0] bg-white text-[13px] text-[#141A14] focus:outline-none focus:border-[#0F6E56]"
+              >
+                {NAV.map(({ id, label }) => <option key={id} value={id}>{label}</option>)}
+              </select>
+            </div>
+            <p className="hidden sm:block text-[13px] font-medium text-[#141A14]">
+              {NAV.find(n => n.id === activeSection)?.label}
+            </p>
+            <button
+              onClick={onClose}
+              className="ml-auto flex items-center justify-center w-7 h-7 rounded-lg text-[#9EA89E] hover:text-[#4A544A] hover:bg-[#F2F4F2] transition-colors"
+            >
+              <X size={15} />
+            </button>
+          </div>
+
+          {/* Scrollable content */}
+          <div ref={contentRef} className="flex-1 overflow-y-auto px-6 py-5">
+            {SECTIONS[activeSection]}
+          </div>
+        </div>
+      </div>
+
+      <style>{`
+        @keyframes modalIn {
+          from { opacity: 0; transform: scale(0.97) translateY(4px); }
+          to   { opacity: 1; transform: scale(1)    translateY(0);   }
+        }
+      `}</style>
+    </div>
+  )
+}
+
+export default function ClientSettingsModal({ open, onClose }) {
+  if (!open) return null
+  return createPortal(<ClientSettingsModalInner onClose={onClose} />, document.body)
+}

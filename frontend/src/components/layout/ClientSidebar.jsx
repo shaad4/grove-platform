@@ -13,6 +13,8 @@ import {
 import { useAuth } from '../../context/AuthContext'
 import ClientPortalSwitcher from './ClientPortalSwitcher'
 
+import ClientSettingsModal from '../modals/ClientSettingsModal'
+
 // ─── Client nav items ─────────────────────────────────────────
 const NAV_ITEMS = [
   {
@@ -37,6 +39,7 @@ export default function ClientSidebar({ badges = {} }) {
   })
 
   const [isPopupOpen, setIsPopupOpen] = useState(false)
+  const [showSettings, setShowSettings] = useState(false)
   const popupRef = useRef(null)
   const mobileRef = useRef(null)
 
@@ -104,14 +107,32 @@ export default function ClientSidebar({ badges = {} }) {
 
       {/* Actions */}
       <div className="p-1">
-        <NavLink
-          to="/portal/settings"
-          onClick={() => setIsPopupOpen(false)}
-          className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-text-sub hover:bg-surface hover:text-text-main transition-colors"
+        <button
+          onClick={() => {
+            setIsPopupOpen(false)
+            setShowSettings(true)
+          }}
+          className="
+            flex items-center gap-2.5
+
+            w-full text-left
+
+            px-3 py-2
+
+            rounded-lg
+
+            text-sm text-text-sub
+
+            hover:bg-surface
+            hover:text-text-main
+
+            transition-colors
+          "
         >
           <Settings size={15} />
-          Settings
-        </NavLink>
+
+          <span>Settings</span>
+        </button>
 
         <div className="mx-2 my-1 h-px bg-border/50" />
 
@@ -317,6 +338,14 @@ export default function ClientSidebar({ badges = {} }) {
 
         </div>
       </div>
+      {showSettings && (
+        <ClientSettingsModal
+          open={showSettings}
+          onClose={() =>
+            setShowSettings(false)
+          }
+        />
+      )}
     </>
   )
 }

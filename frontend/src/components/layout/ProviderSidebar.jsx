@@ -14,6 +14,8 @@ import {
 import { useAuth } from '../../context/AuthContext'
 import PortalSwitcher from './PortalSwitcher'
 
+import ProviderSettingsModal from '../modals/ProviderSettingsModal'
+
 const NAV_ITEMS = [
   {
     to: '/dashboard',
@@ -54,6 +56,9 @@ export default function ProviderSidebar({
     })
 
   const [isPopupOpen, setIsPopupOpen] =
+    useState(false)
+
+  const [showSettings, setShowSettings] =
     useState(false)
 
   const popupRef = useRef(null)
@@ -410,15 +415,15 @@ export default function ProviderSidebar({
                 </p>
               </div>
 
-              <NavLink
-                to="/settings"
-                onClick={() =>
-                  setIsPopupOpen(
-                    false
-                  )
-                }
+              <button
+                onClick={() => {
+                  setIsPopupOpen(false)
+                  setShowSettings(true)
+                }}
                 className="
                   flex items-center gap-3
+
+                  w-full text-left
 
                   px-4 py-2.5
 
@@ -431,13 +436,15 @@ export default function ProviderSidebar({
                   transition-all duration-200
                 "
               >
+
                 <Settings
                   size={15}
                   className="opacity-60"
                 />
 
                 <span>Settings</span>
-              </NavLink>
+
+              </button>
 
               <div className="border-t border-white/[0.06]" />
 
@@ -566,13 +573,15 @@ export default function ProviderSidebar({
             </p>
           </div>
 
-          <NavLink
-            to="/settings"
-            onClick={() =>
+          <button
+            onClick={() => {
               setIsPopupOpen(false)
-            }
+              setShowSettings(true)
+            }}
             className="
               flex items-center gap-3
+
+              w-full text-left
 
               px-4 py-2.5
 
@@ -581,6 +590,8 @@ export default function ProviderSidebar({
 
               hover:bg-white/[0.04]
               hover:text-white
+
+              transition-all duration-200
             "
           >
             <Settings
@@ -589,7 +600,7 @@ export default function ProviderSidebar({
             />
 
             <span>Settings</span>
-          </NavLink>
+          </button>
 
           <div className="border-t border-white/[0.06]" />
 
@@ -688,6 +699,14 @@ export default function ProviderSidebar({
           )}
         </div>
       </div>
+      {showSettings && (
+        <ProviderSettingsModal
+          open={showSettings}
+          onClose={() =>
+            setShowSettings(false)
+          }
+        />
+      )}
     </>
   )
 }
