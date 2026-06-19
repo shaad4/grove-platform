@@ -30,6 +30,7 @@ class Request(models.Model):
 
     is_urgent = models.BooleanField(default=False)
     due_date = models.DateField(null=True, blank=True)
+    overdue_notified_at = models.DateTimeField(null=True, blank=True)
 
     is_deleted = models.BooleanField(default=False)
     deleted_at = models.DateTimeField(null=True, blank=True)

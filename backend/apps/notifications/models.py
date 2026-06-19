@@ -15,6 +15,7 @@ class Notification(models.Model):
         NEW_MESSAGE = "new_message", "New Message"
         FILES_DELIVERED = "files_delivered", "Files Delivered"
         INVITE_ACCEPTED = "invite_accepted", "Invite Accepted"
+        REQUEST_OVERDUE = "request_overdue", "Request Overdue"
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     tenant = models.ForeignKey(Tenant, on_delete=models.CASCADE, related_name="notifications")

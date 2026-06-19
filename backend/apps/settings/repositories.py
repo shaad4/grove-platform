@@ -40,12 +40,15 @@ class UserSettingsRepository:
         """
         current = user.settings or {}
         notifications = current.get("notifications", {})
-        notifications.update(settings_patch)
+        for section, prefs in settings_patch.items():
+            if section not in notifications:
+                notifications[section] = {}
+            notifications[section].update(prefs) 
         current["notifications"] = notifications
         user.settings = current
         user.save(update_fields=["settings", "updated_at"])
         return user
-    
+        
     @staticmethod
     def get_notification_settings(user):
         settings = user.settings or {}
