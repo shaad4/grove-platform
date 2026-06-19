@@ -15,6 +15,8 @@ from apps.tenants.models import TenantMembership
 from apps.request_management.models import Request
 from apps.clients.models import Client
 from apps.settings.repositories import UserSettingsRepository
+from apps.notifications.models import Notification as NotifModel
+from apps.notifications.utils import create_notification
 
 #Email Prefrence Helper
 _EMAIL_PREF_KEY = {
@@ -162,9 +164,11 @@ def email_fallback_for_offline_users():
 @shared_task
 def send_weekly_provider_summary():
     """
-    Monday 8am IST — email each provider a digest of the past week.
+    Runs daily at 8am IST (beat schedule changed from Monday-only).
+    Each provider is emailed only on their preferred day.
+    Respects the weekly_summary toggle and weekly_summary_day preference.
     """
-  
+    today_abbr = timezone.now().strftime("%a") 
     one_week_ago = timezone.now() - timezone.timedelta(days=7)
 
     provider_memberships = TenantMembership.objects.filter(
@@ -172,18 +176,29 @@ def send_weekly_provider_summary():
         is_active=True,
     ).select_related("user", "tenant")
 
-    sent = 0
+    sent = opted_out = 0
 
     for membership in provider_memberships:
         tenant = membership.tenant
-        user = membership.user
+        user   = membership.user
+
+        email_prefs = UserSettingsRepository.get_notification_settings(user).get("email", {})
+
+        # Respect the weekly_summary toggle
+        if not email_prefs.get("weekly_summary", True):
+            opted_out += 1
+            continue
+
+        # Only send on the user's preferred day
+        preferred_day = email_prefs.get("weekly_summary_day", "Mon")
+        if today_abbr != preferred_day:
+            continue
 
         requests_received = Request.objects.filter(
             tenant=tenant,
             created_at__gte=one_week_ago,
             is_deleted=False,
         ).count()
-
 
         requests_delivered = Request.objects.filter(
             tenant=tenant,
@@ -195,16 +210,16 @@ def send_weekly_provider_summary():
         pending_requests = Request.objects.filter(
             tenant=tenant,
             status__in=[
-                Request.Status.RECEIVED, 
+                Request.Status.RECEIVED,
                 Request.Status.IN_REVIEW,
-                Request.Status.IN_PROGRESS, 
+                Request.Status.IN_PROGRESS,
             ],
             is_deleted=False,
         ).count()
 
         active_clients = Client.objects.filter(
             tenant=tenant,
-            status = Client.Status.ACTIVE,
+            status=Client.Status.ACTIVE,
             is_deleted=False,
             is_deactivated=False,
         ).count()
@@ -216,7 +231,7 @@ def send_weekly_provider_summary():
 
         if requests_received == 0 and requests_delivered == 0:
             continue
-        
+
         try:
             email_data = build_weekly_summary_email(
                 display_name=user.display_name,
@@ -226,25 +241,90 @@ def send_weekly_provider_summary():
                 pending_requests=pending_requests,
                 active_clients=active_clients,
                 completion_rate=completion_rate,
-
             )
             send_email(
                 subject=email_data["subject"],
                 text_content=email_data["text_content"],
                 html_content=email_data["html_content"],
-                recipients=[user.email]
+                recipients=[user.email],
             )
-
-            sent+=1
+            sent += 1
         except Exception as e:
             logger.error(
                 f"[weekly_summary] Failed for {user.email} / {tenant.slug}: {e}"
             )
 
-    logger.info(f"[send_weekly_provider_summary] Sent {sent} summary email(s).")
+    logger.info(f"[send_weekly_provider_summary] sent={sent} opted_out={opted_out}")
     return sent
 
 
+@shared_task
+def notify_overdue_requests():
+    """
+    Runs every hour. Finds requests past due_date that are still active
+    and haven't been notified yet. Creates in-app + email per preferences.
+    """
+
+    today = timezone.now().date()
+    now   = timezone.now()
+
+    overdue = Request.objects.filter(
+        due_date__lt=today,
+        due_date__isnull=False,
+        status__in=[
+            Request.Status.RECEIVED,
+            Request.Status.IN_REVIEW,
+            Request.Status.IN_PROGRESS,
+        ],
+        is_deleted=False,
+        overdue_notified_at__isnull=True,
+    ).select_related("tenant", "provider", "client")
+
+    notified = 0
+
+    for req in overdue:
+        provider = req.provider
+        due_str  = req.due_date.strftime("%b %d")
+
+        try:
+            # In-app
+            create_notification(
+                tenant=req.tenant,
+                recipient=provider,
+                event_type=Notification.EventType.REQUEST_OVERDUE,
+                title="Request overdue",
+                body=f'"{req.title}" was due {due_str} and hasn\'t been delivered.',
+                related_request=req,
+                related_client=req.client,
+            )
+
+            # Email 
+            if _wants_email(provider, "request_overdue"):
+                temp = NotifModel(
+                    tenant=req.tenant,
+                    recipient=provider,
+                    event_type="request_overdue",
+                    title="Request overdue",
+                    body=f'"{req.title}" was due {due_str} and hasn\'t been delivered.',
+                    related_request=req,
+                )
+                email_data = build_notification_email(temp)
+                send_email(
+                    subject=email_data["subject"],
+                    text_content=email_data["text_content"],
+                    html_content=email_data["html_content"],
+                    recipients=[provider.email],
+                )
+
+            req.overdue_notified_at = now
+            req.save(update_fields=["overdue_notified_at", "updated_at"])
+            notified += 1
+
+        except Exception as e:
+            logger.error(f"[notify_overdue_requests] Failed for request {req.id}: {e}")
+
+    logger.info(f"[notify_overdue_requests] processed={notified}")
+    return notified
 
     
 
