@@ -1,16 +1,42 @@
 from celery import shared_task
-
 from django.conf import settings
-from .services.email_service import send_email
-from .services.email_templates import build_verification_email, build_password_reset_email, build_notification_email, build_weekly_summary_email
-
-from apps.common.logger import logger
 from django.utils import timezone
 
+from .services.email_service import send_email
+from .services.email_templates import (
+    build_verification_email,
+    build_password_reset_email,
+    build_notification_email,
+    build_weekly_summary_email,
+)
+from apps.common.logger import logger
 from apps.notifications.models import Notification
 from apps.tenants.models import TenantMembership
 from apps.request_management.models import Request
 from apps.clients.models import Client
+from apps.settings.repositories import UserSettingsRepository
+
+#Email Prefrence Helper
+_EMAIL_PREF_KEY = {
+    "new_request":              "new_request",
+    "new_message":              ("client_reply", "new_message"),
+    "status_change":            "status_change",
+    "files_delivered":          "files_delivered",
+    "invite_accepted":          "client_accepted_invite",
+    "client_viewed_delivery":   None,  
+    "request_overdue":          "request_overdue",
+}
+
+
+def _wants_email(user, event_type: str) -> bool:
+    mapping = _EMAIL_PREF_KEY.get(event_type)
+    if mapping is None:
+        return False  
+    email_prefs = UserSettingsRepository.get_notification_settings(user).get("email", {})
+    if isinstance(mapping, tuple):
+        return any(email_prefs.get(k, True) for k in mapping)
+    return email_prefs.get(mapping, True)
+
 
 @shared_task(bind=True, max_retries=3, default_retry_delay=60)
 def send_verification_email(
@@ -87,12 +113,11 @@ def send_password_reset_email(self, user_email, display_name, token, tenant_slug
 @shared_task
 def email_fallback_for_offline_users():
     """
-    Every 15 min — email notifications that are:
-    - unread
-    - not yet emailed
-    - created more than 5 minutes ago (user was offline when WS pushed)
+    Every 15 min — emails unread, un-emailed notifications older than
+    EMAIL_FALLBACK_DELAY_MINUTES. Respects per-user email preferences.
+    Opted-out notifications are still stamped with emailed_at to prevent
+    re-evaluation on every subsequent run.
     """
-
     cutoff = timezone.now() - timezone.timedelta(
         minutes=settings.EMAIL_FALLBACK_DELAY_MINUTES
     )
@@ -103,26 +128,34 @@ def email_fallback_for_offline_users():
         created_at__lte=cutoff,
     ).select_related("recipient", "tenant", "related_request")
 
-    sent = 0
+    sent = opted_out = 0
     now = timezone.now()
 
     for notif in pending:
-      try:
-          email_data = build_notification_email(notif)
-          send_email(
-              subject=email_data["subject"],
-              text_content=email_data["text_content"],
-              html_content=email_data["html_content"],
-              recipients=[notif.recipient.email],
-          )
+        try:
+            if not _wants_email(notif.recipient, notif.event_type):
+                opted_out += 1
+                notif.emailed_at = now  # stamp so we don't re-check next run
+                notif.save(update_fields=["emailed_at"])
+                continue
 
-          notif.emailed_at = now
-          notif.save(update_fields=["emailed_at"])
-          sent += 1
-      except Exception as e:
-          logger.error(f"[email_fallback] Failed for notification {notif.id}: {e}")
+            email_data = build_notification_email(notif)
+            send_email(
+                subject=email_data["subject"],
+                text_content=email_data["text_content"],
+                html_content=email_data["html_content"],
+                recipients=[notif.recipient.email],
+            )
+            notif.emailed_at = now
+            notif.save(update_fields=["emailed_at"])
+            sent += 1
 
-    logger.info(f"[email_fallback_for_offline_users] Sent {sent} fallback email(s).")
+        except Exception as e:
+            logger.error(f"[email_fallback] Failed for notification {notif.id}: {e}")
+
+    logger.info(
+        f"[email_fallback_for_offline_users] sent={sent} opted_out={opted_out}"
+    )
     return sent
 
 
