@@ -298,13 +298,19 @@ CELERY_BEAT_SCHEDULE = {
     # Monday 8am IST — weekly provider digest
     "weekly-provider-summary": {
         "task": "apps.notifications.tasks.send_weekly_provider_summary",
-        "schedule": crontab(hour=8, minute=0, day_of_week=1),
+        "schedule": crontab(hour=2, minute=30),
     },
 
     # Every 30 min — refresh Redis tenant usage cache
     "cache-tenant-usage-stats": {
         "task": "apps.tenants.tasks.cache_tenant_usage_stats",
         "schedule": crontab(minute="*/30"),
+    },
+
+    # Every Hour - Check for any overdue and alert (In-app/Email)
+    "notify-overdue-requests": {
+        "task": "apps.notifications.tasks.notify_overdue_requests",
+        "schedule": crontab(minute=0),  # top of every hour
     },
     
 }
