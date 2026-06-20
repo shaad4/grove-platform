@@ -741,6 +741,7 @@ function DangerZoneSection({ workspaceName }) {
   const [confirmText, setConfirmText] = useState('')
   const [loading, setLoading] = useState(false)
   const [countdown, setCountdown] = useState(0)
+  const { logout } = useAuth()
 
   const handleOpenModal = (type) => { setShowModal(type); setConfirmText(''); setCountdown(3) }
 
@@ -752,7 +753,12 @@ function DangerZoneSection({ workspaceName }) {
 
   const handleDelete = async () => {
     setLoading(true)
-    try { await deleteAccount() } catch { setLoading(false) }
+    try {
+      await deleteAccount()
+      await logout()
+    } catch {
+      setLoading(false)
+    }
   }
 
   const DANGER_ITEMS = [

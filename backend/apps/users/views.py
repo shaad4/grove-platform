@@ -203,6 +203,7 @@ class WorkspaceSetupAPIView(APIView):
         already_provider = TenantMembership.objects.filter(
             user = user,
             role = TenantMembership.Role.PROVIDER,
+            is_active=True,
         ).exists()
 
         if already_provider:
@@ -254,7 +255,7 @@ class CheckSlugAPIView(APIView):
             )
 
         exists = Tenant.objects.filter(
-            slug=slug
+            slug=slug, is_active=True
         ).exists()
 
         return Response({
@@ -450,7 +451,12 @@ class MeView(APIView):
         membership = getattr(request, "tenant_membership", None)
         tenant     = getattr(request, "tenant", None)
 
-        print(f"MeView: user={user.email}, membership={membership}, tenant={tenant}")
+        if membership is None and tenant is not None:
+            return Response(
+                {"success": False, "message": "No active membership found for this workspace."},
+                status=403,
+            )
+
         if membership is None and tenant is None:
             membership = TenantMembership.objects.filter(
                 user=user,
@@ -460,8 +466,6 @@ class MeView(APIView):
             ).first()
             if membership:
                 tenant = membership.tenant
-
-        print(f"MeView: resolved role={membership.role if membership else 'none'}, tenant={tenant}")
  
         return Response({
             "user":   _build_user_payload(user, membership),

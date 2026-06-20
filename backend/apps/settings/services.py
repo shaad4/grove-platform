@@ -7,6 +7,10 @@ from apps.common.logger import logger
 from .repositories import UserSettingsRepository, TenantSettingsRepository
 from apps.tenants.models import TenantMembership
 
+from apps.clients.models import Client
+from apps.clients.repositories import ClientRepository
+
+
 #custom Exceptions
 class WrongCurrentPassword(Exception):
     pass
@@ -261,6 +265,12 @@ class DeleteAccountService:
 
         success = UserSettingsRepository.deactivate_membership(user, tenant)
         if success:
+            client = Client.objects.filter(
+                user=user, tenant=tenant, is_deleted=False,
+            ).first()
+            if client and not client.is_deactivated:
+                ClientRepository.deactiavte(client)
+
             logger.info(
                 "membership_deactivated user_id=%s tenant_id=%s role=%s",
                 user.id, tenant.id, role,

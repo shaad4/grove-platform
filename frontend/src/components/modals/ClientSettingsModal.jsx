@@ -399,6 +399,7 @@ function DangerZoneSection({ tenant }) {
   const [showModal, setShowModal] = useState(false)
   const [loading, setLoading] = useState(false)
   const [countdown, setCountdown] = useState(0)
+  const { logout } = useAuth()
 
   const providerName = tenant?.name || 'this workspace'
 
@@ -412,7 +413,12 @@ function DangerZoneSection({ tenant }) {
 
   const handleLeave = async () => {
     setLoading(true)
-    try { await deleteAccount() } catch { setLoading(false) }
+    try {
+      await deleteAccount()
+      await logout()
+    } catch {
+      setLoading(false)
+    }
   }
 
   return (

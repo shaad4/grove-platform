@@ -1,3 +1,4 @@
+import uuid
 from apps.tenants.models import Tenant, TenantMembership
 from apps.users.models import User
 
@@ -149,7 +150,8 @@ class TenantSettingsRepository:
             return False
 
         locked_tenant.is_active = False
-        locked_tenant.save(update_fields=["is_active", "updated_at"])
+        locked_tenant.slug = f"{locked_tenant.slug}-deleted-{uuid.uuid4().hex[:8]}"
+        locked_tenant.save(update_fields=["is_active", "slug", "updated_at"])
 
         TenantMembership.objects.filter(
             tenant=locked_tenant,

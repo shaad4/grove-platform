@@ -2,7 +2,9 @@
 
 export function getBrandColors(base = '#0F6E56') {
 
-  const hex = base.replace('#', '')
+  const safeBase = base || '#0F6E56'
+  const cleaned = safeBase.replace('#', '')
+  const hex = /^[0-9A-Fa-f]{6}$/.test(cleaned) ? cleaned : '0F6E56'
 
   const r = parseInt(hex.slice(0, 2), 16) / 255
   const g = parseInt(hex.slice(2, 4), 16) / 255

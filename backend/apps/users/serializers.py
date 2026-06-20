@@ -79,7 +79,7 @@ class WorkspaceSetupSerializer(serializers.Serializer):
                 "This slug is reserved."
             )
         
-        if Tenant.objects.filter(slug=value).exists():
+        if Tenant.objects.filter(slug=value, is_active=True).exists():
             raise serializers.ValidationError(
                 "This workspace URL is already taken."
             )
