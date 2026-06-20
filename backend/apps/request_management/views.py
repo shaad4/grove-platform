@@ -605,6 +605,10 @@ class DeliveryReviewView(APIView):
 class SuggestRepliesView(APIView):
     
     def post(self, request, request_id):
+        if not _is_provider(request):
+            return Response({"success": False, "message": "Forbidden."}, status=403)
+
+
         request_obj = RequestRepository.get_by_id(request_id, request.tenant.id)
         if not request_obj:
             return Response({"detail": "Request not found."}, status=status.HTTP_404_NOT_FOUND)
@@ -633,6 +637,10 @@ class SuggestRepliesView(APIView):
 
 class SuggestDeliveryMessageView(APIView):
     def post(self, request, request_id):
+        if not _is_provider(request):
+            return Response({"success": False, "message": "Forbidden."}, status=403)
+
+
         request_obj = RequestRepository.get_by_id(request_id, request.tenant.id)
         if not request_obj:
             return Response({"detail": "Request not found."}, status=status.HTTP_404_NOT_FOUND)
@@ -653,6 +661,9 @@ class SuggestDeliveryMessageView(APIView):
 
 class RegenerateSummaryView(APIView):
     def post(self, request, request_id):
+        if not _is_provider(request):
+            return Response({"success": False, "message": "Forbidden."}, status=403)
+
         request_obj = RequestRepository.get_by_id(request_id, request.tenant.id)
         if not request_obj:
             return Response({"detail": "Request not found."}, status=status.HTTP_404_NOT_FOUND)

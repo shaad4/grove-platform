@@ -60,7 +60,12 @@ const requestsApi = {
   // Chat
   getMessages: (requestId) => api.get(`/requests/${requestId}/messages/`),
   sendMessage: (requestId, data) => api.post(`/requests/${requestId}/messages/`, data),
-  markRead: (requestId) => api.post(`/requests/${requestId}/messages/mark-read/`)
+  markRead: (requestId) => api.post(`/requests/${requestId}/messages/mark-read/`),
+
+  // AI
+  regenerateSummary: (id) => api.post(`/requests/${id}/regenerate-summary/`),
+  suggestReplies: (id) => api.post(`/requests/${id}/suggest-replies/`),
+  suggestDeliveryMessage: (id) => api.post(`/requests/${id}/suggest-delivery-message/`),
 
 }
 

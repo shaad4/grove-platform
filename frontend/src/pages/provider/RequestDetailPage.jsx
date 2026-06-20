@@ -6,6 +6,7 @@ import {
   CheckCircle2, Circle, Clock, Send, Paperclip,
   MoreHorizontal, Copy, ExternalLink, Download, Pencil, Check,
   GripVertical, ArrowRight, RotateCcw, Video,
+  Sparkles, RefreshCw,
 } from 'lucide-react'
 import ProviderLayout from '../../components/layout/ProviderLayout'
 import requestsApi from '../../api/requests.api'
@@ -69,6 +70,92 @@ function StatusPill({ status, statusConfig }) {
       <span className={`h-1.5 w-1.5 rounded-full ${cfg.dot}`} />
       {cfg.label}
     </span>
+  )
+}
+
+// AI CATEGORY 
+const CATEGORY_STYLES = {
+  design:   { label: 'Design',   bg: 'bg-violet-50', text: 'text-violet-600', dot: 'bg-violet-500' },
+  dev:      { label: 'Dev',      bg: 'bg-cyan-50',   text: 'text-cyan-600',   dot: 'bg-cyan-500' },
+  content:  { label: 'Content',  bg: 'bg-orange-50', text: 'text-orange-600', dot: 'bg-orange-500' },
+  feedback: { label: 'Feedback', bg: 'bg-rose-50',   text: 'text-rose-600',   dot: 'bg-rose-500' },
+}
+
+function CategoryChip({ category }) {
+  const style = CATEGORY_STYLES[category]
+  if (!style) return null
+  return (
+    <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[12px] font-medium ${style.bg} ${style.text}`}>
+      <span className={`h-1.5 w-1.5 rounded-full ${style.dot}`} />
+      {style.label}
+    </span>
+  )
+}
+
+//  AI SUMMARY CARD 
+function AISummaryCard({ request, requestId, onRegenerate }) {
+  const [regenerating, setRegenerating] = useState(false)
+  const isReady = Boolean(request.ai_summary)
+
+  const handleRegenerate = async () => {
+    setRegenerating(true)
+    try {
+      await requestsApi.regenerateSummary(requestId)
+      onRegenerate()
+    } finally {
+      setRegenerating(false)
+    }
+  }
+
+  return (
+    <div className="relative rounded-2xl bg-gradient-to-br from-violet-200/60 via-emerald-200/50 to-cyan-200/60 p-[1px]">
+      <div className="relative rounded-2xl bg-white p-5 overflow-hidden">
+        <div className="pointer-events-none absolute -top-10 -right-10 h-32 w-32 rounded-full bg-gradient-to-br from-violet-400/10 to-emerald-400/10 blur-2xl" />
+
+        <div className="relative z-10 flex items-center justify-between gap-3 mb-3 flex-wrap">
+          <div className="flex items-center gap-2">
+            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-violet-500 to-emerald-500 shadow-[0_0_12px_rgba(99,102,241,0.35)]">
+              <Sparkles size={13} className="text-white" />
+            </div>
+            <p className="text-[13px] font-semibold text-[#141a14]">AI Summary</p>
+            {!isReady && (
+              <span className="flex items-center gap-1 text-[11px] text-[#9ea89e]">
+                <Loader2 size={11} className="animate-spin" />
+                Thinking...
+              </span>
+            )}
+          </div>
+
+          <div className="flex items-center gap-2">
+            <CategoryChip category={request.ai_category} />
+            <button
+              onClick={handleRegenerate}
+              disabled={regenerating}
+              title="Regenerate summary"
+              className="h-7 w-7 flex items-center justify-center rounded-lg text-[#9ea89e] hover:text-[#0f6e56] hover:bg-[#f0faf6] transition-colors disabled:opacity-50"
+            >
+              <RefreshCw size={13} className={regenerating ? 'animate-spin' : ''} />
+            </button>
+          </div>
+        </div>
+
+        {isReady ? (
+          <p className="relative z-10 text-[13px] text-[#4a544a] leading-relaxed">
+            {request.ai_summary}
+          </p>
+        ) : (
+          <div className="relative z-10 space-y-2">
+            {['92%', '78%', '60%'].map((w) => (
+              <div
+                key={w}
+                style={{ width: w }}
+                className="h-3 rounded-full bg-gradient-to-r from-[#eef0ee] via-[#f7f8f7] to-[#eef0ee] bg-[length:200%_100%] animate-shimmer"
+              />
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
   )
 }
 
@@ -1088,6 +1175,30 @@ export default function RequestDetailPage() {
       .catch(() => {})
   }, [])
 
+  useEffect(() => {
+    if (!req || req.ai_summary) return
+
+    let cancelled = false
+    let elapsed = 0
+    const INTERVAL = 3000
+    const TIMEOUT = 18000
+
+    const interval = setInterval(async () => {
+      elapsed += INTERVAL
+      try {
+        const res = await requestsApi.get(requestId)
+        if (cancelled) return
+        const fresh = res.data.data
+        setReq(prev => ({ ...prev, ai_summary: fresh.ai_summary, ai_category: fresh.ai_category }))
+        if (fresh.ai_summary || elapsed >= TIMEOUT) clearInterval(interval)
+      } catch {
+        clearInterval(interval)
+      }
+    }, INTERVAL)
+
+    return () => { cancelled = true; clearInterval(interval) }
+  }, [requestId, req?.ai_summary])
+
   const handleStatusChange = async (newStatus) => {
     if (newStatus === 'delivered') { setShowDeliver(true); return }
     setStatusLoading(true)
@@ -1308,6 +1419,12 @@ export default function RequestDetailPage() {
               </div>
             </div>
 
+            <AISummaryCard
+              request={req}
+              requestId={requestId}
+              onRegenerate={() => setReq(prev => ({ ...prev, ai_summary: null }))}
+            />
+
             {/* Details + history */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
               <div className="lg:col-span-2 rounded-xl border border-[#e8eae8] bg-white p-5 space-y-4">
@@ -1441,19 +1558,24 @@ export default function RequestDetailPage() {
               {notes.length > 0 && (
                 <div className="space-y-3 mb-4 max-h-[250px] overflow-y-auto pr-1 no-scrollbar">
                   {notes.map(note => (
-                    <div key={note.id} className={`rounded-xl p-3 border ${note.is_ai_generated ? 'border-[#d1fae5] bg-[#f0faf6]' : 'bg-[#f7f8f7] border-[#e8eae8]/40'}`}>
-                      <div className="flex items-center gap-2 mb-1.5">
-                        {note.is_ai_generated ? (
-                          <span className="text-[11px] font-semibold text-[#0f6e56]">Grove AI</span>
-                        ) : (
-                          <span className="text-[11px] font-semibold text-[#141a14]"> {note.author_name}</span>
-                        )}
-                        <span className="text-[11px] text-[#9ea89e]">{timeAgo(note.created_at)}</span>
-                        {note.is_ai_generated && (
-                          <span className="ml-auto text-[10px] text-[#9ea89e] bg-white px-1.5 py-0.5 rounded-md border border-[#d1fae5]">Synthetic telemetry</span>
-                        )}
+                    <div
+                      key={note.id}
+                      className={note.is_ai_generated ? "rounded-xl p-[1px] bg-gradient-to-br from-violet-200/70 via-emerald-200/60 to-cyan-200/70" : ""}
+                    >
+                      <div className={`rounded-xl p-3 ${note.is_ai_generated ? 'bg-[#fbfdfc]' : 'bg-[#f7f8f7] border border-[#e8eae8]/40'}`}>
+                        <div className="flex items-center gap-2 mb-1.5">
+                          {note.is_ai_generated ? (
+                            <span className="flex items-center gap-1 text-[11px] font-semibold text-[#0f6e56]">
+                              <Sparkles size={11} />
+                              Grove AI · Triage note
+                            </span>
+                          ) : (
+                            <span className="text-[11px] font-semibold text-[#141a14]">{note.author_name}</span>
+                          )}
+                          <span className="text-[11px] text-[#9ea89e]">{timeAgo(note.created_at)}</span>
+                        </div>
+                        <p className="text-[13px] text-[#4a544a] leading-relaxed whitespace-pre-wrap font-sans">{note.content}</p>
                       </div>
-                      <p className="text-[13px] text-[#4a544a] leading-relaxed whitespace-pre-wrap font-sans">{note.content}</p>
                     </div>
                   ))}
                 </div>
