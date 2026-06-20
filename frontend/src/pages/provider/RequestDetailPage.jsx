@@ -9,6 +9,7 @@ import {
 } from 'lucide-react'
 import ProviderLayout from '../../components/layout/ProviderLayout'
 import requestsApi from '../../api/requests.api'
+import { getWorkspace } from '../../api/settings.api'
 import { getAvatarColor, getInitials, timeAgo, formatDate } from '../../utils/clientHelpers'
 import { useBadges } from '../../hooks/useBadges'
 import ConnectionPill from '../../components/ui/ConnectionPill'
@@ -22,12 +23,24 @@ import VideoCall from '../../components/chat/VideoCall'
 
 // ── Status config ─────────────────────────────────────────────
 const STATUS_ORDER = ['received', 'in_review', 'in_progress', 'delivered', 'closed']
-const STATUS_CONFIG = {
+const DEFAULT_STATUS_CONFIG = {
   received:    { label: 'Received',    pill: 'bg-[#e6f5f0] text-[#085041]',   dot: 'bg-[#1d9e75]' },
   in_review:   { label: 'In Review',   pill: 'bg-[#fef3e2] text-[#92500a]',   dot: 'bg-[#f59e0b]' },
   in_progress: { label: 'In Progress', pill: 'bg-[#eef2ff] text-[#3730a3]',   dot: 'bg-[#6366f1]' },
   delivered:   { label: 'Delivered',   pill: 'bg-[#e6f5f0] text-[#0f6e56]',   dot: 'bg-[#0f6e56]' },
   closed:      { label: 'Closed',      pill: 'bg-[#f3f4f3] text-[#4a544a]',   dot: 'bg-[#9ea89e]' },
+}
+
+function buildStatusConfig(customLabels) {
+  if (!customLabels) return DEFAULT_STATUS_CONFIG
+  const merged = {}
+  for (const key of Object.keys(DEFAULT_STATUS_CONFIG)) {
+    merged[key] = {
+      ...DEFAULT_STATUS_CONFIG[key],
+      label: customLabels[key]?.trim() || DEFAULT_STATUS_CONFIG[key].label,
+    }
+  }
+  return merged
 }
 
 const VALID_TRANSITIONS = {
@@ -49,8 +62,8 @@ function Avatar({ name = '', size = 'md' }) {
   )
 }
 
-function StatusPill({ status }) {
-  const cfg = STATUS_CONFIG[status] || STATUS_CONFIG.received
+function StatusPill({ status, statusConfig }) {
+  const cfg = statusConfig[status] || statusConfig.received
   return (
     <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[12px] font-medium ${cfg.pill}`}>
       <span className={`h-1.5 w-1.5 rounded-full ${cfg.dot}`} />
@@ -909,7 +922,7 @@ const EVENT_META = {
   ai_summary_generated:{ icon: FileText,     color: 'text-[#6366f1]',  bg: 'bg-[#eef2ff]',  label: 'AI summary'       },
 }
 
-function ActivityLogModal({ requestId, onClose }) {
+function ActivityLogModal({ requestId, statusConfig, onClose }) {
   const [activities, setActivities] = useState([])
   const [loading, setLoading] = useState(true)
 
@@ -972,9 +985,9 @@ function ActivityLogModal({ requestId, onClose }) {
                             {isStatusChange && act.metadata && (
                               <div className="mt-1 space-y-1.5">
                                 <div className="flex items-center gap-1.5">
-                                  <StatusPill status={act.metadata.from} />
+                                  <StatusPill status={act.metadata.from} statusConfig={statusConfig} />
                                   <ChevronRight size={11} className="text-[#9ea89e] shrink-0" />
-                                  <StatusPill status={act.metadata.to} />
+                                  <StatusPill status={act.metadata.to} statusConfig={statusConfig} />
                                 </div>
                                 {act.metadata.action === 'rework' && act.metadata.rework_message && (
                                   <div className="flex items-start gap-2 rounded-lg bg-[#fff8e6] border border-[#f59e0b]/20 px-3 py-2">
@@ -1018,6 +1031,7 @@ export default function RequestDetailPage() {
   const [activities, setActivities] = useState([])
   const [notes, setNotes] = useState([])
   const [loading, setLoading] = useState(true)
+  const [statusConfig, setStatusConfig] = useState(DEFAULT_STATUS_CONFIG)
   const [noteContent, setNoteContent] = useState('')
   const [addingNote, setAddingNote] = useState(false)
   const [showDeliver, setShowDeliver] = useState(false)
@@ -1067,6 +1081,12 @@ export default function RequestDetailPage() {
   }, [requestId])
 
   useEffect(() => { fetchAll() }, [fetchAll])
+
+  useEffect(() => {
+    getWorkspace()
+      .then(r => setStatusConfig(buildStatusConfig(r.data.data?.custom_status_labels)))
+      .catch(() => {})
+  }, [])
 
   const handleStatusChange = async (newStatus) => {
     if (newStatus === 'delivered') { setShowDeliver(true); return }
@@ -1125,7 +1145,7 @@ export default function RequestDetailPage() {
     </ProviderLayout>
   )
 
-  const cfg = STATUS_CONFIG[req.status]
+  const cfg = statusConfig[req.status]
   const allowedNext = VALID_TRANSITIONS[req.status] || []
   const clientName = req.client_name || 'Client'
 
@@ -1169,7 +1189,7 @@ export default function RequestDetailPage() {
           <div className="flex items-center gap-2 shrink-0 ml-4">
             <div className="flex items-center bg-[#f7f8f7] p-0.5 rounded-lg border border-[#e8eae8]">
               {STATUS_ORDER.filter(s => s !== 'closed').map((s, i) => {
-                const scfg = STATUS_CONFIG[s]
+                const scfg = statusConfig[s]
                 const isCurrent = req.status === s
                 const isDone = STATUS_ORDER.indexOf(req.status) > i
                 const canClick = allowedNext.includes(s) || s === req.status
@@ -1245,7 +1265,7 @@ export default function RequestDetailPage() {
               <div className="flex items-start justify-between gap-4">
                 <div className="space-y-1.5 min-w-0 flex-1">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <StatusPill status={req.status} />
+                    <StatusPill status={req.status} statusConfig={statusConfig} />
                     <span className="text-[12px] text-[#9ea89e]">Submitted {formatDate(req.created_at)}</span>
                   </div>
                   <h1 className="text-[20px] font-semibold text-[#141a14] leading-snug truncate">{req.title}</h1>
@@ -1351,7 +1371,7 @@ export default function RequestDetailPage() {
                   </div>
                   <div className="space-y-0 relative before:absolute before:top-2 before:bottom-2 before:left-[9px] before:w-0.5 before:bg-[#e8eae8]">
                     {STATUS_ORDER.map((s, i) => {
-                      const scfg = STATUS_CONFIG[s]
+                      const scfg = statusConfig[s]
                       const currentIdx = STATUS_ORDER.indexOf(req.status)
                       const isDone = i < currentIdx
                       const isCurrent = i === currentIdx
@@ -1523,6 +1543,7 @@ export default function RequestDetailPage() {
       {showActivityLog && (
         <ActivityLogModal
           requestId={requestId}
+          statusConfig={statusConfig}
           onClose={() => setShowActivityLog(false)}
         />
       )}
