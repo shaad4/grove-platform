@@ -5,7 +5,7 @@ from django.conf import settings
 
 from apps.common.logger import logger
 from .repositories import UserSettingsRepository, TenantSettingsRepository
-
+from apps.tenants.models import TenantMembership
 
 #custom Exceptions
 class WrongCurrentPassword(Exception):
@@ -244,19 +244,28 @@ class NotificationService:
 class DeleteAccountService:
 
     @staticmethod
-    def leave_workspace(user, tenant):
+    def leave_workspace(user, tenant, role):
         """
-        Soft-delete: deactivates membership in this tenant only.
+        Soft-delete: Based on Roles.
         User's global account and other memberships are untouched.
         """
+
+        if role == TenantMembership.Role.PROVIDER:
+            success = TenantSettingsRepository.deactivate_tenant_cascade(tenant)
+            if success:
+                logger.warning(
+                    "tenant_deleted_by_provider user_id=%s tenant_id=%s",
+                    user.id, tenant.id,
+                )
+            return success
 
         success = UserSettingsRepository.deactivate_membership(user, tenant)
         if success:
             logger.info(
-                "membership_deactivated user_id=%s tenant_id=%s",
-                user.id, tenant.id,
+                "membership_deactivated user_id=%s tenant_id=%s role=%s",
+                user.id, tenant.id, role,
             )
-            return success
+        return success
 
    
 

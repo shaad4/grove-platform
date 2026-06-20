@@ -92,7 +92,7 @@ class TenantSettingsRepository:
 
     @staticmethod
     def slug_taken(slug, exclude_tenant_id=None):
-        qs = Tenant.objects.filter(slug=slug)
+        qs = Tenant.objects.filter(slug=slug, is_active=True)
         if exclude_tenant_id:
             qs = qs.exclude(id=exclude_tenant_id)
         return qs.exists()
@@ -127,3 +127,33 @@ class TenantSettingsRepository:
         tenant.logo_url = logo_url
         tenant.save(update_fields=["logo_url", "updated_at"])
         return tenant
+    
+    @staticmethod
+    @transaction.atomic
+    def deactivate_tenant_cascade(tenant):
+        """
+        Soft-deletes a tenant (provider has left/deleted their workspace) and
+        deactivates every TenantMembership tied to it — the provider's own
+        membership AND every client's membership under this tenant.
+
+        Tenant row and all related data (Client, Request, File, etc.) are
+        NOT hard-deleted — is_active=False keeps everything in place for
+        audit/recovery. S3 object cleanup is handled separately (not here).
+
+        Returns True if the tenant was active and is now deactivated,
+        False if it was already inactive.
+        """
+        locked_tenant = Tenant.objects.select_for_update().get(id=tenant.id)
+
+        if not locked_tenant.is_active:
+            return False
+
+        locked_tenant.is_active = False
+        locked_tenant.save(update_fields=["is_active", "updated_at"])
+
+        TenantMembership.objects.filter(
+            tenant=locked_tenant,
+            is_active=True,
+        ).update(is_active=False)
+
+        return True
