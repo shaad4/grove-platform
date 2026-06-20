@@ -103,4 +103,40 @@ def categorise_request(self, request_id):
     Request.objects.filter(id=request_id).update(ai_category=category)
 
 
+@shared_task(
+    bind=True,  
+    autoretry_for=(AIRateLimitError,),
+    retry_backoff=True,
+    retry_backoff_max=120,
+    max_retries=3,
+)
+def generate_request_summary(self, request_id):
+    try:
+        request_obj = Request.objects.get(id=request_id, is_deleted=False)
+    except Request.DoesNotExist:
+        logger.warning(f"[generate_request_summary] Request {request_id} not found.")
+        return
+    
+    try:
+        summary = AIService.complete(
+            system="Summarise this client request in 2-3 plain sentences for the service provider. No preamble.",
+            user=f"Title: {request_obj.title}\nDescription: {request_obj.description}",
+            model=settings.AI_MODEL_QUALITY,
+            max_tokens=120,
+        )
+    except AIServiceError as e:
+        logger.error(f"[generate_request_summary] AI call failed for {request_id}: {e}")
+        return
+    
+    Request.objects.filter(id=request_id).update(ai_summary=summary)
+
+    RequestActivityRepository.log(
+        request_obj=request_obj,
+        event_type=RequestActivity.EventType.AI_SUMMARY_GENERATED,
+        description="AI summary generated.",
+        actor=None,
+        actor_source=RequestActivity.ActorSource.AI,
+    )
+
+    
 
