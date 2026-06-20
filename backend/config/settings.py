@@ -394,4 +394,4 @@ CACHE_TTL = 120 #Dashboard stats cash timeout (Dashboard - views)
 PAGE_SIZE = 500 #Activity Page size
 
 
-
+CLIENT_INSIGHT_TTL = 60 * 60 * 36 

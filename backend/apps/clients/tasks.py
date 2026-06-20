@@ -5,9 +5,13 @@ from django.conf import settings
 from apps.common.logger import logger
 from apps.clients.models import Invite
 from django.utils import timezone
+from datetime import timedelta
+from django.core.cache import cache
 
 from apps.request_management.models import Request
 from apps.clients.models import Client
+
+CLIENT_INSIGHT_TTL = settings.CLIENT_INSIGHT_TTL
 
 
 @shared_task(bind=True, max_retries=3, default_retry_delay=60)
@@ -131,6 +135,30 @@ def mark_inactive_clients():
     return updated
 
 
+
+
+
+@shared_task
+def generate_client_insights():
+    """Nightly scan — flags clients gone quiet or spiking in volume. Cache-only, no schema change."""
+    cutoff_quiet = timezone.now() - timedelta(days=14)
+    cutoff_recent = timezone.now() - timedelta(days=7)
+
+    for client in Client.objects.filter(is_deleted=False, is_deactivated=False).iterator():
+        recent_count = Request.objects.filter(
+            client=client, is_deleted=False, created_at__gte=cutoff_recent
+        ).count()
+        last_request = Request.objects.filter(
+            client=client, is_deleted=False
+        ).order_by("-created_at").first()
+
+        insight = None
+        if last_request and last_request.created_at < cutoff_quiet:
+            insight = "gone_quiet"
+        elif recent_count >= 5:
+            insight = "high_volume"
+
+        cache.set(f"client_insight:{client.id}", insight, CLIENT_INSIGHT_TTL)
 
 
 
