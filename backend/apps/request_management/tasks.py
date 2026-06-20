@@ -1,35 +1,40 @@
-"""
-Celery tasks for the requests module.
-
-AI tasks (ai_summary, ai_category) are stubbed here.
-Wire them up when the OpenAI integration is ready —
-the hooks in services.py already call these after request creation.
-"""
 from config.celery import app
 from apps.common.logger import logger
 from django.utils import timezone
 
+from celery import shared_task
+from django.conf import settings
+
 from apps.request_management.models import Request, File
 from apps.clients.models import Client
 
-@app.task(bind=True, max_retries=3, default_retry_delay=10)
-def generate_ai_summary(self, request_id: str):
-    """
-    Generate a 2-3 sentence summary for a request.
-    Stores result in requests.ai_summary.
-    TODO: implement with OpenAI when ready.
-    """
-    pass
+from apps.common.ai.client import AIService
+from apps.common.ai.exceptions import AIServiceError, AIRateLimitError
+from apps.common.logger import logger
+
+from .models import Request, RequestActivity, InternalNote
+from .repositories import RequestActivityRepository
+
+CATEGORY_OPTIONS = ["design", "dev", "content", "feedback"]
+
+# @app.task(bind=True, max_retries=3, default_retry_delay=10)
+# def generate_ai_summary(self, request_id: str):
+#     """
+#     Generate a 2-3 sentence summary for a request.
+#     Stores result in requests.ai_summary.
+#     TODO: implement with OpenAI when ready.
+#     """
+#     pass
 
 
-@app.task(bind=True, max_retries=3, default_retry_delay=10)
-def generate_ai_category(self, request_id: str):
-    """
-    Assign a category to a request (design, dev, content, feedback).
-    Stores result in requests.ai_category.
-    TODO: implement with OpenAI when ready.
-    """
-    pass
+# @app.task(bind=True, max_retries=3, default_retry_delay=10)
+# def generate_ai_category(self, request_id: str):
+#     """
+#     Assign a category to a request (design, dev, content, feedback).
+#     Stores result in requests.ai_category.
+#     TODO: implement with OpenAI when ready.
+#     """
+#     pass
 
 @app.task
 def purge_soft_deleted_records():
@@ -67,3 +72,35 @@ def purge_soft_deleted_records():
         "clients": deleted_clients,
         "files": deleted_files,
     }
+
+
+@shared_task(bind=True, autoretry_for=(AIRateLimitError,), retry_backoff=True, retry_backoff_max=120, max_retries=3)
+def categorise_request(self, request_id):
+    try:
+        request_obj = Request.objects.get(id=request_id, is_deleted=False)
+    except Request.DoesNotExist:
+        logger.warning(f"[categorise_request] Request {request_id} not found.")
+        return
+    
+    try:
+        category = AIService.complete(
+            system=(
+                "Categorise this freelance client request into exactly one word: "
+                f"one of {', '.join(CATEGORY_OPTIONS)}. Reply with only that single word, lowercase."
+            ),
+            user=f"Title: {request_obj.title}\nDescription: {request_obj.description}",
+            model=settings.AI_MODEL_FAST,
+            max_tokens=10,
+            temperature=0,
+        ).lower().strip()
+    except AIServiceError as e:
+        logger.error(f"[categorise_request] AI call failed for {request_id}: {e}")
+        return
+    
+    if category not in CATEGORY_OPTIONS:
+        category = "feedback"
+
+    Request.objects.filter(id=request_id).update(ai_category=category)
+
+
+
