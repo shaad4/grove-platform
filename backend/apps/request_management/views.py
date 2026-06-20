@@ -7,6 +7,12 @@ from rest_framework.views import APIView
 
 from apps.tenants.models import TenantMembership
 from apps.clients.models import Client
+from .models import Request
+
+from apps.common.ai.client import AIService
+from apps.common.ai.exceptions import AIRateLimitError, AIServiceError
+from .tasks import generate_request_summary
+
 
 from .repositories import (
     RequestRepository,
@@ -596,9 +602,34 @@ class DeliveryReviewView(APIView):
         })
         
 
+class SuggestRepliesView(APIView):
+    
+    def post(self, request, request_id):
+        request_obj = RequestRepository.get_by_id(request_id, request.tenant.id)
+        if not request_obj:
+            return Response({"detail": "Request not found."}, status=status.HTTP_404_NOT_FOUND)
 
 
+        last_messages = request_obj.messages.order_by("-created_at")[:5]
+        thread = "\n".join(f"{m.sender.display_name}: {m.content}" for m in reversed(last_messages))
 
+        try:
+            raw = AIService.complete(
+                system=(
+                    "Suggest 3 short, distinct reply options the provider could send next in this "
+                    "client chat thread. Return as a numbered list, 1-2 sentences each, no preamble."
+                ),
+                user=thread or f"Request: {request_obj.title}\n{request_obj.description}",
+                max_tokens=200,
+            )
+        except AIRateLimitError:
+            return Response({"detail": "AI is busy, try again shortly."}, status=status.HTTP_429_TOO_MANY_REQUESTS)
+        except AIServiceError:
+            return Response({"detail": "AI suggestions unavailable right now."}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
 
+        suggestions = [line.split(".", 1)[-1].strip() for line in raw.splitlines() if line.strip()][:3]
+        return Response({"suggestions" : suggestions})
+    
+    
 
 

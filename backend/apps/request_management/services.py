@@ -11,6 +11,8 @@ from apps.common.logger import logger
 from apps.notifications.utils import create_notification
 from apps.notifications.models import Notification
 
+from .tasks import categorise_request, generate_request_summary, generate_triage_note
+
 from .models import Request, RequestActivity, File
 from .repositories import (
     RequestRepository,
@@ -114,7 +116,13 @@ class RequestService:
             except Exception as e:
                 logger.error(f"[create_request] Notification failed: {e}")
 
+        def  _trigger_ai_tasks():
+            categorise_request.delay(str(request_obj.id))
+            generate_request_summary.delay(str(request_obj.id))
+            generate_triage_note.delay(str(request_obj.id))
+
         transaction.on_commit(_notify_new_request)
+        transaction.on_commit(_trigger_ai_tasks)
 
         return request_obj
     
