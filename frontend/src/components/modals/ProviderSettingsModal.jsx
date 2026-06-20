@@ -452,14 +452,24 @@ function PortalBrandingSection({ ws, setWs }) {
 function NotificationsSection() {
   const [notifPrefs, setNotifPrefs] = useState(null)
   const [savingKey, setSavingKey] = useState(null)
+  const [error, setError] = useState(null)
 
   useEffect(() => { getNotifications().then(r => setNotifPrefs(r.data.data)) }, [])
 
   const handleToggle = async (section, key, value) => {
     const k = `${section}.${key}`
     setSavingKey(k)
+    setError(null)
+    const prevPrefs = notifPrefs
     setNotifPrefs(p => ({ ...p, [section]: { ...p[section], [key]: value } }))
-    try { await updateNotifications({ [section]: { [key]: value } }) } catch { }
+    try {
+      const res = await updateNotifications({ [section]: { [key]: value } })
+      console.log('Save response:', res.data)  
+    } catch (err) {
+      console.error('Save failed:', err?.response?.data || err)  
+      setNotifPrefs(prevPrefs)  
+      setError('Could not save preference.')
+    }
     finally { setSavingKey(null) }
   }
 

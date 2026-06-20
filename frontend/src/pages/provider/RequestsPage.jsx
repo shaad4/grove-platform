@@ -9,21 +9,36 @@ import ProviderLayout from '../../components/layout/ProviderLayout'
 import ProviderTopbar from '../../components/layout/ProviderTopbar'
 import requestsApi from '../../api/requests.api'
 import clientsApi from '../../api/clients.api'
+import { getWorkspace } from '../../api/settings.api'
 import { getAvatarColor, getInitials, timeAgo, formatDate } from '../../utils/clientHelpers'
 
-// ── Status config ─────────────────────────────────────────────
-const STATUS_CONFIG = {
-  received: { label: 'Received', clientLabel: 'Just submitted', dot: 'bg-[#1d9e75]', pill: 'bg-[#e6f5f0] text-[#085041]', border: 'border-l-[#1d9e75]' },
-  in_review: { label: 'In Review', clientLabel: "We're looking at it", dot: 'bg-[#f59e0b]', pill: 'bg-[#fef3e2] text-[#92500a]', border: 'border-l-[#f59e0b]' },
-  in_progress: { label: 'In Progress', clientLabel: 'Work has started', dot: 'bg-[#6366f1]', pill: 'bg-[#eef2ff] text-[#3730a3]', border: 'border-l-[#6366f1]' },
-  delivered: { label: 'Delivered', clientLabel: 'Ready for you', dot: 'bg-[#0f6e56]', pill: 'bg-[#e6f5f0] text-[#0f6e56]', border: 'border-l-[#0f6e56]' },
-  closed: { label: 'Closed', clientLabel: 'Done', dot: 'bg-[#9ea89e]', pill: 'bg-[#f3f4f3] text-[#4a544a]', border: 'border-l-[#9ea89e]' },
+//  Status config 
+// Colors, dots, and pill styling are fixed — only the `label` text
+// is ever overridden by a workspace's custom_status_labels.
+const DEFAULT_STATUS_CONFIG = {
+   received: { label: 'Received', clientLabel: 'Just submitted', dot: 'bg-[#1d9e75]', pill: 'bg-[#e6f5f0] text-[#085041]', border: 'border-l-[#1d9e75]' },
+   in_review: { label: 'In Review', clientLabel: "We're looking at it", dot: 'bg-[#f59e0b]', pill: 'bg-[#fef3e2] text-[#92500a]', border: 'border-l-[#f59e0b]' },
+   in_progress: { label: 'In Progress', clientLabel: 'Work has started', dot: 'bg-[#6366f1]', pill: 'bg-[#eef2ff] text-[#3730a3]', border: 'border-l-[#6366f1]' },
+   delivered: { label: 'Delivered', clientLabel: 'Ready for you', dot: 'bg-[#0f6e56]', pill: 'bg-[#e6f5f0] text-[#0f6e56]', border: 'border-l-[#0f6e56]' },
+   closed: { label: 'Closed', clientLabel: 'Done', dot: 'bg-[#9ea89e]', pill: 'bg-[#f3f4f3] text-[#4a544a]', border: 'border-l-[#9ea89e]' },
+ }
+
+function buildStatusConfig(customLabels) {
+  if (!customLabels) return DEFAULT_STATUS_CONFIG
+  const merged = {}
+  for (const key of Object.keys(DEFAULT_STATUS_CONFIG)) {
+    merged[key] = {
+      ...DEFAULT_STATUS_CONFIG[key],
+      label: customLabels[key]?.trim() || DEFAULT_STATUS_CONFIG[key].label,
+    }
+  }
+  return merged
 }
 
 const STATUS_TABS = ['all', 'received', 'in_review', 'in_progress', 'delivered', 'closed', 'flagged', 'overdue']
 
-function StatusPill({ status, small = false }) {
-  const cfg = STATUS_CONFIG[status] || STATUS_CONFIG.received
+function StatusPill({ status, statusConfig, small = false }) {
+  const cfg = statusConfig[status] || statusConfig.received
   return (
     <span className={`inline-flex items-center gap-1.5 rounded-full font-medium ${small ? 'px-2 py-0.5 text-[11px]' : 'px-2.5 py-1 text-[12px]'} ${cfg.pill}`}>
       <span className={`h-1.5 w-1.5 rounded-full shrink-0 ${cfg.dot}`} />
@@ -60,7 +75,7 @@ function DueDate({ date }) {
 }
 
 // ── LIST ROW ─────────────────────────────────────────────────
-function RequestRow({ req, onClick, selected, onSelect }) {
+function RequestRow({  req, statusConfig, onClick, selected, onSelect }) {
   const clientName = req.client_name || 'Unknown'
   const hasFiles = req.file_count > 0
   const isClosed = req.status === 'closed'
@@ -101,7 +116,7 @@ function RequestRow({ req, onClick, selected, onSelect }) {
       </div>
 
       <div className="w-28 shrink-0">
-        <StatusPill status={req.status} small />
+        <StatusPill status={req.status} statusConfig={statusConfig} small />
       </div>
 
       <div className="hidden lg:block w-28 shrink-0">
@@ -127,7 +142,7 @@ function RequestRow({ req, onClick, selected, onSelect }) {
 }
 
 // ── PIPELINE CARD ─────────────────────────────────────────────
-function PipelineCard({ req, onClick }) {
+function PipelineCard({ req, statusConfig, onClick }) {
   const clientName = req.client_name || 'Unknown'
   const isClosed = req.status === 'closed'
   
@@ -183,8 +198,8 @@ function PipelineCard({ req, onClick }) {
 }
 
 // ── PIPELINE COLUMN ───────────────────────────────────────────
-function PipelineColumn({ status, requests, onCardClick }) {
-  const cfg = STATUS_CONFIG[status]
+function PipelineColumn({ status, requests, statusConfig, onCardClick }) {
+  const cfg = statusConfig[status]
   const isClosed = status === 'closed'
   const [collapsed, setCollapsed] = useState(isClosed) // closed starts collapsed
 
@@ -236,7 +251,7 @@ function PipelineColumn({ status, requests, onCardClick }) {
       {!collapsed && (
         <div className="flex flex-col gap-2">
           {requests.map(r => (
-            <PipelineCard key={r.id} req={r} onClick={() => onCardClick(r.id)} />
+            <PipelineCard key={r.id} req={r} statusConfig={statusConfig} onClick={() => onCardClick(r.id)} />
           ))}
           {requests.length === 0 && (
             <div className="rounded-xl border border-dashed border-[#e8eae8] p-4 text-center">
@@ -296,6 +311,7 @@ export default function RequestsPage() {
   const navigate = useNavigate()
   const [requests, setRequests] = useState([])
   const [clients, setClients] = useState([])
+  const [statusConfig, setStatusConfig] = useState(DEFAULT_STATUS_CONFIG)
   const [loading, setLoading] = useState(true)
   const [view, setView] = useState('pipeline') // Kanban view default updated
   const [activeTab, setActiveTab] = useState('all')
@@ -335,6 +351,12 @@ export default function RequestsPage() {
 
   useEffect(() => {
     clientsApi.list().then(r => setClients(r.data.data?.clients || [])).catch(() => {})
+  }, [])
+
+  useEffect(() => {
+    getWorkspace()
+      .then(r => setStatusConfig(buildStatusConfig(r.data.data?.custom_status_labels)))
+      .catch(() => {}) 
   }, [])
 
   const dateOptions = [
@@ -408,9 +430,14 @@ export default function RequestsPage() {
   ]
 
   const TAB_LABELS = {
-    all: 'All', received: 'Received', in_review: 'In Review',
-    in_progress: 'In Progress', delivered: 'Delivered',
-    closed: 'Closed', flagged: 'Flagged', overdue: 'Overdue',
+    all: 'All',
+    received: statusConfig.received.label,
+    in_review: statusConfig.in_review.label,
+    in_progress: statusConfig.in_progress.label,
+    delivered: statusConfig.delivered.label,
+    closed: statusConfig.closed.label,
+    flagged: 'Flagged',
+    overdue: 'Overdue',
   }
 
   return (
@@ -569,6 +596,7 @@ export default function RequestsPage() {
                 <RequestRow
                   key={req.id}
                   req={req}
+                  statusConfig={statusConfig}
                   onClick={() => navigate(`/requests/${req.id}`)}
                   selected={selected.has(req.id)}
                   onSelect={() => setSelected(s => {
@@ -587,6 +615,7 @@ export default function RequestsPage() {
               <PipelineColumn
                 key={s}
                 status={s}
+                statusConfig={statusConfig}
                 requests={byStatus[s] || []}
                 onCardClick={id => navigate(`/requests/${id}`)}
               />
