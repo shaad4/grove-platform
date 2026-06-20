@@ -1,6 +1,7 @@
 from apps.tenants.models import Tenant, TenantMembership
 from apps.users.models import User
 
+from django.db import transaction
 
 
 class UserSettingsRepository:
@@ -33,21 +34,29 @@ class UserSettingsRepository:
         return user
     
     @staticmethod
+    @transaction.atomic
     def update_notification_settings(user, settings_patch):
         """
-        Merge settings_patch into users.settings jsonb.
-        Creates the key if it doesn't exist yet.
+        Deep-merges settings_patch into users.settings.notifications.
+        Uses select_for_update to prevent race conditions when multiple
+        toggles are saved in quick succession (each is a separate request).
         """
-        current = user.settings or {}
+        locked_user = User.objects.select_for_update().get(id=user.id)
+
+        current = locked_user.settings or {}
         notifications = current.get("notifications", {})
+
         for section, prefs in settings_patch.items():
             if section not in notifications:
                 notifications[section] = {}
-            notifications[section].update(prefs) 
+            notifications[section].update(prefs)
+
         current["notifications"] = notifications
-        user.settings = current
-        user.save(update_fields=["settings", "updated_at"])
-        return user
+        locked_user.settings = current
+        locked_user.save(update_fields=["settings", "updated_at"])
+
+        user.settings = locked_user.settings
+        return locked_user
         
     @staticmethod
     def get_notification_settings(user):

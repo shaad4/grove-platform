@@ -15,6 +15,7 @@ _IN_APP_PREF_KEY = {
     Notification.EventType.NEW_MESSAGE: "client_reply",
     Notification.EventType.INVITE_ACCEPTED: "client_accepted_invite",
     Notification.EventType.FILES_DELIVERED: "client_viewed_delivery",
+    Notification.EventType.REQUEST_OVERDUE: "request_overdue",
 }
 
 def _wants_in_app(user, event_type):

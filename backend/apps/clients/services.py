@@ -8,6 +8,9 @@ from django.core.cache import cache
 from .models import Client, Invite
 from .repositories import ClientRepository, InviteRepository, TagRepository
 
+from apps.notifications.utils import create_notification
+from apps.notifications.models import Notification
+from apps.common.logger import logger
 
 #custom exceptions
 class ClientLimitExceeded(Exception):
@@ -173,6 +176,22 @@ class ClientService:
 
         #Mark invite as accepted
         InviteRepository.mark_accepted(invite)
+
+
+        def _notify_invite_accepted():
+            try:
+                create_notification(
+                    tenant=tenant,
+                    recipient=provider,
+                    event_type=Notification.EventType.INVITE_ACCEPTED,
+                    title=f"{invite.client_name or 'A client'} joined your portal",
+                    body=f"{invite.client_name or 'A new client'} accepted their invite and is now active.",
+                    related_client=client,
+                )
+            except Exception as e:
+                logger.error(f"[accept_invite] Notification failed: {e}")
+
+        transaction.on_commit(_notify_invite_accepted)
 
         return {"user": user, "tenant": tenant, "client": client, "membership": membership}
     
