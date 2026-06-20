@@ -312,6 +312,11 @@ CELERY_BEAT_SCHEDULE = {
         "task": "apps.notifications.tasks.notify_overdue_requests",
         "schedule": crontab(minute=0),  # top of every hour
     },
+    # clinet insights 
+    "generate-client-insights": {
+        "task": "apps.clients.tasks.generate_client_insights",
+        "schedule": crontab(hour=4, minute=0),
+    },
     
 }
 
@@ -371,6 +376,12 @@ LOGGING = {
 }
 
 SECURE_CROSS_ORIGIN_OPENER_POLICY = "unsafe-none"
+
+# AI (Config)
+GEMINI_API_KEY = config("GEMINI_API_KEY")
+GEMINI_BASE_URL = "https://generativelanguage.googleapis.com/v1beta/openai/"
+AI_MODEL_FAST = "gemini-2.5-flash-lite" #categorisation cheap, high frequency
+AI_MODEL_QUALITY = "gemini-2.5-flash" # summaries, notes, replies
 
 # Configuration
 
