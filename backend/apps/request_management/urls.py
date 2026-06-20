@@ -13,6 +13,7 @@ from .views import (
     RequestFilesView,
     DeliveryReviewView,
     SuggestRepliesView,
+    SuggestDeliveryMessageView,
 
 )
 
@@ -38,6 +39,7 @@ urlpatterns = [
     path("<uuid:request_id>/deliveries/<uuid:delivery_id>/review/", DeliveryReviewView.as_view(), name="delivery-review"),
 
     path("<uuid:request_id>/suggest-replies/", SuggestRepliesView.as_view()),
+    path("<uuid:request_id>/suggest-delivery-message/", SuggestDeliveryMessageView.as_view()),
 
  
 ]

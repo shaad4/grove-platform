@@ -630,6 +630,27 @@ class SuggestRepliesView(APIView):
         suggestions = [line.split(".", 1)[-1].strip() for line in raw.splitlines() if line.strip()][:3]
         return Response({"suggestions" : suggestions})
     
+
+class SuggestDeliveryMessageView(APIView):
+    def post(self, request, request_id):
+        request_obj = RequestRepository.get_by_id(request_id, request.tenant.id)
+        if not request_obj:
+            return Response({"detail": "Request not found."}, status=status.HTTP_404_NOT_FOUND)
+        
+        try:
+            message = AIService.complete(
+                system="Write a short, friendly delivery message to the client for this completed request. 2-3 sentences.",
+                user=f"Title: {request_obj.title}\nDescription: {request_obj.description}",
+                max_tokens=120,
+            )
+        except AIRateLimitError:
+            return Response({"detail": "AI is busy, try again shortly."}, status=status.HTTP_429_TOO_MANY_REQUESTS)
+        except AIServiceError:
+            return Response({"detail": "AI suggestion unavailable right now."}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+
+        return Response({"message": message})
     
+    
+
 
 
