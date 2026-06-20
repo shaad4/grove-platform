@@ -381,7 +381,7 @@ SECURE_CROSS_ORIGIN_OPENER_POLICY = "unsafe-none"
 GEMINI_API_KEY = config("GEMINI_API_KEY")
 GEMINI_BASE_URL = "https://generativelanguage.googleapis.com/v1beta/openai/"
 AI_MODEL_FAST = "gemini-2.5-flash-lite" #categorisation cheap, high frequency
-AI_MODEL_QUALITY = "gemini-2.5-flash" # summaries, notes, replies
+AI_MODEL_QUALITY = "gemini-2.5-flash-lite" # summaries, notes, replies
 
 # Configuration
 

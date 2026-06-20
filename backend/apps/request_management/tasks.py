@@ -122,7 +122,7 @@ def generate_request_summary(self, request_id):
             system="Summarise this client request in 2-3 plain sentences for the service provider. No preamble.",
             user=f"Title: {request_obj.title}\nDescription: {request_obj.description}",
             model=settings.AI_MODEL_QUALITY,
-            max_tokens=120,
+            max_tokens=500,
         )
     except AIServiceError as e:
         logger.error(f"[generate_request_summary] AI call failed for {request_id}: {e}")
@@ -163,7 +163,7 @@ def generate_triage_note(self, request_id):
             ),
             user=f"Title: {request_obj.title}\nDescription: {request_obj.description}",
             model=settings.AI_MODEL_QUALITY,
-            max_tokens=150,
+            max_tokens=500,
         )
     except AIServiceError as e:
         logger.error(f"[generate_triage_note] AI call failed for {request_id}: {e}")

@@ -263,6 +263,7 @@ function DeliverModal({ request, onClose, onSuccess }) {
   const [files, setFiles] = useState([])
   const [submitting, setSubmitting] = useState(false)
   const [dragOver, setDragOver] = useState(false)
+  const [suggestingMessage, setSuggestingMessage] = useState(false)
   const fileInput = useRef(null)
   const { loadBadges } = useBadges()
 
@@ -374,6 +375,22 @@ function DeliverModal({ request, onClose, onSuccess }) {
       return false;
     }
   };
+
+  const handleSuggestMessage = async () => {
+    setSuggestingMessage(true)
+    try {
+      const res = await requestsApi.suggestDeliveryMessage(request.id)
+      const suggested = res.data?.data?.message
+      if (suggested) {
+        setMessage(suggested)
+        setValidationErrors(prev => ({ ...prev, message: '' }))
+      }
+    } catch {
+      // silent — button just stops spinning, textarea stays as-is
+    } finally {
+      setSuggestingMessage(false)
+    }
+  }
 
   // ── COMPUTE UPLOAD IN PROGRESS STATE ───────────────────────
   const isCurrentlyUploading = useMemo(() => {
@@ -912,9 +929,19 @@ function DeliverModal({ request, onClose, onSuccess }) {
                       Add context or explain what was delivered.
                     </p>
                   </div>
-                  <span className={`text-[11px] ${message.length > MAX_MESSAGE_LENGTH ? 'text-red-600 font-bold' : 'text-[#7c867d]'}`}>
-                    {message.length}/{MAX_MESSAGE_LENGTH}
-                  </span>
+                  <div className="flex items-center gap-3">
+                    <button
+                      onClick={handleSuggestMessage}
+                      disabled={suggestingMessage}
+                      className="flex items-center gap-1.5 text-[11px] font-medium text-violet-600 hover:text-violet-700 transition-colors disabled:opacity-50"
+                    >
+                      <Sparkles size={12} className={suggestingMessage ? 'animate-pulse' : ''} />
+                      {suggestingMessage ? 'Drafting…' : 'Suggest message'}
+                    </button>
+                    <span className={`text-[11px] ${message.length > MAX_MESSAGE_LENGTH ? 'text-red-600 font-bold' : 'text-[#7c867d]'}`}>
+                      {message.length}/{MAX_MESSAGE_LENGTH}
+                    </span>
+                  </div>
                 </div>
 
                 <textarea

@@ -611,7 +611,7 @@ class SuggestRepliesView(APIView):
 
         request_obj = RequestRepository.get_by_id(request_id, request.tenant.id)
         if not request_obj:
-            return Response({"detail": "Request not found."}, status=status.HTTP_404_NOT_FOUND)
+            return Response({"success": False, "message": "Request not found."}, status=status.HTTP_404_NOT_FOUND)
 
 
         last_messages = request_obj.messages.order_by("-created_at")[:5]
@@ -624,15 +624,15 @@ class SuggestRepliesView(APIView):
                     "client chat thread. Return as a numbered list, 1-2 sentences each, no preamble."
                 ),
                 user=thread or f"Request: {request_obj.title}\n{request_obj.description}",
-                max_tokens=200,
+                max_tokens=600,
             )
         except AIRateLimitError:
-            return Response({"detail": "AI is busy, try again shortly."}, status=status.HTTP_429_TOO_MANY_REQUESTS)
+            return Response({"success": False, "message": "AI is busy, try again shortly."}, status=status.HTTP_429_TOO_MANY_REQUESTS)
         except AIServiceError:
-            return Response({"detail": "AI suggestions unavailable right now."}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+            return Response({"success": False, "message": "AI suggestions unavailable right now."}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
 
         suggestions = [line.split(".", 1)[-1].strip() for line in raw.splitlines() if line.strip()][:3]
-        return Response({"suggestions" : suggestions})
+        return Response({"success": True, "data": {"suggestions": suggestions}})
     
 
 class SuggestDeliveryMessageView(APIView):
@@ -643,20 +643,19 @@ class SuggestDeliveryMessageView(APIView):
 
         request_obj = RequestRepository.get_by_id(request_id, request.tenant.id)
         if not request_obj:
-            return Response({"detail": "Request not found."}, status=status.HTTP_404_NOT_FOUND)
-        
+            return Response({"success": False, "message": "Request not found."}, status=status.HTTP_404_NOT_FOUND)
+         
         try:
             message = AIService.complete(
                 system="Write a short, friendly delivery message to the client for this completed request. 2-3 sentences.",
                 user=f"Title: {request_obj.title}\nDescription: {request_obj.description}",
-                max_tokens=120,
+                max_tokens=500,
             )
         except AIRateLimitError:
-            return Response({"detail": "AI is busy, try again shortly."}, status=status.HTTP_429_TOO_MANY_REQUESTS)
+            return Response({"success": False, "message": "AI is busy, try again shortly."}, status=status.HTTP_429_TOO_MANY_REQUESTS)
         except AIServiceError:
-            return Response({"detail": "AI suggestion unavailable right now."}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
-
-        return Response({"message": message})
+            return Response({"success": False, "message": "AI suggestion unavailable right now."}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+        return Response({"success": True, "data": {"message": message}})
     
 
 class RegenerateSummaryView(APIView):

@@ -3,6 +3,7 @@ import {
   Send, Paperclip, Loader2, CheckCircle2,
   AlertCircle, X, Lock, Download, FileText,
   Image as ImageIcon, File as FileIcon,
+  Sparkles,
 } from 'lucide-react'
 import { useSelector } from 'react-redux'
 import { selectAccessToken } from '../../features/auth/authSlice'
@@ -153,7 +154,11 @@ export default function ChatPanel({
   const currentUser    = useSelector(s => s.auth.user)
   const isClosed       = requestStatus === 'closed'
 
-  // ── Initial load ─────────────────────────────────────────────
+  const [suggestions, setSuggestions] = useState([])
+  const [loadingSuggestions, setLoadingSuggestions] = useState(false)
+  const [showSuggestions, setShowSuggestions] = useState(false)
+
+  // Initial load 
   useEffect(() => {
     requestsApi.getMessages(requestId)
       .then(res => {
@@ -167,12 +172,12 @@ export default function ChatPanel({
       .catch(() => {})
   }, [requestId, currentUser?.id])
 
-  // ── Auto scroll ──────────────────────────────────────────────
+  // Auto scroll
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
 
-  // ── Auto resize textarea ─────────────────────────────────────
+  // Auto resize textarea 
   useEffect(() => {
     const ta = textareaRef.current
     if (!ta) return
@@ -180,7 +185,7 @@ export default function ChatPanel({
     ta.style.height = Math.min(ta.scrollHeight, 120) + 'px'
   }, [input])
 
-  // ── WebSocket ────────────────────────────────────────────────
+  // WebSocket 
   const tenant = window.location.hostname.split('.')[0]
   const socketUrl = accessToken
     ? wsUrl(`/ws/chat/${requestId}/?token=${accessToken}&tenant=${tenant}`)
@@ -285,7 +290,27 @@ export default function ChatPanel({
     }
   }, [requestId])
 
-  // ── Send ─────────────────────────────────────────────────────
+  // AI reply suggestions 
+  const fetchSuggestions = async () => {
+    setLoadingSuggestions(true)
+    setShowSuggestions(true)
+    try {
+      const res = await requestsApi.suggestReplies(requestId)
+      setSuggestions(res.data?.data?.suggestions || [])
+    } catch {
+      setSuggestions([])
+    } finally {
+      setLoadingSuggestions(false)
+    }
+  }
+
+  const applySuggestion = (text) => {
+    setInput(text)
+    setShowSuggestions(false)
+    textareaRef.current?.focus()
+  }
+
+  // Send 
   const handleSend = async () => {
     const content         = input.trim()
     const doneAttachments = attachments.filter(a => a.status === 'done')
@@ -520,6 +545,51 @@ export default function ChatPanel({
         </div>
       ) : (
         <div className="shrink-0 p-4 bg-white border-t border-slate-200/80 shadow-[0_-4px_12px_rgba(0,0,0,0.02)]">
+          
+          {/* AI reply suggestions */}
+          <div className="mb-3">
+            <div className="flex items-center justify-between mb-2">
+              <button
+                onClick={fetchSuggestions}
+                disabled={loadingSuggestions}
+                className="flex items-center gap-1.5 text-[11px] font-medium text-violet-600 hover:text-violet-700 transition-colors disabled:opacity-50"
+              >
+                <Sparkles size={12} className={loadingSuggestions ? 'animate-pulse' : ''} />
+                {loadingSuggestions ? 'Thinking of replies…' : showSuggestions ? 'Refresh suggestions' : 'Suggest replies'}
+              </button>
+              {showSuggestions && !loadingSuggestions && (
+                <button onClick={() => setShowSuggestions(false)} className="text-[11px] text-slate-400 hover:text-slate-600">
+                  Hide
+                </button>
+              )}
+            </div>
+
+            {showSuggestions && (
+              loadingSuggestions ? (
+                <div className="flex gap-2">
+                  {[0, 1, 2].map(i => (
+                    <div key={i} className="h-8 w-28 rounded-full bg-gradient-to-r from-slate-100 via-slate-50 to-slate-100 bg-[length:200%_100%] animate-shimmer" />
+                  ))}
+                </div>
+              ) : suggestions.length > 0 ? (
+                <div className="flex flex-wrap gap-2">
+                  {suggestions.map((s, i) => (
+                    <button
+                      key={i}
+                      onClick={() => applySuggestion(s)}
+                      title={s}
+                      className="text-left max-w-[260px] truncate rounded-full px-3 py-1.5 text-[12px] font-medium text-slate-700 bg-gradient-to-r from-violet-50 to-emerald-50 hover:from-violet-100 hover:to-emerald-100 shadow-sm transition-all"
+                    >
+                      {s}
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-[11px] text-slate-400">No suggestions right now — try again in a moment.</p>
+              )
+            )}
+          </div>
+
 
           {/* Pending upload chips */}
           {attachments.length > 0 && (

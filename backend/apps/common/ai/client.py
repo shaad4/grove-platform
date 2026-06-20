@@ -14,7 +14,7 @@ class AIService:
     Wrapper around Gemini's free tier
     """
     @staticmethod
-    def complete(system, user, model=None, max_tokens=300, temperature=0.4):
+    def complete(system, user, model = None, max_tokens = 300, temperature = 0.4):
         model = model or settings.AI_MODEL_QUALITY
         try:
             resp = _client.chat.completions.create(

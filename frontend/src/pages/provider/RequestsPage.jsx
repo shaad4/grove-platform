@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import {
   Search, Flag, Calendar, ChevronDown, LayoutList,
   Columns, Plus, Clock, AlertCircle, Loader2,
-  CheckCircle2, Filter, Check
+  CheckCircle2, Filter, Check, Sparkles
 } from 'lucide-react'
 import ProviderLayout from '../../components/layout/ProviderLayout'
 import ProviderTopbar from '../../components/layout/ProviderTopbar'
@@ -12,9 +12,7 @@ import clientsApi from '../../api/clients.api'
 import { getWorkspace } from '../../api/settings.api'
 import { getAvatarColor, getInitials, timeAgo, formatDate } from '../../utils/clientHelpers'
 
-//  Status config 
-// Colors, dots, and pill styling are fixed — only the `label` text
-// is ever overridden by a workspace's custom_status_labels.
+
 const DEFAULT_STATUS_CONFIG = {
    received: { label: 'Received', clientLabel: 'Just submitted', dot: 'bg-[#1d9e75]', pill: 'bg-[#e6f5f0] text-[#085041]', border: 'border-l-[#1d9e75]' },
    in_review: { label: 'In Review', clientLabel: "We're looking at it", dot: 'bg-[#f59e0b]', pill: 'bg-[#fef3e2] text-[#92500a]', border: 'border-l-[#f59e0b]' },
@@ -36,6 +34,25 @@ function buildStatusConfig(customLabels) {
 }
 
 const STATUS_TABS = ['all', 'received', 'in_review', 'in_progress', 'delivered', 'closed', 'flagged', 'overdue']
+
+// AI category 
+const CATEGORY_STYLES = {
+  design:   { label: 'Design',   dot: 'bg-violet-500', text: 'text-violet-600' },
+  dev:      { label: 'Dev',      dot: 'bg-cyan-500',   text: 'text-cyan-600' },
+  content:  { label: 'Content',  dot: 'bg-orange-500', text: 'text-orange-600' },
+  feedback: { label: 'Feedback', dot: 'bg-rose-500',   text: 'text-rose-600' },
+}
+
+function CategoryDot({ category }) {
+  const style = CATEGORY_STYLES[category]
+  if (!style) return null
+  return (
+    <span className={`shrink-0 inline-flex items-center gap-1 text-[11px] font-medium ${style.text}`}>
+      <span className={`h-1.5 w-1.5 rounded-full ${style.dot}`} />
+      {style.label}
+    </span>
+  )
+}
 
 function StatusPill({ status, statusConfig, small = false }) {
   const cfg = statusConfig[status] || statusConfig.received
@@ -104,10 +121,13 @@ function RequestRow({  req, statusConfig, onClick, selected, onSelect }) {
 
       <div className="flex-1 min-w-0">
         <p className={`text-[14px] font-medium truncate ${isOverdueOrToday ? 'text-red-950 font-semibold' : 'text-[#141a14]'}`}>{req.title}</p>
-        <p className="text-[12px] text-[#9ea89e] truncate mt-0.5">
-          {req.description?.slice(0, 80)}
-          {hasFiles && <span className="ml-2 inline-flex items-center gap-1 text-[#9ea89e]"><span>📎</span>{req.file_count} files</span>}
-        </p>
+        <div className="flex items-center gap-2 mt-0.5 min-w-0">
+          <p className="text-[12px] text-[#9ea89e] truncate">
+            {req.description?.slice(0, 80)}
+            {hasFiles && <span className="ml-2 inline-flex items-center gap-1 text-[#9ea89e]"><span>📎</span>{req.file_count} files</span>}
+          </p>
+          <CategoryDot category={req.ai_category} />
+        </div>
       </div>
 
       <div className="hidden md:flex items-center gap-2 w-44 shrink-0">
@@ -164,6 +184,7 @@ function PipelineCard({ req, statusConfig, onClick }) {
         <div className="flex items-center gap-2">
           <Avatar name={clientName} size="sm" />
           <span className="text-[12px] text-[#9ea89e] truncate">{clientName}</span>
+          <CategoryDot category={req.ai_category} />
         </div>
         {req.due_date && (
           <div className={`mt-2.5 flex items-center gap-1.5 text-[12px] font-medium
@@ -306,7 +327,7 @@ function FilterDropdown({ label, value, options, onChange, icon: Icon }) {
   )
 }
 
-// ── MAIN PAGE ─────────────────────────────────────────────────
+// MAIN PAGE 
 export default function RequestsPage() {
   const navigate = useNavigate()
   const [requests, setRequests] = useState([])
@@ -319,6 +340,7 @@ export default function RequestsPage() {
   
   // Filtering Hooks
   const [clientFilter, setClientFilter] = useState('')
+  const [categoryFilter, setCategoryFilter] = useState('')
   const [dateFilter, setDateFilter] = useState('')
   const [sortFilter, setSortFilter] = useState('newest')
   const [selected, setSelected] = useState(new Set())
@@ -328,6 +350,7 @@ export default function RequestsPage() {
     try {
       const params = {}
       if (clientFilter) params.client_id = clientFilter
+      if (categoryFilter) params.ai_category = categoryFilter
       if (sortFilter) params.sort = sortFilter
 
       if (dateFilter) {
@@ -343,7 +366,7 @@ export default function RequestsPage() {
     } finally {
       setLoading(false)
     }
-  }, [clientFilter, dateFilter, sortFilter])
+  }, [clientFilter, categoryFilter, dateFilter, sortFilter])
 
   useEffect(() => {
     fetchRequests()
@@ -366,6 +389,14 @@ export default function RequestsPage() {
     { value: '90', label: 'Last 90 days' }
   ]
 
+  const categoryOptions = [
+    { value: '', label: 'All categories' },
+    { value: 'design', label: 'Design' },
+    { value: 'dev', label: 'Dev' },
+    { value: 'content', label: 'Content' },
+    { value: 'feedback', label: 'Feedback' },
+  ]
+
   const now = new Date()
   
   // Filter core logic
@@ -377,6 +408,7 @@ export default function RequestsPage() {
     return true
   }).filter(r => {
     if (clientFilter && r.client_id !== clientFilter) return false
+    if (categoryFilter && r.ai_category !== categoryFilter) return false
     
     if (dateFilter) {
       const boundaryDate = new Date()
@@ -539,6 +571,13 @@ export default function RequestsPage() {
                 options={dateOptions}
                 onChange={setDateFilter}
                 icon={Calendar}
+              />
+              <FilterDropdown
+                label="Category"
+                value={categoryFilter}
+                options={categoryOptions}
+                onChange={setCategoryFilter}
+                icon={Sparkles}
               />
             </div>
             <div className="flex items-center gap-2 shrink-0">
