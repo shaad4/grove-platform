@@ -138,5 +138,52 @@ def generate_request_summary(self, request_id):
         actor_source=RequestActivity.ActorSource.AI,
     )
 
+
+@shared_task(
+    bind=True,
+     autoretry_for=(AIRateLimitError,),
+    retry_backoff=True,
+    retry_backoff_max=120,
+    max_retries=3,
+)
+def generate_triage_note(self, request_id):
+    try:
+        request_obj = Request.objects.select_related("tenant", "provider").get(id=request_id, is_deleted=False)
+    except Request.DoesNotExist:
+        logger.warning(f"[generate_triage_note] Request {request_id} not found.")
+        return
     
+
+    try:
+        note_text = AIService.complete(
+            system=(
+                "Write a short internal triage note for the provider (2-3 sentences): "
+                "a rough effort estimate (quick / moderate / involved) and anything unclear or risky. "
+                "No greeting, no sign-off."
+            ),
+            user=f"Title: {request_obj.title}\nDescription: {request_obj.description}",
+            model=settings.AI_MODEL_QUALITY,
+            max_tokens=150,
+        )
+    except AIServiceError as e:
+        logger.error(f"[generate_triage_note] AI call failed for {request_id}: {e}")
+        return
+    
+
+    InternalNote.objects.create(
+        request=request_obj,
+        tenant=request_obj.tenant,
+        user=request_obj.provider,    
+        content=note_text,
+        is_ai_generated=True,
+    )
+
+    RequestActivityRepository.log(
+        request_obj=request_obj,
+        event_type=RequestActivity.EventType.NOTE_ADDED,
+        description="AI triage note added.",
+        actor=None,
+        actor_source=RequestActivity.ActorSource.AI,
+    )
+
 
