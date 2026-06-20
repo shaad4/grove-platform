@@ -383,6 +383,11 @@ GEMINI_BASE_URL = "https://generativelanguage.googleapis.com/v1beta/openai/"
 AI_MODEL_FAST = "gemini-2.5-flash-lite" #categorisation cheap, high frequency
 AI_MODEL_QUALITY = "gemini-2.5-flash-lite" # summaries, notes, replies
 
+
+GROQ_API_KEY = config("GROQ_API_KEY", default="")
+GROQ_BASE_URL = "https://api.groq.com/openai/v1"
+AI_FALLBACK_MODEL = "openai/gpt-oss-120b"
+
 # Configuration
 
 EMAIL_FALLBACK_DELAY_MINUTES = 5  # Email Fallback Message Delay Time (notification-tasks)

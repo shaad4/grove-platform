@@ -2,22 +2,41 @@ from django.conf import settings
 from openai import OpenAI, RateLimitError, APIError, APIConnectionError
 
 from .exceptions import AIRateLimitError, AIServiceError
+from apps.common.logger import logger
 
 
-_client = OpenAI(
+_gemini_client = OpenAI(
     api_key=settings.GEMINI_API_KEY,
     base_url=settings.GEMINI_BASE_URL,
 )
 
+_groq_client = OpenAI(
+    api_key=settings.GROQ_API_KEY,
+    base_url=settings.GROQ_BASE_URL,
+)
+
+
 class AIService:
     """
-    Wrapper around Gemini's free tier
+    Gemini free tier first; falls back to Groq automatically if Gemini
+    is rate-limited, out of quota, or otherwise unavailable.
     """
+
     @staticmethod
-    def complete(system, user, model = None, max_tokens = 300, temperature = 0.4):
+    def complete(system, user, model=None, max_tokens=300, temperature=0.4):
         model = model or settings.AI_MODEL_QUALITY
         try:
-            resp = _client.chat.completions.create(
+            return AIService._call(_gemini_client, model, system, user, max_tokens, temperature)
+        except (AIRateLimitError, AIServiceError) as e:
+            logger.info(f"[AIService] Gemini unavailable ({e}), falling back to Groq")
+            return AIService._call(
+                _groq_client, settings.AI_FALLBACK_MODEL, system, user, max_tokens, temperature
+            )
+
+    @staticmethod
+    def _call(client, model, system, user, max_tokens, temperature):
+        try:
+            resp = client.chat.completions.create(
                 model=model,
                 messages=[
                     {"role": "system", "content": system},
