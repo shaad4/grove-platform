@@ -736,7 +736,7 @@ function WorkflowSection({ ws }) {
   )
 }
 
-function DangerZoneSection() {
+function DangerZoneSection({ workspaceName }) {
   const [showModal, setShowModal] = useState(null)
   const [confirmText, setConfirmText] = useState('')
   const [loading, setLoading] = useState(false)
@@ -756,8 +756,14 @@ function DangerZoneSection() {
   }
 
   const DANGER_ITEMS = [
-    { id: 'leave', title: 'Leave workspace', desc: 'Removes your access to this workspace. Your account stays active.', action: 'Leave workspace', confirmPhrase: null, variant: 'danger-ghost' },
-    { id: 'delete', title: 'Delete account', desc: 'Permanently deletes your account, all workspaces you own, and removes all client data. This cannot be undone.', action: 'Delete my account', confirmPhrase: 'delete my account', variant: 'danger' },
+    {
+      id: 'delete-workspace',
+      title: 'Delete workspace',
+      desc: `Permanently removes "${workspaceName || 'this workspace'}" for everyone. Every client loses access and all client data is removed. Your Grove account stays active — you can create a new workspace later.`,
+      action: 'Delete workspace',
+      confirmPhrase: 'delete workspace',
+      variant: 'danger',
+    },
   ]
 
   const activeItem = DANGER_ITEMS.find(i => i.id === showModal)
@@ -852,7 +858,7 @@ function ProviderSettingsModalInner({ onClose }) {
     'account-security': <AccountSecuritySection user={user} />,
     'plan-billing':     <PlanBillingSection ws={ws} />,
     'workflow':         <WorkflowSection ws={ws} />,
-    'danger-zone':      <DangerZoneSection />,
+    'danger-zone':      <DangerZoneSection workspaceName={ws?.name} />,
   }
 
   const groups = [
