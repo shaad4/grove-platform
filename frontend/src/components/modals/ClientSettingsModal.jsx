@@ -6,17 +6,20 @@ import {
   getNotifications, updateNotifications,
 } from '../../api/settings.api'
 import {
-  User, Bell, X, Eye, EyeOff, Check, Loader2, Camera, Info,
+  User, Bell, Trash2, AlertTriangle, X, Eye, EyeOff, Check, Loader2, Camera, Info,
 } from 'lucide-react'
 
-// ─── Nav ──────────────────────────────────────────────────────────────────────
+import { deleteAccount } from '../../api/settings.api'
+
+// Nav 
 
 const NAV = [
   { id: 'profile',       label: 'Profile',       icon: User  },
   { id: 'notifications', label: 'Notifications', icon: Bell  },
+  { id: 'danger-zone',   label: 'Danger zone',   icon: Trash2, danger: true },
 ]
 
-// ─── Primitives ───────────────────────────────────────────────────────────────
+// Primitives 
 
 function Spinner({ size = 14 }) {
   return <Loader2 size={size} className="animate-spin" />
@@ -109,6 +112,7 @@ function Btn({ children, onClick, loading, variant = 'primary', size = 'md', dis
   const variants = {
     primary: 'bg-[#0F6E56] text-white hover:bg-[#0A5A44] shadow-sm',
     ghost: 'bg-transparent text-[#4A544A] hover:bg-[#F2F4F2] border border-[#E0E4E0]',
+    'danger-ghost': 'bg-transparent text-red-600 border border-red-200 hover:bg-red-50',
   }
   return (
     <button
@@ -144,7 +148,29 @@ function InfoBox({ children }) {
   )
 }
 
-// ─── Password Strength ────────────────────────────────────────────────────────
+function ConfirmModal({ title, children, onClose }) {
+  useEffect(() => {
+    const onKey = (e) => e.key === 'Escape' && onClose()
+    document.addEventListener('keydown', onKey)
+    return () => document.removeEventListener('keydown', onKey)
+  }, [onClose])
+  return (
+    <div className="fixed inset-0 z-[70] flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-black/40" onClick={onClose} />
+      <div className="relative bg-white w-full max-w-sm rounded-2xl border border-[#E8EAE8] shadow-2xl">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-[#EEF0EE]">
+          <h3 className="text-[14px] font-semibold text-[#141A14]">{title}</h3>
+          <button onClick={onClose} className="text-[#9EA89E] hover:text-[#4A544A] transition-colors p-1 rounded-lg hover:bg-[#F2F4F2]">
+            <X size={14} />
+          </button>
+        </div>
+        <div className="px-5 py-4">{children}</div>
+      </div>
+    </div>
+  )
+}
+
+//  Password Strength 
 
 function passwordStrength(pw) {
   if (!pw) return { score: 0, label: '', color: '' }
@@ -159,7 +185,7 @@ function passwordStrength(pw) {
   return { score: s, label: 'Strong', color: 'bg-[#0F6E56]' }
 }
 
-// ─── Sections ─────────────────────────────────────────────────────────────────
+//  Sections 
 
 function ProfileSection({ user, tenant }) {
   const [displayName, setDisplayName] = useState('')
@@ -369,7 +395,79 @@ function NotificationsSection({ tenant }) {
   )
 }
 
-// ─── Main Modal ───────────────────────────────────────────────────────────────
+function DangerZoneSection({ tenant }) {
+  const [showModal, setShowModal] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const [countdown, setCountdown] = useState(0)
+
+  const providerName = tenant?.name || 'this workspace'
+
+  const handleOpenModal = () => { setShowModal(true); setCountdown(3) }
+
+  useEffect(() => {
+    if (countdown <= 0 || !showModal) return
+    const t = setTimeout(() => setCountdown(c => c - 1), 1000)
+    return () => clearTimeout(t)
+  }, [countdown, showModal])
+
+  const handleLeave = async () => {
+    setLoading(true)
+    try { await deleteAccount() } catch { setLoading(false) }
+  }
+
+  return (
+    <>
+      <div>
+        <div className="flex items-center gap-2 mb-1">
+          <AlertTriangle size={14} className="text-red-600" />
+          <h3 className="text-[15px] font-semibold text-red-800">Danger zone</h3>
+        </div>
+        <p className="text-[12px] text-red-500 mb-5">This action is permanent and cannot be reversed.</p>
+
+        <div className="rounded-xl border border-red-200 overflow-hidden">
+          <div className="px-4 py-3.5 flex items-start justify-between gap-4 bg-white">
+            <div>
+              <p className="text-[13px] font-medium text-[#141A14]">Leave workspace</p>
+              <p className="text-[12px] text-[#9EA89E] mt-0.5 max-w-xs">
+                Removes your access to {providerName}. Your Grove account stays active and you can still access any other workspaces you're a part of.
+              </p>
+            </div>
+            <Btn variant="danger-ghost" size="sm" onClick={handleOpenModal} className="flex-shrink-0 mt-0.5">
+              Leave workspace
+            </Btn>
+          </div>
+        </div>
+      </div>
+
+      {showModal && (
+        <ConfirmModal title="Leave workspace" onClose={() => setShowModal(false)}>
+          <div className="space-y-4">
+            <div className="flex items-start gap-2.5 p-3 rounded-xl bg-red-50 border border-red-200">
+              <AlertTriangle size={13} className="text-red-600 mt-0.5 flex-shrink-0" />
+              <p className="text-[12px] text-red-800 leading-relaxed">
+                You'll lose access to {providerName} and all requests, deliveries, and messages there. This cannot be undone.
+              </p>
+            </div>
+            <div className="flex items-center gap-2.5 justify-end pt-1">
+              <Btn variant="ghost" onClick={() => setShowModal(false)}>Cancel</Btn>
+              <Btn
+                variant="primary"
+                onClick={handleLeave}
+                loading={loading}
+                disabled={countdown > 0}
+                className="!bg-red-600 hover:!bg-red-700"
+              >
+                {countdown > 0 ? `Wait ${countdown}s…` : 'Leave workspace'}
+              </Btn>
+            </div>
+          </div>
+        </ConfirmModal>
+      )}
+    </>
+  )
+}
+
+//  Main Modal 
 
 function ClientSettingsModalInner({ onClose }) {
   const { user, tenant } = useAuth()
@@ -388,6 +486,7 @@ function ClientSettingsModalInner({ onClose }) {
   const SECTIONS = {
     'profile':       <ProfileSection user={user} tenant={tenant} />,
     'notifications': <NotificationsSection tenant={tenant} />,
+    'danger-zone':   <DangerZoneSection tenant={tenant} />,
   }
 
   return (
@@ -399,14 +498,14 @@ function ClientSettingsModalInner({ onClose }) {
       <div
         className="relative flex bg-white rounded-2xl shadow-2xl overflow-hidden"
         style={{
-          width: 'min(640px, calc(100vw - 32px))',
-          height: 'min(520px, calc(100vh - 48px))',
+          width: 'min(700px, calc(100vw - 32px))',
+          height: 'min(580px, calc(100vh - 48px))',
           animation: 'modalIn 0.18s cubic-bezier(0.16,1,0.3,1)',
         }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* ── Sidebar nav ── */}
-        <aside className="hidden sm:flex flex-col w-[180px] flex-shrink-0 border-r border-[#F0F2F0] bg-[#FAFBFA] overflow-y-auto">
+        <aside className="hidden sm:flex flex-col w-[190px] flex-shrink-0 border-r border-[#F0F2F0] bg-[#FAFBFA] overflow-y-auto">
           <div className="px-4 pt-5 pb-3 border-b border-[#F0F2F0]">
             <p className="text-[13px] font-semibold text-[#141A14]">Account</p>
           </div>
@@ -418,8 +517,12 @@ function ClientSettingsModalInner({ onClose }) {
                 onClick={() => setActiveSection(id)}
                 className={`w-full text-left flex items-center gap-2.5 text-[13px] px-2.5 py-2 rounded-lg transition-colors ${
                   activeSection === id
-                    ? 'bg-[#EAF5EF] text-[#0F6E56] font-medium'
-                    : 'text-[#4A544A] hover:bg-[#F2F4F2] hover:text-[#141A14]'
+                    ? id === 'danger-zone'
+                      ? 'bg-red-50 text-red-600 font-medium'
+                      : 'bg-[#EAF5EF] text-[#0F6E56] font-medium'
+                    : id === 'danger-zone'
+                      ? 'text-red-500 hover:bg-red-50/60'
+                      : 'text-[#4A544A] hover:bg-[#F2F4F2] hover:text-[#141A14]'
                 }`}
               >
                 <Icon size={14} className="flex-shrink-0" />
