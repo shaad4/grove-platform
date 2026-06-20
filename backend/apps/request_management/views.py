@@ -650,7 +650,17 @@ class SuggestDeliveryMessageView(APIView):
 
         return Response({"message": message})
     
-    
+
+class RegenerateSummaryView(APIView):
+    def post(self, request, request_id):
+        request_obj = RequestRepository.get_by_id(request_id, request.tenant.id)
+        if not request_obj:
+            return Response({"detail": "Request not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        Request.objects.filter(id=request_id).update(ai_summary=None)
+        generate_request_summary.delay(str(request_id))
+        return Response({"detail": "Regenerating summary."}, status=status.HTTP_202_ACCEPTED)
+
 
 
 

@@ -14,6 +14,7 @@ from .views import (
     DeliveryReviewView,
     SuggestRepliesView,
     SuggestDeliveryMessageView,
+    RegenerateSummaryView,
 
 )
 
@@ -40,6 +41,7 @@ urlpatterns = [
 
     path("<uuid:request_id>/suggest-replies/", SuggestRepliesView.as_view()),
     path("<uuid:request_id>/suggest-delivery-message/", SuggestDeliveryMessageView.as_view()),
+    path("<uuid:request_id>/regenerate-summary/", RegenerateSummaryView.as_view()),
 
  
 ]
