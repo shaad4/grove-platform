@@ -283,7 +283,14 @@ class DeleteAccountView(APIView):
                 status=400,
             )
         
-        success = DeleteAccountService.leave_workspace(request.user, tenant)
+        role = _get_role(request)
+        if role is None:
+            return Response(
+                {"success": False, "message": "No active membership found."},
+                status=404,
+            )
+
+        success = DeleteAccountService.leave_workspace(request.user, tenant, role)
 
         if not success:
             return Response(
@@ -291,10 +298,13 @@ class DeleteAccountView(APIView):
                 status=404,
             )
         
-        return Response({
-            "success": True,
-            "message": "You have left this workspace. Your account remains active.",
-        })
+        message = (
+            "Your workspace and all associated client data have been deleted. "
+            "Your account remains active."
+            if role == TenantMembership.Role.PROVIDER
+            else "You have left this workspace. Your account remains active."
+        )
+        return Response({"success": True, "message": message})
 
 
     
