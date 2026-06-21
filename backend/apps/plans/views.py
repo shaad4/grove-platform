@@ -101,3 +101,43 @@ class BillingHistoryView(APIView):
 
         return Response({"success": True, "data": data})
 
+
+@method_decorator(csrf_exempt, name="dispatch")
+class StripeWebhookView(APIView):
+    """
+    Receives Stripe webhook events. No auth — verified via signature instead.
+    Handles: checkout.session.completed, customer.subscription.deleted, invoice.payment_failed
+    """
+
+    permission_classes = [AllowAny]
+    authentication_classes = []
+
+    def post(self, request):
+        payload = request.body
+        sig_header = request.META.get("HTTP_STRIPE_SIGNATURE")
+
+        try:
+            event = stripe.Webhook.construct_event(
+                payload, sig_header, settings.STRIPE_WEBHOOK_SECRET
+            )
+        except (ValueError, stripe.error.SignatureVerificationError) as e:
+            logger.error(f"[StripeWebhookView] Signature verification failed: {e}")
+            return Response({"success": False}, status=status.HTTP_400_BAD_REQUEST)
+
+        event_type = event["type"]
+        event_data = event["data"]["object"]
+
+        if event_type == "checkout.session.completed":
+            BillingService.handle_checkout_completed(event_data)
+        elif event_type == "customer.subscription.deleted":
+            BillingService.handle_subscription_deleted(event_data)
+        elif event_type == "invoice.payment_failed":
+            BillingService.handle_payment_failed(event_data)
+        else:
+            logger.info(f"[StripeWebhookView] Unhandled event type: {event_type}")
+            return Response({"success": True})
+        
+        sync_billing_event.delay(event_type, event_data)
+
+        return Response({"success" : True})
+    
