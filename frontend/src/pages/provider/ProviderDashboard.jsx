@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { ChevronRight, AlertCircle, Users, Inbox, CheckCircle2, Clock3, MoreHorizontal, UserX, TrendingUp, } from 'lucide-react'
+import { ChevronRight, AlertCircle, Users, Inbox, CheckCircle2, Clock3, MoreHorizontal, UserX, TrendingUp, Sparkles, X} from 'lucide-react'
 import { useWebSocket } from '../../hooks/useWebSocket'
 import ConnectionPill from '../../components/ui/ConnectionPill'
 import { useSelector } from 'react-redux'
@@ -14,7 +14,7 @@ import dashboardApi from '../../api/dashboard.api'
 import LiveFeed from '../../components/chat/LiveFeed'
 
 
-// ─── Constants ────────────────────────────────────────────────────────────────
+//  Constants 
 
 const AVATAR_COLORS = [
   'bg-[#e6f5f0] text-[#085041]',
@@ -54,7 +54,7 @@ const COL_ORDER  = [2, 3, 4, 5, 6, 7, 1]
 const COL_LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
 
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
+//  Helpers 
 
 function getInitials(name = '') {
   return name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()
@@ -77,7 +77,7 @@ function Skeleton({ className }) {
   return <div className={`rounded-xl bg-[#f1f3f1] animate-pulse ${className}`} />
 }
 
-// ─── Stat Card ────────────────────────────────────────────────────────────────
+// Stat Card 
 
 function StatCard({ icon: Icon, title, value, sub, subVariant = 'neutral', loading }) {
   const subColor = { neutral: 'text-[#9ea89e]', warning: 'text-[#92500a]', success: 'text-[#085041]' }[subVariant]
@@ -99,7 +99,69 @@ function StatCard({ icon: Icon, title, value, sub, subVariant = 'neutral', loadi
   )
 }
 
-// ─── Client Row ───────────────────────────────────────────────────────────────
+//  AI Insight Center 
+const INSIGHT_COPY = {
+  gone_quiet:  { message: "hasn't submitted anything in 2+ weeks.", dot: 'bg-amber-400' },
+  high_volume: { message: 'has submitted 5+ requests in the last week.', dot: 'bg-violet-400' },
+}
+
+const DISMISSED_KEY = 'grove_dismissed_insights'
+
+function loadDismissed() {
+  try {
+    return new Set(JSON.parse(localStorage.getItem(DISMISSED_KEY) || '[]'))
+  } catch {
+    return new Set()
+  }
+}
+
+function InsightCenter({ clients, onView }) {
+  const [dismissed, setDismissed] = useState(loadDismissed)
+
+  const dismiss = (key) => {
+    setDismissed(prev => {
+      const next = new Set(prev)
+      next.add(key)
+      try { localStorage.setItem(DISMISSED_KEY, JSON.stringify([...next])) } catch {}
+      return next
+    })
+  }
+
+  const flagged = clients.filter(c => c.ai_insight && !dismissed.has(`${c.id}:${c.ai_insight}`))
+  if (flagged.length === 0) return null
+
+  return (
+    <div className="rounded-2xl border border-[#e8eae8] bg-white p-5">
+      <div className="flex items-center gap-2 mb-1">
+        <Sparkles size={13} className="text-violet-600" />
+        <h3 className="text-[15px] font-semibold text-[#141a14]">Needs attention</h3>
+        <span className="text-[11px] bg-[#f3f4f3] text-[#4a544a] px-2 py-0.5 rounded-full font-medium">{flagged.length}</span>
+      </div>
+      <div className="divide-y divide-[#f1f3f1]">
+        {flagged.map(c => {
+          const copy = INSIGHT_COPY[c.ai_insight]
+          const name = c.display_name || c.client_name || 'A client'
+          return (
+            <div key={c.id} className="flex items-center gap-3 py-2.5">
+              <span className={`h-1.5 w-1.5 rounded-full shrink-0 ${copy.dot}`} />
+              <p className="flex-1 text-[13px] text-[#4a544a] truncate">
+                <span className="font-medium text-[#141a14]">{name}</span> {copy.message}
+              </p>
+              <button onClick={() => onView(c.id)} className="text-[12px] font-medium text-[#0f6e56] hover:underline shrink-0">
+                View
+              </button>
+              <button onClick={() => dismiss(`${c.id}:${c.ai_insight}`)} className="text-[#9ea89e] hover:text-[#4a544a] shrink-0">
+                <X size={13} />
+              </button>
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
+//  Client Row 
 
 function ClientRow({ client, index, onClick }) {
   const name     = client.display_name || client.client_name || 'Unknown'
@@ -142,7 +204,7 @@ function ClientRow({ client, index, onClick }) {
   )
 }
 
-// ─── Recent Request Card ──────────────────────────────────────────────────────
+//  Recent Request Card 
 
 function RecentRequestCard({ req, onClick }) {
   const meta    = STATUS_META[req.status] || STATUS_META.received
@@ -184,7 +246,7 @@ function RecentRequestCard({ req, onClick }) {
 }
 
 
-// ─── Busiest Times Heatmap ────────────────────────────────────────────────────
+//  Busiest Times Heatmap 
 
 function BusiestHeatmap({ heatmap }) {
   const grid = {}
@@ -243,7 +305,7 @@ function BusiestHeatmap({ heatmap }) {
 }
 
 
-// ─── Plan Usage ───────────────────────────────────────────────────────────────
+//  Plan Usage 
 
 function PlanUsage({ clientCount, clientLimit, openRequests }) {
   const atLimit  = clientCount >= clientLimit
@@ -287,7 +349,7 @@ function PlanUsage({ clientCount, clientLimit, openRequests }) {
   )
 }
 
-// ─── Page ─────────────────────────────────────────────────────────────────────
+// Page 
 
 export default function ProviderDashboard() {
   const { tenant } = useAuth()
@@ -338,6 +400,10 @@ export default function ProviderDashboard() {
 
           {/* LEFT */}
           <div className="space-y-6 min-w-0">
+
+            {/* AI insight center */}
+            <InsightCenter clients={clients} onView={(id) => navigate(`/clients/${id}`)} />
+
 
             {/* Stat strip */}
             <div className="grid gap-4 grid-cols-4">

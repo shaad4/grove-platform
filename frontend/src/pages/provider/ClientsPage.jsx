@@ -5,6 +5,7 @@ import {
   Mail, RotateCcw, Trash2, PowerOff, Power,
   Send, AlertTriangle, Users, Loader2,
   LayoutGrid, List, Clock, Activity,
+  Sparkles,
 } from 'lucide-react'
 import ProviderLayout from '../../components/layout/ProviderLayout'
 import ProviderTopbar from '../../components/layout/ProviderTopbar'
@@ -14,7 +15,7 @@ import DeleteClientModal from '../../components/modals/DeleteClientModal'
 import clientsApi from '../../api/clients.api'
 import { getTagColor, getAvatarColor, getInitials, timeAgo } from '../../utils/clientHelpers'
 
-// ─── STATUS CONFIG ────────────────────────────────────────────
+// STATUS CONFIG 
 const STATUS_CONFIG = {
   active: {
     label: 'Active',
@@ -39,7 +40,7 @@ function getClientStatus(client) {
   return 'active'
 }
 
-// ─── TAG CHIP ─────────────────────────────────────────────────
+// TAG CHIP 
 function TagChip({ name }) {
   const c = getTagColor(name)
   return (
@@ -53,7 +54,24 @@ function TagChip({ name }) {
   )
 }
 
-// ─── ACTION MENU ──────────────────────────────────────────────
+// AI INSIGHT BADGE 
+const INSIGHT_META = {
+  gone_quiet:  { label: 'Gone quiet',  classes: 'bg-amber-50 text-amber-700' },
+  high_volume: { label: 'High volume', classes: 'bg-violet-50 text-violet-700' },
+}
+
+function InsightBadge({ insight }) {
+  const meta = INSIGHT_META[insight]
+  if (!meta) return null
+  return (
+    <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium ${meta.classes}`}>
+      <Sparkles size={10} />
+      {meta.label}
+    </span>
+  )
+}
+
+// ACTION MENU 
 function ActionMenu({ client, onEdit, onDeactivate, onReactivate, onDelete, onResend }) {
   const [open, setOpen] = useState(false)
   const ref = useRef(null)
@@ -163,13 +181,14 @@ function ClientCard({ client, onEdit, onDeactivate, onReactivate, onDelete, onRe
           </div>
         </div>
 
-        {/* Tags */}
-        {tags.length > 0 && (
+       {/* Tags + AI insight */}
+        {(tags.length > 0 || client.ai_insight) && (
           <div className="mt-3 flex flex-wrap gap-1.5">
             {tags.slice(0, 3).map(tag => <TagChip key={tag} name={tag} />)}
             {tags.length > 3 && (
               <span className="text-[11px] text-[#9ea89e]">+{tags.length - 3}</span>
             )}
+            <InsightBadge insight={client.ai_insight} />
           </div>
         )}
       </div>
@@ -265,6 +284,7 @@ function ClientRow({ client, onEdit, onDeactivate, onReactivate, onDelete, onRes
       <div className="hidden md:flex items-center gap-1.5 w-32">
         {tags.slice(0, 2).map(tag => <TagChip key={tag} name={tag} />)}
         {tags.length > 2 && <span className="text-[11px] text-[#9ea89e]">+{tags.length - 2}</span>}
+        <InsightBadge insight={client.ai_insight} />
       </div>
 
       <div className="hidden sm:block w-24 text-right">

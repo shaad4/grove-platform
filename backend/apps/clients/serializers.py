@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from django.contrib.auth.password_validation import validate_password
+from django.core.cache import cache
 from apps.request_management.models import Request
 from .models import Client
 
@@ -40,6 +41,7 @@ class ClientListSerializer(serializers.ModelSerializer):
     display_name = serializers.SerializerMethodField()
     last_login = serializers.SerializerMethodField()
     tags = serializers.SerializerMethodField()
+    ai_insight = serializers.SerializerMethodField()
 
     open_request_count = serializers.SerializerMethodField()
     delivered_count = serializers.SerializerMethodField()
@@ -51,7 +53,7 @@ class ClientListSerializer(serializers.ModelSerializer):
                      "joined_at", "created_at", "business_type", 
                      "private_note", "tags", "client_name",
                        "client_email", "open_request_count",
-                         "delivered_count", 
+                         "delivered_count","ai_insight", 
                 ]
         
     def get_email(self, obj):
@@ -62,6 +64,9 @@ class ClientListSerializer(serializers.ModelSerializer):
     
     def get_last_login(self, obj):
         return obj.user.last_login if obj.user else None
+    
+    def get_ai_insight(self, obj):
+        return cache.get(f"client_insight:{obj.id}")
     
 
     def get_tags(self, obj):
