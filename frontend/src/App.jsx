@@ -35,6 +35,7 @@ import ActivityPage       from './pages/provider/ActivityPage'
 import UpgradePage        from './pages/provider/UpgradePage'
 import { BadgeProvider } from './context/BadgeContext'
 import UpgradeModal from './components/modals/UpgradeModal'
+import UpgradeSuccessModal from './components/modals/UpgradeSuccessModal'
 
 
 function RoleDashboard() {
@@ -146,6 +147,7 @@ export default function App() {
 
             </Routes>
             <UpgradeModal />
+            <UpgradeSuccessModal />
           </TenantGuard>
         </AuthProvider>
       </BrowserRouter>

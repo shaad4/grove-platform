@@ -11,7 +11,5 @@ api.post('/billing/portal/', {
 return_url: returnUrl,
 })
 
-export const getBillingPortalUrl = ({ returnUrl } = {}) =>
-  api.post('/billing/portal/', {
-    return_url: returnUrl,
-  })
+export const getBillingHistory = () =>
+  api.get('/billing/history/')

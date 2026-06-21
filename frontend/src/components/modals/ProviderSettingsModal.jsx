@@ -671,7 +671,7 @@ function PlanBillingSection({ ws }) {
         successUrl: `${window.location.origin}/dashboard?upgraded=true`,
         cancelUrl: window.location.href,
       })
-      window.location.href = res.data.data.checkoutUrl
+      window.location.href = res.data.data.checkout_url
     } catch {
       setActionError('Could not start checkout. Try again.')
       setUpgradeLoading(false)
@@ -682,7 +682,7 @@ function PlanBillingSection({ ws }) {
     setPortalLoading(true); setActionError(null)
     try {
       const res = await getBillingPortalUrl({ returnUrl: window.location.href })
-      window.location.href = res.data.data.portalUrl
+      window.location.href = res.data.data.portal_url
     } catch {
       setActionError('Could not open billing portal. Try again.')
       setPortalLoading(false)
