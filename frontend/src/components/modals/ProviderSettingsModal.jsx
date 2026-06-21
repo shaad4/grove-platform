@@ -7,6 +7,9 @@ import {
   getNotifications, updateNotifications, deleteAccount,
 } from '../../api/settings.api'
 import {
+  createCheckoutSession, getBillingPortalUrl, getBillingHistory,
+} from '../../api/billing.api'
+import {
   Building2, Palette, Bell, ShieldCheck, CreditCard,
   Workflow, Trash2, X, Eye, EyeOff, Lock, Unlock,
   Upload, AlertTriangle, Check, Loader2, ChevronRight,
@@ -16,7 +19,7 @@ import {
 import { authApi } from '../../api/auth.api'
 
 
-// ─── Nav config ───────────────────────────────────────────────────────────────
+// Nav config 
 
 const NAV = [
   { id: 'business-profile',  label: 'Business profile',   icon: Building2,    group: 'workspace' },
@@ -38,7 +41,7 @@ const STATUS_STAGES = [
 
 const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
 
-// ─── Primitives ───────────────────────────────────────────────────────────────
+// Primitives 
 
 function Spinner({ size = 14 }) {
   return <Loader2 size={size} className="animate-spin" />
@@ -645,7 +648,49 @@ function AccountSecuritySection({ user }) {
 }
 
 function PlanBillingSection({ ws }) {
+  const [history, setHistory] = useState(null)
+  const [historyError, setHistoryError] = useState(false)
+  const [upgradeLoading, setUpgradeLoading] = useState(false)
+  const [portalLoading, setPortalLoading] = useState(false)
+  const [actionError, setActionError] = useState(null)
+
+  const isPro = ws?.plan?.name === 'pro'
+  const isUnlimited = (limit) => limit === -1
+
+  useEffect(() => {
+    if (!ws) return
+    getBillingHistory()
+      .then((r) => setHistory(r.data.data))
+      .catch(() => setHistoryError(true))
+  }, [ws])
+
+  const handleUpgrade = async () => {
+    setUpgradeLoading(true); setActionError(null)
+    try {
+      const res = await createCheckoutSession({
+        successUrl: `${window.location.origin}/dashboard?upgraded=true`,
+        cancelUrl: window.location.href,
+      })
+      window.location.href = res.data.data.checkoutUrl
+    } catch {
+      setActionError('Could not start checkout. Try again.')
+      setUpgradeLoading(false)
+    }
+  }
+
+  const handleManageBilling = async () => {
+    setPortalLoading(true); setActionError(null)
+    try {
+      const res = await getBillingPortalUrl({ returnUrl: window.location.href })
+      window.location.href = res.data.data.portalUrl
+    } catch {
+      setActionError('Could not open billing portal. Try again.')
+      setPortalLoading(false)
+    }
+  }
+
   if (!ws) return <div className="flex items-center justify-center h-48"><Spinner size={20} /></div>
+
   return (
     <div>
       <SectionTitle title="Plan & billing" description="Your current plan and usage." />
@@ -655,27 +700,39 @@ function PlanBillingSection({ ws }) {
             {ws.plan.name} plan
           </span>
           <p className="text-[12px] text-[#9EA89E] mt-1.5">
-            Up to <strong className="text-[#4A544A]">{ws.plan.client_limit}</strong> clients and <strong className="text-[#4A544A]">{ws.plan.request_limit}</strong> active requests.
+            {isUnlimited(ws.plan.client_limit)
+              ? 'Unlimited clients and unlimited active requests.'
+              : <>Up to <strong className="text-[#4A544A]">{ws.plan.client_limit}</strong> clients and <strong className="text-[#4A544A]">{ws.plan.request_limit}</strong> active requests.</>
+            }
           </p>
         </div>
-        {ws.plan.name === 'free' && <Btn size="sm">Upgrade to Pro</Btn>}
+        {isPro ? (
+          <Btn size="sm" variant="ghost" onClick={handleManageBilling} loading={portalLoading}>Manage billing</Btn>
+        ) : (
+          <Btn size="sm" onClick={handleUpgrade} loading={upgradeLoading}>Upgrade to Pro</Btn>
+        )}
       </div>
+
+      {actionError && <p className="text-[11px] text-red-600 mt-2">{actionError}</p>}
 
       <Divider />
 
       <div className="space-y-4">
         {[{ label: 'Clients', used: ws.usage.client_count, limit: ws.plan.client_limit }, { label: 'Active requests', used: ws.usage.active_request_count, limit: ws.plan.request_limit }].map(({ label, used, limit }) => {
-          const pct = Math.min((used / limit) * 100, 100)
-          const near = pct >= 80
+          const unlimited = isUnlimited(limit)
+          const pct = unlimited ? 0 : Math.min((used / limit) * 100, 100)
+          const near = !unlimited && pct >= 80
           return (
             <div key={label}>
               <div className="flex items-center justify-between mb-1.5">
                 <span className="text-[12px] font-medium text-[#4A544A]">{label}</span>
-                <span className="text-[11px] text-[#9EA89E] tabular-nums">{used} / {limit}</span>
+                <span className="text-[11px] text-[#9EA89E] tabular-nums">{used} / {unlimited ? '∞' : limit}</span>
               </div>
-              <div className="h-1.5 rounded-full bg-[#EEF0EE] overflow-hidden">
-                <div className={`h-full rounded-full transition-all ${near ? 'bg-amber-400' : 'bg-[#0F6E56]'}`} style={{ width: `${pct}%` }} />
-              </div>
+              {!unlimited && (
+                <div className="h-1.5 rounded-full bg-[#EEF0EE] overflow-hidden">
+                  <div className={`h-full rounded-full transition-all ${near ? 'bg-amber-400' : 'bg-[#0F6E56]'}`} style={{ width: `${pct}%` }} />
+                </div>
+              )}
               {near && <p className="text-[11px] text-amber-600 mt-1">Approaching the limit — consider upgrading.</p>}
             </div>
           )
@@ -686,11 +743,62 @@ function PlanBillingSection({ ws }) {
 
       <div>
         <p className="text-[11px] font-semibold text-[#9EA89E] uppercase tracking-wider mb-2">Billing history</p>
-        <p className="text-[12px] text-[#9EA89E] italic">{ws.plan.name === 'free' ? 'No invoices — you\'re on the free plan.' : 'Billing history coming soon.'}</p>
+
+        {historyError && (
+          <p className="text-[12px] text-red-500 italic">Could not load billing history.</p>
+        )}
+
+        {!historyError && history === null && (
+          <div className="flex items-center gap-2 text-[12px] text-[#9EA89E]">
+            <Spinner size={13} /> Loading…
+          </div>
+        )}
+
+        {!historyError && history?.length === 0 && (
+          <p className="text-[12px] text-[#9EA89E] italic">
+            {isPro ? 'No invoices yet.' : "No invoices — you're on the free plan."}
+          </p>
+        )}
+
+        {!historyError && history?.length > 0 && (
+          <div className="border border-[#EEF0EE] rounded-lg overflow-hidden">
+            <table className="w-full text-[12px]">
+              <thead>
+                <tr className="bg-[#FAFBFA] text-[#9EA89E] text-left">
+                  <th className="font-medium px-3 py-2">Date</th>
+                  <th className="font-medium px-3 py-2">Amount</th>
+                  <th className="font-medium px-3 py-2">Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {history.map((h) => (
+                  <tr key={h.id} className="border-t border-[#F0F2F0]">
+                    <td className="px-3 py-2 text-[#4A544A]">
+                      {new Date(h.createdAt).toLocaleDateString()}
+                    </td>
+                    <td className="px-3 py-2 text-[#141A14] tabular-nums">
+                      {h.currency} {h.amount}
+                    </td>
+                    <td className="px-3 py-2">
+                      <span className={`capitalize px-2 py-0.5 rounded-md text-[11px] font-medium ${
+                        h.status === 'paid' ? 'bg-[#E6F5F0] text-[#0F6E56]'
+                        : h.status === 'failed' ? 'bg-red-50 text-red-600'
+                        : 'bg-[#F2F4F2] text-[#4A544A]'
+                      }`}>
+                        {h.status}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
     </div>
   )
 }
+
 
 function WorkflowSection({ ws }) {
   const [statusLabels, setStatusLabels] = useState({})
