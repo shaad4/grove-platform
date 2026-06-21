@@ -10,6 +10,7 @@ class Plan(models.Model):
     client_limit = models.IntegerField(default=3)
     request_limit = models.IntegerField(default=10)      
     price_monthly = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    stripe_price_id = models.CharField(max_length=255, null=True, blank=True)
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -39,6 +40,8 @@ class Tenant(models.Model):
     white_label_enabled = models.BooleanField(default=False)
     custom_status_labels = models.JSONField(null=True, blank=True)
     client_limit_override = models.IntegerField(null=True, blank=True)
+    stripe_customer_id = models.CharField(max_length=255, null=True, blank=True)
+    stripe_subscription_id = models.CharField(max_length=255, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -62,6 +65,12 @@ class Tenant(models.Model):
     @property
     def effective_request_limit(self):
         return self.plan.request_limit
+    
+    @property
+    def is_pro(self):
+        """Single source of truth for Pro-gated features (AI, etc)"""
+        return self.plan.name == "pro"
+
 
 
 class TenantMembership(models.Model):
@@ -130,3 +139,38 @@ class TenantUsage(models.Model):
 
     def __str__(self):
         return f"Usage({self.tenant.slug})"
+    
+
+class BillingHistory(models.Model):
+    """Invoice/payment record synced from Stripe webhook events"""
+
+    class Status(models.TextChoices):
+        PAID     = "paid",     "Paid"
+        FAILED   = "failed",   "Failed"
+        REFUNDED = "refunded", "Refunded"
+        PENDING  = "pending",  "Pending"
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    tenant = models.ForeignKey(Tenant, on_delete=models.CASCADE, related_name="billing_history")
+    plan = models.ForeignKey(Plan, on_delete=models.PROTECT, related_name="billing_history")
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    currency = models.CharField(max_length=10, default="USD")
+    stripe_invoice_id = models.CharField(max_length=255, null=True, blank=True)
+    stripe_payment_intent_id = models.CharField(max_length=255, null=True, blank=True)
+    status = models.CharField(max_length=30, choices=Status.choices)
+    period_start = models.DateField()
+    period_end = models.DateField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        db_table = "billing_history"
+        indexes  = [
+            models.Index(fields=["tenant"], name="idx_billing_history_tenant_id"),
+            models.Index(fields=["plan"], name="idx_billing_history_plan_id"),
+            models.Index(fields=["status"], name="idx_billing_history_status"),
+            models.Index(fields=["created_at"], name="idx_billing_history_created_at"),
+        ]
+
+    def __str__(self):
+        return f"{self.tenant.slug} — {self.amount} {self.currency} ({self.status})"
+    
