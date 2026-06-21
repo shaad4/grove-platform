@@ -1,3 +1,4 @@
+import json
 import stripe
 from django.conf import settings
 from django.utils.decorators import method_decorator
@@ -137,9 +138,11 @@ class StripeWebhookView(APIView):
             logger.info(f"[StripeWebhookView] Unhandled event type: {event_type}")
             return Response({"success": True})
         
+        safe_event_data = json.loads(str(event_data))
+
         sync_billing_event.delay(
             event_type,
-            event_data.to_dict_recursive(),
+            safe_event_data,
         )
 
         return Response({"success" : True})

@@ -1,5 +1,6 @@
 from django.db import transaction
 from django.utils import timezone
+from django.db.models import F
 
 from apps.tenants.models import  TenantMembership, TenantUsage
 from apps.users.repositories import UserRepository
@@ -169,9 +170,7 @@ class ClientService:
 
         #Update usage counter
         TenantUsage.objects.filter(tenant=tenant).update(
-            client_count=TenantUsage.objects.values_list(
-                "client_count", flat=True
-            ).get(tenant=tenant) + 1
+            client_count=F("client_count") + 1
         )
 
         #Mark invite as accepted
@@ -247,9 +246,7 @@ class ClientService:
             client.membership.save(update_fields=["is_active"])
         ClientRepository.soft_delete(client)
         TenantUsage.objects.filter(tenant=tenant).update(
-            client_count=TenantUsage.objects.values_list(
-                "client_count", flat=True
-            ).get(tenant=tenant) - 1
+            client_count=F("client_count") - 1
         )
         
         cache.delete(f"dashboard_stats:{tenant.id}")

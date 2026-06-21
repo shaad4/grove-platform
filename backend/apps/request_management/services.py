@@ -3,6 +3,7 @@ from botocore.exceptions import ClientError
 from django.conf import settings
 from django.db import transaction
 from django.utils import timezone
+from django.db.models import F
 
 from apps.tenants.models import TenantUsage
 from django.core.cache import cache  
@@ -91,12 +92,8 @@ class RequestService:
         )
 
         TenantUsage.objects.filter(tenant=tenant).update(
-            active_request_count=TenantUsage.objects.values_list(
-                "active_request_count", flat=True
-            ).get(tenant=tenant) + 1,
-            total_requests_lifetime=TenantUsage.objects.values_list(
-                "total_requests_lifetime", flat=True
-            ).get(tenant=tenant) + 1,
+            active_request_count=F("active_request_count") + 1,
+            total_requests_lifetime=F("total_requests_lifetime") + 1,
         )
 
         cache.delete(f"dashboard_stats:{tenant.id}")
@@ -160,26 +157,23 @@ class RequestService:
 
         # Decrement active count when closed or delivered
         if new_status in [Request.Status.CLOSED, Request.Status.DELIVERED]:
-            usage = TenantUsage.objects.get(tenant=tenant)
-            if usage.active_request_count > 0:
-                TenantUsage.objects.filter(tenant=tenant).update(
-                    active_request_count=usage.active_request_count - 1
-                )
+            TenantUsage.objects.filter(tenant=tenant, active_request_count__gt=0).update(
+                active_request_count=F("active_request_count") - 1
+            )
 
          # Increment delivered count
         if new_status == Request.Status.DELIVERED:
-            usage = TenantUsage.objects.get(tenant=tenant)
             TenantUsage.objects.filter(tenant=tenant).update(
-                total_delivered_lifetime=usage.total_delivered_lifetime + 1
+                total_delivered_lifetime=F("total_delivered_lifetime") + 1
             )
 
         # Restore active count if coming back from closed/delivered
         if old_status in [Request.Status.CLOSED, Request.Status.DELIVERED] and \
            new_status not in [Request.Status.CLOSED, Request.Status.DELIVERED]:
-            usage = TenantUsage.objects.get(tenant=tenant)
             TenantUsage.objects.filter(tenant=tenant).update(
-                active_request_count=usage.active_request_count + 1
+                active_request_count=F("active_request_count") + 1
             )
+
 
         cache.delete(f"dashboard_stats:{tenant.id}")
         cache.delete(f"sidebar_badges:{tenant.id}")
@@ -320,12 +314,10 @@ class RequestService:
             metadata={"from": old_status, "to": Request.Status.DELIVERED},
         )
 
-        usage = TenantUsage.objects.get(tenant=tenant)
-        if usage.active_request_count > 0:
-            TenantUsage.objects.filter(tenant=tenant).update(
-                active_request_count=usage.active_request_count - 1,
-                total_delivered_lifetime=usage.total_delivered_lifetime + 1,
-            )
+        TenantUsage.objects.filter(tenant=tenant, active_request_count__gt=0).update(
+            active_request_count=F("active_request_count") - 1,
+            total_delivered_lifetime=F("total_delivered_lifetime") + 1,
+        )
 
         cache.delete(f"dashboard_stats:{tenant.id}")
         cache.delete(f"sidebar_badges:{tenant.id}")
@@ -412,17 +404,17 @@ class RequestService:
         )
 
         if new_status == Request.Status.CLOSED:
-            usage = TenantUsage.objects.get(tenant=tenant)
-            updates = {"total_delivered_lifetime" : usage.total_delivered_lifetime + 1}
-            if usage.active_request_count > 0:
-                updates["active_request_count"] = usage.active_request_count - 1
-            TenantUsage.objects.filter(tenant=tenant).update(**updates)
+            TenantUsage.objects.filter(tenant=tenant).update(
+                total_delivered_lifetime=F("total_delivered_lifetime") + 1
+            )
+            TenantUsage.objects.filter(tenant=tenant, active_request_count__gt=0).update(
+                active_request_count=F("active_request_count") - 1
+            )
 
         if new_status == Request.Status.IN_PROGRESS:
-            usage = TenantUsage.objects.get(tenant=tenant)
             TenantUsage.objects.filter(tenant=tenant).update(
-                active_request_count=usage.active_request_count + 1
-            ) 
+                active_request_count=F("active_request_count") + 1
+            )
 
         def _notify_review():
             try:
