@@ -32,7 +32,10 @@ import ClientDetailPage   from './pages/provider/ClientDetailPage'
 import RequestsPage       from './pages/provider/RequestsPage'
 import RequestDetailPage  from './pages/provider/RequestDetailPage'
 import ActivityPage       from './pages/provider/ActivityPage'
+import UpgradePage        from './pages/provider/UpgradePage'
 import { BadgeProvider } from './context/BadgeContext'
+import UpgradeModal from './components/modals/UpgradeModal'
+
 
 function RoleDashboard() {
   const { user, loading } = useAuth()
@@ -128,6 +131,12 @@ export default function App() {
                     element={<TenantRoute><ClientRequestDetailPage /></TenantRoute>}
                   />
 
+                  {/* ── Upgrade (provider) ── */}
+                  <Route
+                    path="/upgrade"
+                    element={<TenantRoute><UpgradePage /></TenantRoute>}
+                  />
+
                 </Route>
               </Route>
 
@@ -136,6 +145,7 @@ export default function App() {
               <Route path="*" element={<Navigate to="/" replace />} />
 
             </Routes>
+            <UpgradeModal />
           </TenantGuard>
         </AuthProvider>
       </BrowserRouter>
