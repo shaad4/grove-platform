@@ -1,4 +1,5 @@
 import { setAccessToken, clearAuth } from '../../features/auth/authSlice'
+import { openUpgradeModal } from '../../features/billing/billingSlice'
 import { getSubdomain } from "../../utils/domain"
 import { appUrl } from '../../utils/urls'
 
@@ -22,6 +23,19 @@ export const authResponseInterceptor = async (_store, api, error) => {
     console.log(error.response?.data)
 
     if (isLoggingOut) {
+        return Promise.reject(error)
+    }
+
+    const errorType = error.response?.data?.errorType
+
+    if (
+        error.response?.status === 403 &&
+        (errorType === 'limit_reached' || errorType === 'pro_feature_required')
+    ) {
+        _store.dispatch(openUpgradeModal({
+            reason: errorType,
+            message: error.response.data.message,
+        }))
         return Promise.reject(error)
     }
     
