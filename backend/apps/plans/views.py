@@ -32,7 +32,7 @@ class CreateCheckoutSessionView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
-        if _is_provider(request):
+        if not _is_provider(request):
             return Response({"success": False, "message": "Forbidden."}, status=403)
         
         tenant = request.tenant
@@ -137,7 +137,10 @@ class StripeWebhookView(APIView):
             logger.info(f"[StripeWebhookView] Unhandled event type: {event_type}")
             return Response({"success": True})
         
-        sync_billing_event.delay(event_type, event_data)
+        sync_billing_event.delay(
+            event_type,
+            event_data.to_dict_recursive(),
+        )
 
         return Response({"success" : True})
     

@@ -16,6 +16,7 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
+from apps.plans.urls import webhook_urlpatterns
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -28,5 +29,5 @@ urlpatterns = [
     path("api/notifications/", include("apps.notifications.urls")),
     path("api/settings/", include("apps.settings.urls")),
     path("api/billing/", include("apps.plans.urls")),
-    path("api/webhooks/", include("apps.plans.urls.webhook_urlpatterns")),
+    path("api/webhooks/", include(webhook_urlpatterns)),
 ]

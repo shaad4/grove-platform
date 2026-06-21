@@ -81,34 +81,49 @@ class BillingService:
     @staticmethod
     @transaction.atomic
     def handle_checkout_completed(event_data):
-        tenant_id = event_data.get("metadata", {}).get("tenant_id")
+
+        tenant_id = event_data["metadata"]["tenant_id"]
+
         if not tenant_id:
-            logger.warning("[handle_checkout_completed] No tenant_id in session metadata.")
-            return
-        
-        tenant = Tenant.objects.select_for_update().filter(id=tenant_id).first()
-        if not tenant:
-            logger.warning(f"[handle_checkout_completed] Tenant {tenant_id} not found.")
-            return
-        
-        pro_plan = Plan.objects.filter(name="pro").first()
-        if not pro_plan:
-            logger.error("[handle_checkout_completed] Pro plan missing from DB.")
+            logger.warning(
+                "[handle_checkout_completed] No tenant_id in session metadata."
+            )
             return
 
-        subscription_id = event_data.get("subscription")
+        tenant = Tenant.objects.select_for_update().filter(
+            id=tenant_id
+        ).first()
+
+        if not tenant:
+            logger.warning(
+                f"[handle_checkout_completed] Tenant {tenant_id} not found."
+            )
+            return
+
+        pro_plan = Plan.objects.filter(name="pro").first()
+
+        if not pro_plan:
+            logger.error(
+                "[handle_checkout_completed] Pro plan missing from DB."
+            )
+            return
+
+        subscription_id = event_data["subscription"]
 
         Tenant.objects.filter(id=tenant.id).update(
             plan=pro_plan,
             stripe_subscription_id=subscription_id,
         )
 
-        logger.info(f"[handle_checkout_completed] Tenant {tenant.id} upgraded to Pro.")
+        logger.info(
+            f"[handle_checkout_completed] Tenant {tenant.id} upgraded to Pro."
+        )
+
 
     @staticmethod
     @transaction.atomic
     def handle_subscription_deleted(event_data):
-        subscription_id = event_data.get("id")
+        subscription_id = event_data["id"]
         tenant = Tenant.objects.select_for_update().filter(stripe_subscription_id=subscription_id).first()
         if not tenant:
             logger.warning(f"[handle_subscription_deleted] No tenant found for subscription {subscription_id}.")
