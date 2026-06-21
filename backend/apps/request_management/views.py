@@ -607,7 +607,13 @@ class SuggestRepliesView(APIView):
     def post(self, request, request_id):
         if not _is_provider(request):
             return Response({"success": False, "message": "Forbidden."}, status=403)
-
+        
+        if not request.tenant.is_pro:
+            return Response({
+                "success": False,
+                "error_type": "pro_feature_required",
+                "message": "Reply suggestions are a Pro feature. Upgrade to unlock AI-powered replies.",
+            }, status=403)
 
         request_obj = RequestRepository.get_by_id(request_id, request.tenant.id)
         if not request_obj:
@@ -639,7 +645,13 @@ class SuggestDeliveryMessageView(APIView):
     def post(self, request, request_id):
         if not _is_provider(request):
             return Response({"success": False, "message": "Forbidden."}, status=403)
-
+        
+        if not request.tenant.is_pro:
+            return Response({
+                "success": False,
+                "error_type": "pro_feature_required",
+                "message": "AI delivery messages are a Pro feature. Upgrade to unlock this.",
+            }, status=403)
 
         request_obj = RequestRepository.get_by_id(request_id, request.tenant.id)
         if not request_obj:
@@ -662,6 +674,13 @@ class RegenerateSummaryView(APIView):
     def post(self, request, request_id):
         if not _is_provider(request):
             return Response({"success": False, "message": "Forbidden."}, status=403)
+        
+        if not request.tenant.is_pro:
+            return Response({
+                "success": False,
+                "error_type": "pro_feature_required",
+                "message": "AI summaries are a Pro feature. Upgrade to unlock this.",
+            }, status=403)
 
         request_obj = RequestRepository.get_by_id(request_id, request.tenant.id)
         if not request_obj:

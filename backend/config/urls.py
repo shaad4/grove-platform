@@ -28,4 +28,5 @@ urlpatterns = [
     path("api/notifications/", include("apps.notifications.urls")),
     path("api/settings/", include("apps.settings.urls")),
     path("api/billing/", include("apps.plans.urls")),
+    path("api/webhooks/", include("apps.plans.urls.webhook_urlpatterns")),
 ]

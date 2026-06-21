@@ -117,6 +117,8 @@ class RequestService:
                 logger.error(f"[create_request] Notification failed: {e}")
 
         def  _trigger_ai_tasks():
+            if not tenant.is_pro:
+                return
             categorise_request.delay(str(request_obj.id))
             generate_request_summary.delay(str(request_obj.id))
             generate_triage_note.delay(str(request_obj.id))
