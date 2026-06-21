@@ -388,6 +388,12 @@ GROQ_API_KEY = config("GROQ_API_KEY", default="")
 GROQ_BASE_URL = "https://api.groq.com/openai/v1"
 AI_FALLBACK_MODEL = "openai/gpt-oss-120b"
 
+
+# Stripe
+STRIPE_SECRET_KEY = config("STRIPE_SECRET_KEY", default="")
+STRIPE_WEBHOOK_SECRET = config("STRIPE_WEBHOOK_SECRET", default="")
+STRIPE_PRICE_ID_PRO = config("STRIPE_PRICE_ID_PRO", default="")
+
 # Configuration
 
 EMAIL_FALLBACK_DELAY_MINUTES = 5  # Email Fallback Message Delay Time (notification-tasks)
