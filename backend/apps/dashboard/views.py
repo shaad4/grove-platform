@@ -73,6 +73,7 @@ class DashboardStatsView(APIView):
         active_requests = Request.objects.filter(
             tenant_id=tid,
             is_deleted=False,
+            client__is_deleted=False,
             status__in=[
                 Request.Status.RECEIVED,
                 Request.Status.IN_REVIEW,
@@ -87,6 +88,7 @@ class DashboardStatsView(APIView):
             tenant_id = tid,
             status=Request.Status.DELIVERED,
             is_deleted=False,
+            client__is_deleted=False,
             updated_at__gte=week_start,
         ).count()
 
@@ -95,6 +97,7 @@ class DashboardStatsView(APIView):
             event_type=RequestActivity.EventType.STATUS_CHANGE,
             metadata__to="closed",
             created_at__gte=week_start,
+            request__client__is_deleted=False,
         ).count()
 
         #Inactive clients count
@@ -102,6 +105,7 @@ class DashboardStatsView(APIView):
         active_client_ids = Request.objects.filter(
             tenant_id=tid,
             is_deleted=False,
+            client__is_deleted=False,
             created_at__gte=five_days_ago,
         ).values_list("client_id", flat=True).distinct()
 
@@ -113,7 +117,7 @@ class DashboardStatsView(APIView):
 
         #Recent Requests - 5
         raw_recent = (
-            Request.objects.filter(tenant_id=tid, is_deleted=False)
+            Request.objects.filter(tenant_id=tid, is_deleted=False, client__is_deleted=False)
             .select_related("client__user")
             .order_by("-created_at")[:5]
             .values(
@@ -143,7 +147,7 @@ class DashboardStatsView(APIView):
 
         heatmap = list(
             Request.objects.filter(
-                tenant_id=tid, is_deleted=False,
+                tenant_id=tid, is_deleted=False, client__is_deleted=False,
                 created_at__gte=thirty_days_ago,
             )
             .annotate(
@@ -160,6 +164,7 @@ class DashboardStatsView(APIView):
             Request.objects.filter(
                 tenant_id = tid,
                 is_deleted=False,
+                client__is_deleted=False,
                 status__in=[
                     Request.Status.RECEIVED,
                     Request.Status.IN_REVIEW,
@@ -181,6 +186,7 @@ class DashboardStatsView(APIView):
             "recent_requests": recent_requests,
             "heatmap": heatmap,
         }
+
 
 class SidebarBadgesView(APIView):
     permission_classes = [IsAuthenticated]
@@ -218,6 +224,7 @@ class SidebarBadgesView(APIView):
             "requests": Request.objects.filter(
                 tenant_id=tid,
                 is_deleted=False,
+                client__is_deleted=False,
                 status__in=[
                     Request.Status.RECEIVED,
                     Request.Status.IN_REVIEW,
@@ -288,6 +295,7 @@ class ActivityFeedView(APIView):
 
         qs = (
             RequestActivity.objects.filter(tenant_id=tid)
+            .filter(Q(request__isnull=True) | Q(request__client__is_deleted=False))
             .select_related("actor", "request", "request__client", "request__client__user")
             .order_by("-created_at", "-id")
         )

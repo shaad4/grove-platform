@@ -5,7 +5,7 @@ from django.db.models import F
 from apps.tenants.models import  TenantMembership, TenantUsage
 from apps.users.repositories import UserRepository
 from django.core.cache import cache 
-
+from apps.request_management.models import Request
 from .models import Client, Invite
 from .repositories import ClientRepository, InviteRepository, TagRepository
 
@@ -53,11 +53,18 @@ class ClientService:
         usage = TenantUsage.objects.select_for_update().get(tenant=tenant)
         limit = tenant.effective_client_limit
 
-        if limit != -1 and usage.client_count >= limit:
-            raise ClientLimitExceeded(
-                f"You have reached your plan limit of {limit} clients. "
-                "Upgrade to Pro to add more."
-            )
+        if limit != -1:
+            pending_invite_count = Invite.objects.filter(
+                tenant=tenant,
+                status=Invite.Status.PENDING,
+                expires_at__gt=timezone.now(),
+            ).count()
+
+            if usage.client_count + pending_invite_count >= limit:
+                raise ClientLimitExceeded(
+                    f"You have reached your plan limit of {limit} clients "
+                    f"(including pending invites). Upgrade to Pro to add more."
+                )
 
         email = client_email.lower().strip()
 
@@ -126,12 +133,12 @@ class ClientService:
 
             #Check they dont already have a membership here
             already_member = TenantMembership.objects.filter(
-                user=user, tenant=tenant
+                user=user, tenant=tenant, is_active=True
             ).exists()
 
             if already_member:
                 InviteRepository.mark_accepted(invite)
-                client = Client.objects.get(user=user, tenant=tenant)
+                client = Client.objects.get(user=user, tenant=tenant, is_deleted=False)
                 return {"user": user, "tenant": tenant, "client": client}
         else:
             #brand new user, set password from invite form
@@ -147,13 +154,23 @@ class ClientService:
             )
 
         #Create membership (role=client in this tenant)
-        membership = TenantMembership.objects.create(
+        membership, _ = TenantMembership.objects.update_or_create(
             user=user,
             tenant=tenant,
-            role=TenantMembership.Role.CLIENT,
+            defaults={
+                "role": TenantMembership.Role.CLIENT,
+                "is_active": True,
+            },
         )
 
         client = ClientRepository.get_pending_by_invite(invite)
+        
+        old_client_ids_to_clear = Client.objects.filter(
+            membership=membership, is_deleted=True
+        )
+        if client:
+            old_client_ids_to_clear = old_client_ids_to_clear.exclude(id=client.id)
+        old_client_ids_to_clear.update(membership=None)
 
         if client:
             ClientRepository.activate(client, user, membership)
@@ -167,7 +184,6 @@ class ClientService:
                 status=Client.Status.ACTIVE,
                 joined_at=timezone.now(),
             )
-
         #Update usage counter
         TenantUsage.objects.filter(tenant=tenant).update(
             client_count=F("client_count") + 1
@@ -238,17 +254,37 @@ class ClientService:
     @staticmethod
     @transaction.atomic
     def delete_client(client_id, tenant):
+
         client = ClientRepository.get_by_id(client_id, tenant.id)
         if not client:
             raise ClientNotFound("Client not found.")
         if client.membership:
             client.membership.is_active = False
             client.membership.save(update_fields=["is_active"])
+
+        active_request_count_for_client = Request.objects.filter(
+            client=client,
+            is_deleted=False,
+            status__in=[
+                Request.Status.RECEIVED,
+                Request.Status.IN_REVIEW,
+                Request.Status.IN_PROGRESS,
+            ],
+        ).count()
+
         ClientRepository.soft_delete(client)
-        TenantUsage.objects.filter(tenant=tenant).update(
+
+        TenantUsage.objects.filter(tenant=tenant, client_count__gt=0).update(
             client_count=F("client_count") - 1
         )
-        
+
+        if active_request_count_for_client > 0:
+            TenantUsage.objects.filter(
+                tenant=tenant, active_request_count__gte=active_request_count_for_client
+            ).update(
+                active_request_count=F("active_request_count") - active_request_count_for_client
+            )
+
         cache.delete(f"dashboard_stats:{tenant.id}")
         cache.delete(f"sidebar_badges:{tenant.id}")
 

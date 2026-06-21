@@ -18,7 +18,7 @@ class RequestRepository:
 
         qs = (
             Request.objects
-            .filter(tenant_id=tenant_id, is_deleted=False)
+            .filter(tenant_id=tenant_id, is_deleted=False, client__is_deleted=False)
             .select_related("client__user", "provider")
             .order_by("-created_at")
         )

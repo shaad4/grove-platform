@@ -774,7 +774,7 @@ function PlanBillingSection({ ws }) {
                 {history.map((h) => (
                   <tr key={h.id} className="border-t border-[#F0F2F0]">
                     <td className="px-3 py-2 text-[#4A544A]">
-                      {new Date(h.createdAt).toLocaleDateString()}
+                      {new Date(h.createdAt || h.created_at).toLocaleDateString("en-GB")}
                     </td>
                     <td className="px-3 py-2 text-[#141A14] tabular-nums">
                       {h.currency} {h.amount}
