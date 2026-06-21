@@ -75,4 +75,29 @@ class BillingPortalView(APIView):
         return Response({"success": True, "data": {"portal_url": portal_url}})
 
 
+class BillingHistoryView(APIView):
+    """Returns the invoice history for the current tenant."""
+
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        if not _is_provider(request):
+            return Response({"success": False, "message": "Forbidden."}, status=403)
+
+        history = BillingHistoryRepository.get_for_tenant(request.tenant.id)
+
+        data = [
+            {
+                "id": str(h.id),
+                "amount": str(h.amount),
+                "currency": h.currency,
+                "status": h.status,
+                "period_start": h.period_start,
+                "period_end": h.period_end,
+                "created_at": h.created_at,
+            }
+            for h in history
+        ]
+
+        return Response({"success": True, "data": data})
 
