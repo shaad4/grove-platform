@@ -55,4 +55,24 @@ class CreateCheckoutSessionView(APIView):
         return Response({"success": True, "data": {"checkout_url": checkout_url}})
     
 
+class BillingPortalView(APIView):
+    """Provider clicks 'Manage Billing' returns a Stripe Customer Portal URL."""
+
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        if not _is_provider(request):
+            return Response({"success": False, "message": "Forbidden."}, status=403)
+
+        tenant = request.tenant
+        return_url = request.data.get("return_url") or f"{settings.FRONTEND_URL}/dashboard"
+
+        try:
+            portal_url = BillingService.create_portal_session(tenant=tenant, return_url=return_url)
+        except PortalSessionError as e:
+            return Response({"success": False, "message": str(e)}, status=400)
+
+        return Response({"success": True, "data": {"portal_url": portal_url}})
+
+
 
