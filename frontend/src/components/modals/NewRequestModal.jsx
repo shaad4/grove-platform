@@ -62,6 +62,7 @@ export default function NewRequestModal({ providerName, onClose, onSuccess }) {
   const [created, setCreated] = useState(null)
   const [errors, setErrors] = useState({})
   const [uploadError, setUploadError] = useState('')
+  const [limitReached, setLimitReached] = useState(false)
 
   const fileInput = useRef(null)
 
@@ -161,6 +162,7 @@ export default function NewRequestModal({ providerName, onClose, onSuccess }) {
   // ───────────────── Submit Pipeline ─────────────────
   const handleSubmit = async () => {
     setUploadError('')
+    setLimitReached(false)
     if (!validateForm()) return
 
     setSubmitting(true)
@@ -184,11 +186,52 @@ export default function NewRequestModal({ providerName, onClose, onSuccess }) {
       setCreated(newReq)
     } catch (err) {
       console.error(err)
-      setUploadError('Failed to create request.')
+      if (err?.response?.data?.error_type === 'limit_reached') {
+        setLimitReached(true)
+      } else {
+        setUploadError('Failed to create request.')
+      }
     } finally {
       setSubmitting(false)
     }
   }
+
+    //  LIMIT REACHED SCREEN 
+  if (limitReached) {
+    return (
+      <Backdrop onClose={onClose}>
+        <div className="relative w-full sm:max-w-[420px] h-[100dvh] sm:h-auto bg-white sm:rounded-3xl p-6 sm:p-8 shadow-2xl flex flex-col justify-center animate-in zoom-in-95 duration-200">
+          <button
+            onClick={onClose}
+            className="absolute right-5 top-5 flex h-10 w-10 items-center justify-center rounded-full bg-surface hover:bg-border/50 transition-colors"
+          >
+            <X size={18} className="text-text-dim" />
+          </button>
+
+          <div className="flex flex-col items-center text-center">
+            <div className="flex h-16 w-16 items-center justify-center rounded-full border-4 border-amber-100 bg-amber-50 mb-6">
+              <AlertCircle size={32} className="text-amber-500" />
+            </div>
+            <h2 className="text-2xl font-bold text-text-main tracking-tight">
+              Not accepting new requests right now
+            </h2>
+            <p className="mt-3 text-sm leading-relaxed text-text-sub max-w-[300px]">
+              <span className="font-semibold text-text-main">{providerName}</span> has reached the request limit on their current plan. Please contact them directly, or try again later.
+            </p>
+            <div className="my-8 h-px w-full bg-border/50" />
+
+            <button
+              onClick={onClose}
+              className="w-full rounded-xl bg-primary py-4 text-sm font-semibold text-white hover:bg-primary-dark active:scale-[0.98] transition-all shadow-sm"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      </Backdrop>
+    )
+  }
+
 
   // ── SUCCESS SCREEN ─────────────────────────────────────────
   if (created) {
