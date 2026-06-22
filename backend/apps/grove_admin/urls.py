@@ -13,6 +13,7 @@ from .views import (
     AdminUserSendPasswordResetView,
     AdminUserDeactivateView,
     AdminPlanListView,
+    GroveAdminTokenRefreshView,
 
 
 
@@ -21,6 +22,7 @@ from .views import (
 
 urlpatterns = [
     path("login/", GroveAdminLoginView.as_view()),
+    path("token/refresh/", GroveAdminTokenRefreshView.as_view()),
     path("stats/", AdminStatsView.as_view()),
     path("tenants/", AdminTenantListView.as_view()),
     path("tenants/<uuid:tenant_id>/", AdminTenantDetailView.as_view()),

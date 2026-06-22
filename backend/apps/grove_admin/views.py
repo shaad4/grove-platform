@@ -2,7 +2,8 @@ from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
-
+from rest_framework_simplejwt.exceptions import TokenError
+from apps.users.models import User
 from apps.users.utils import set_auth_cookies
 from apps.common.logger import logger
 
@@ -41,6 +42,27 @@ def _client_ip(request):
     if forwarded:
         return forwarded.split(",")[0].strip()
     return request.META.get("REMOTE_ADDR", "unknown")
+
+class GroveAdminTokenRefreshView(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        raw_token = request.COOKIES.get("grove_admin_refresh")
+        if not raw_token:
+            return Response({"success": False, "message": "No refresh token found."}, status=401)
+
+        try:
+            refresh = RefreshToken(raw_token)
+        except TokenError:
+            return Response({"success": False, "message": "Invalid or expired session. Please log in again."}, status=401)
+
+        user_id = refresh.payload.get("user_id")
+        admin_user = User.objects.filter(id=user_id, is_superuser=True).first()
+        if not admin_user:
+            logger.warning(f"[grove_admin_auth] Refresh attempted with a non-superuser token (user_id={user_id}).")
+            return Response({"success": False, "message": "Invalid session."}, status=401)
+
+        return Response({"success": True, "access": str(refresh.access_token)})
 
 
 class GroveAdminLoginView(APIView):
