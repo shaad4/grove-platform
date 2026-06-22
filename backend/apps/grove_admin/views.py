@@ -129,3 +129,13 @@ class AdminTenantDowngradeView(APIView):
             return Response({"success": False, "message": str(e)}, status=500)
         return Response({"success": True, "message": f"{tenant.name} downgraded to Free."})
 
+
+class AdminTenantSuspendView(APIView):
+    permission_classes = [IsGroveSuperuser]
+
+    def post(self, request, tenant_id):
+        try:
+            tenant = TenantAdminService.suspend(request.user, tenant_id)
+        except TenantNotFound as e:
+            return Response({"success": False, "message": str(e)}, status=404)
+        return Response({"success": True, "message": f"{tenant.name} suspended."})
