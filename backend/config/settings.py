@@ -65,8 +65,7 @@ INSTALLED_APPS = [
     "apps.dashboard",
     "apps.chat",
     "apps.settings",
-
-
+    "apps.grove_admin",
 
 ]
 
