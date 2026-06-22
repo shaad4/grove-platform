@@ -224,7 +224,59 @@ class TenantAdminService:
         logger.info(f"[grove_admin] Tenant {tenant.slug} client limit overridden to {limit} by {admin.email}.")
         return tenant
 
+class UserAdminService:
 
+    @staticmethod
+    def list_users(search=None, role=None, status=None):
+        return UserAdminRepository.search_and_filter(search, role, status)
+
+    @staticmethod
+    @transaction.atomic
+    def send_password_reset(admin, user_id):
+        user = UserAdminRepository.get_user_by_id(user_id)
+        if not user:
+            raise UserNotFound("User not found.")
+
+        result = PasswordResetService.request_reset(email=user.email)
+
+        if result:
+            membership = (
+                TenantMembership.objects
+                .filter(user=user, is_active=True)
+                .select_related("tenant")
+                .first()
+            )
+            tenant_slug = membership.tenant.slug if membership else None
+            try:
+                send_password_reset_email.delay(
+                    user_email=result["user"].email,
+                    display_name=result["user"].display_name,
+                    token=str(result["reset_token"].token),
+                    tenant_slug=tenant_slug,
+                )
+            except Exception as e:
+                logger.error(f"[grove_admin] Failed to queue password reset email for {user.email}: {e}")
+
+        AdminActionRepository.log(admin, "send_password_reset", "user", user.id)
+        logger.info(f"[grove_admin] Password reset triggered for {user.email} by {admin.email}.")
+        return user
+
+    @staticmethod
+    @transaction.atomic
+    def toggle_deactivate(admin, user_id):
+        user = UserAdminRepository.get_user_by_id(user_id)
+        if not user:
+            raise UserNotFound("User not found.")
+
+        new_state = not user.is_active
+        UserAdminRepository.set_active(user, new_state)
+
+        action_type = "reactivate_user" if new_state else "deactivate_user"
+        AdminActionRepository.log(admin, action_type, "user", user.id)
+        logger.info(
+            f"[grove_admin] User {user.email} {'reactivated' if new_state else 'deactivated'} by {admin.email}."
+        )
+        return user
 
 
 

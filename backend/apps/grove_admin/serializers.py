@@ -78,3 +78,15 @@ class AdminTenantDetailSerializer(serializers.Serializer):
 class OverrideLimitSerializer(serializers.Serializer):
     limit = serializers.IntegerField(required=False, allow_null=True)
 
+class AdminUserListSerializer(serializers.Serializer):
+    def to_representation(self, membership):
+        return {
+            "id": str(membership.user.id),
+            "email": membership.user.email,
+            "display_name": membership.user.display_name,
+            "role": membership.role,
+            "tenant_slug": membership.tenant.slug,
+            "joined_at": membership.joined_at,
+            "last_login": membership.user.last_login,
+            "is_active": membership.user.is_active,
+        }

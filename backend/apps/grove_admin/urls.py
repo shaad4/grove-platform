@@ -9,7 +9,10 @@ from .views import (
     AdminTenantSuspendView,
     AdminTenantUnsuspendView,
     AdminTenantOverrideLimitView,
-    
+    AdminUserListView,
+    AdminUserSendPasswordResetView,
+
+
 )
 
 
@@ -23,5 +26,8 @@ urlpatterns = [
     path("api/tenants/<uuid:tenant_id>/suspend/", AdminTenantSuspendView.as_view()),
     path("api/tenants/<uuid:tenant_id>/unsuspend/", AdminTenantUnsuspendView.as_view()),
     path("api/tenants/<uuid:tenant_id>/override-limit/", AdminTenantOverrideLimitView.as_view()),
+
+    path("api/users/", AdminUserListView.as_view()),
+    path("api/users/<uuid:user_id>/send-password-reset/", AdminUserSendPasswordResetView.as_view()),
 
 ]

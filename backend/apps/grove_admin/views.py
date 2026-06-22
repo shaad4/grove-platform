@@ -13,6 +13,7 @@ from .serializers import (
     AdminTenantListSerializer,
     AdminTenantDetailSerializer,
     OverrideLimitSerializer,
+    AdminUserListSerializer,
 )
 
 from .services import (
@@ -24,6 +25,8 @@ from .services import (
     TenantNotFound,
     PlanNotFound,
     InvalidLimitValue,
+    UserAdminService,
+    UserNotFound,
 
 
 )
@@ -173,3 +176,26 @@ class AdminTenantOverrideLimitView(APIView):
             "message": f"Client limit override updated for {tenant.name}.",
             "data": {"client_limit_override": tenant.client_limit_override},
         })
+    
+class AdminUserListView(APIView):
+    permission_classes = [IsGroveSuperuser]
+
+    def get(self, request):
+        memberships = UserAdminService.list_users(
+            search=request.query_params.get("search"),
+            role=request.query_params.get("role"),
+            status=request.query_params.get("status"),
+        )
+        serializer = AdminUserListSerializer(memberships, many=True)
+        return Response({"success": True, "data": {"users": serializer.data, "total": memberships.count()}})
+
+
+class AdminUserSendPasswordResetView(APIView):
+    permission_classes = [IsGroveSuperuser]
+
+    def post(self, request, user_id):
+        try:
+            user = UserAdminService.send_password_reset(request.user, user_id)
+        except UserNotFound as e:
+            return Response({"success": False, "message": str(e)}, status=404)
+        return Response({"success": True, "message": f"Password reset email sent to {user.email}."})
