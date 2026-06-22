@@ -11,7 +11,8 @@ from .serializers import (
     GroveAdminLoginSerializer,
     AdminStatsSerializer,
     AdminTenantListSerializer,
-    AdminTenantDetailSerializer
+    AdminTenantDetailSerializer,
+    OverrideLimitSerializer,
 )
 
 from .services import (
@@ -22,6 +23,7 @@ from .services import (
     TenantAdminService,
     TenantNotFound,
     PlanNotFound,
+    InvalidLimitValue,
 
 
 )
@@ -150,3 +152,24 @@ class AdminTenantUnsuspendView(APIView):
         except TenantNotFound as e:
             return Response({"success": False, "message": str(e)}, status=404)
         return Response({"success": True, "message": f"{tenant.name} unsuspended."})
+
+
+class AdminTenantOverrideLimitView(APIView):
+    permission_classes = [IsGroveSuperuser]
+
+    def post(self, request, tenant_id):
+        serializer = OverrideLimitSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        try:
+            tenant = TenantAdminService.override_client_limit(
+                request.user, tenant_id, serializer.validated_data.get("limit")
+            )
+        except TenantNotFound as e:
+            return Response({"success": False, "message": str(e)}, status=404)
+        except InvalidLimitValue as e:
+            return Response({"success": False, "message": str(e)}, status=400)
+        return Response({
+            "success": True,
+            "message": f"Client limit override updated for {tenant.name}.",
+            "data": {"client_limit_override": tenant.client_limit_override},
+        })

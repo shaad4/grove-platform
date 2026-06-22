@@ -74,3 +74,7 @@ class AdminTenantDetailSerializer(serializers.Serializer):
                 for c in data["clients"]
             ],
         }
+    
+class OverrideLimitSerializer(serializers.Serializer):
+    limit = serializers.IntegerField(required=False, allow_null=True)
+

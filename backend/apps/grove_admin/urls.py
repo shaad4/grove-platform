@@ -8,6 +8,7 @@ from .views import (
     AdminTenantDowngradeView,
     AdminTenantSuspendView,
     AdminTenantUnsuspendView,
+    AdminTenantOverrideLimitView,
     
 )
 
@@ -21,5 +22,6 @@ urlpatterns = [
     path("api/tenants/<uuid:tenant_id>/downgrade/", AdminTenantDowngradeView.as_view()),
     path("api/tenants/<uuid:tenant_id>/suspend/", AdminTenantSuspendView.as_view()),
     path("api/tenants/<uuid:tenant_id>/unsuspend/", AdminTenantUnsuspendView.as_view()),
+    path("api/tenants/<uuid:tenant_id>/override-limit/", AdminTenantOverrideLimitView.as_view()),
 
 ]
