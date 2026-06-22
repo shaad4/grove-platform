@@ -87,7 +87,7 @@ function UpgradeModalInner({ reason, message, onClose }) {
         successUrl: `${window.location.origin}/dashboard?upgraded=true`,
         cancelUrl: window.location.href,
       })
-      window.location.href = res.data.data.checkoutUrl
+      window.location.href = res.data.data.checkout_url
     } catch {
       setError('Could not start checkout. Try again in a moment.')
       setLoading(false)

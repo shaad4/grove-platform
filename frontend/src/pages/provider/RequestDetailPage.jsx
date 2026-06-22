@@ -93,7 +93,7 @@ function CategoryChip({ category }) {
 }
 
 //  AI SUMMARY CARD 
-function AISummaryCard({ request, requestId, onRegenerate }) {
+function AISummaryCard({ request, requestId, onRegenerate, isPro }) {
   const [regenerating, setRegenerating] = useState(false)
   const isReady = Boolean(request.ai_summary)
 
@@ -128,14 +128,16 @@ function AISummaryCard({ request, requestId, onRegenerate }) {
 
           <div className="flex items-center gap-2">
             <CategoryChip category={request.ai_category} />
-            <button
-              onClick={handleRegenerate}
-              disabled={regenerating}
-              title="Regenerate summary"
-              className="h-7 w-7 flex items-center justify-center rounded-lg text-[#9ea89e] hover:text-[#0f6e56] hover:bg-[#f0faf6] transition-colors disabled:opacity-50"
-            >
-              <RefreshCw size={13} className={regenerating ? 'animate-spin' : ''} />
-            </button>
+            {isPro && (
+              <button
+                onClick={handleRegenerate}
+                disabled={regenerating}
+                title="Regenerate summary"
+                className="h-7 w-7 flex items-center justify-center rounded-lg text-[#9ea89e] hover:text-[#0f6e56] hover:bg-[#f0faf6] transition-colors disabled:opacity-50"
+              >
+                <RefreshCw size={13} className={regenerating ? 'animate-spin' : ''} />
+              </button>
+            )}
           </div>
         </div>
 
@@ -256,7 +258,7 @@ function DueDateEditor({ dueDate, requestId, onUpdate }) {
 }
 
 // ── DELIVER MODAL ─────────────────────────────────────────────
-function DeliverModal({ request, onClose, onSuccess }) {
+function DeliverModal({ request, onClose, onSuccess, isPro }) {
   const [mode, setMode] = useState('files')
   const [message, setMessage] = useState('')
   const [links, setLinks] = useState([{ url: '', label: '' }])
@@ -930,14 +932,16 @@ function DeliverModal({ request, onClose, onSuccess }) {
                     </p>
                   </div>
                   <div className="flex items-center gap-3">
-                    <button
-                      onClick={handleSuggestMessage}
-                      disabled={suggestingMessage}
-                      className="flex items-center gap-1.5 text-[11px] font-medium text-violet-600 hover:text-violet-700 transition-colors disabled:opacity-50"
-                    >
-                      <Sparkles size={12} className={suggestingMessage ? 'animate-pulse' : ''} />
-                      {suggestingMessage ? 'Drafting…' : 'Suggest message'}
-                    </button>
+                    {isPro && (
+                      <button
+                        onClick={handleSuggestMessage}
+                        disabled={suggestingMessage}
+                        className="flex items-center gap-1.5 text-[11px] font-medium text-violet-600 hover:text-violet-700 transition-colors disabled:opacity-50"
+                      >
+                        <Sparkles size={12} className={suggestingMessage ? 'animate-pulse' : ''} />
+                        {suggestingMessage ? 'Drafting…' : 'Suggest message'}
+                      </button>
+                    )}
                     <span className={`text-[11px] ${message.length > MAX_MESSAGE_LENGTH ? 'text-red-600 font-bold' : 'text-[#7c867d]'}`}>
                       {message.length}/{MAX_MESSAGE_LENGTH}
                     </span>
@@ -1137,7 +1141,7 @@ function ActivityLogModal({ requestId, statusConfig, onClose }) {
 }
 
 
-// ── MAIN PAGE ─────────────────────────────────────────────────
+//  MAIN PAGE 
 export default function RequestDetailPage() {
   const { requestId } = useParams()
   const navigate = useNavigate()
@@ -1146,6 +1150,7 @@ export default function RequestDetailPage() {
   const [notes, setNotes] = useState([])
   const [loading, setLoading] = useState(true)
   const [statusConfig, setStatusConfig] = useState(DEFAULT_STATUS_CONFIG)
+  const [isPro, setIsPro] = useState(false)
   const [noteContent, setNoteContent] = useState('')
   const [addingNote, setAddingNote] = useState(false)
   const [showDeliver, setShowDeliver] = useState(false)
@@ -1198,12 +1203,15 @@ export default function RequestDetailPage() {
 
   useEffect(() => {
     getWorkspace()
-      .then(r => setStatusConfig(buildStatusConfig(r.data.data?.custom_status_labels)))
+      .then(r => {
+        setStatusConfig(buildStatusConfig(r.data.data?.custom_status_labels))
+        setIsPro(r.data.data?.plan?.name === 'pro')
+      })
       .catch(() => {})
   }, [])
 
   useEffect(() => {
-    if (!req || req.ai_summary) return
+    if (!isPro || !req || req.ai_summary) return
 
     let cancelled = false
     let elapsed = 0
@@ -1224,7 +1232,7 @@ export default function RequestDetailPage() {
     }, INTERVAL)
 
     return () => { cancelled = true; clearInterval(interval) }
-  }, [requestId, req?.ai_summary])
+  }, [requestId, req?.ai_summary, isPro])
 
   const handleStatusChange = async (newStatus) => {
     if (newStatus === 'delivered') { setShowDeliver(true); return }
@@ -1446,11 +1454,14 @@ export default function RequestDetailPage() {
               </div>
             </div>
 
-            <AISummaryCard
-              request={req}
-              requestId={requestId}
-              onRegenerate={() => setReq(prev => ({ ...prev, ai_summary: null }))}
-            />
+            {isPro && (
+              <AISummaryCard
+                request={req}
+                requestId={requestId}
+                onRegenerate={() => setReq(prev => ({ ...prev, ai_summary: null }))}
+                isPro={isPro}
+              />
+            )}
 
             {/* Details + history */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
@@ -1683,6 +1694,7 @@ export default function RequestDetailPage() {
               activities={activities}
               wsRef={chatWsRef}
               onSignal={handleSignal}
+              isPro={isPro}
             />
           </div>
 
@@ -1702,6 +1714,7 @@ export default function RequestDetailPage() {
           request={req}
           onClose={() => setShowDeliver(false)}
           onSuccess={() => { setShowDeliver(false); fetchAll() }}
+          isPro={isPro}
         />
       )}
       <VideoCall

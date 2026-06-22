@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { ChevronRight, AlertCircle, Users, Inbox, CheckCircle2, Clock3, MoreHorizontal, UserX, TrendingUp, Sparkles, X} from 'lucide-react'
 import { useWebSocket } from '../../hooks/useWebSocket'
 import ConnectionPill from '../../components/ui/ConnectionPill'
-import { useSelector } from 'react-redux'
+import { useSelector, useDispatch } from 'react-redux'
 import { selectAccessToken } from '../../features/auth/authSlice'
 import { useNavigate } from 'react-router-dom'
 import ProviderLayout from '../../components/layout/ProviderLayout'
@@ -11,6 +11,8 @@ import AddClientModal from '../../components/modals/AddClientModal'
 import { useAuth } from '../../context/AuthContext'
 import clientsApi from '../../api/clients.api'
 import dashboardApi from '../../api/dashboard.api'
+import { getWorkspace } from '../../api/settings.api'
+import { openUpgradeModal } from '../../features/billing/billingSlice'
 import LiveFeed from '../../components/chat/LiveFeed'
 
 
@@ -307,20 +309,31 @@ function BusiestHeatmap({ heatmap }) {
 
 //  Plan Usage 
 
-function PlanUsage({ clientCount, clientLimit, openRequests }) {
+function PlanUsage({ clientCount, clientLimit, openRequests, isPro }) {
+  const dispatch = useDispatch()
   const atLimit  = clientCount >= clientLimit
   const usagePct = Math.min(Math.round((clientCount / clientLimit) * 100), 100)
+
+  const handleUpgrade = () => {
+    dispatch(openUpgradeModal({
+      reason: 'limit_reached',
+      message: "You've reached your client limit on the Free plan.",
+    }))
+  }
+
   return (
-    <div className={`rounded-2xl border p-5 ${atLimit ? 'border-[#fca5a5] bg-[#fff8f8]' : 'border-[#b3e0d1] bg-[#f0faf6]'}`}>
-      <p className={`text-[13px] font-semibold mb-4 ${atLimit ? 'text-[#92500a]' : 'text-[#085041]'}`}>Plan usage</p>
+    <div className={`rounded-2xl border p-5 ${atLimit && !isPro ? 'border-[#fca5a5] bg-[#fff8f8]' : 'border-[#b3e0d1] bg-[#f0faf6]'}`}>
+     <p className={`text-[13px] font-semibold mb-4 ${atLimit && !isPro ? 'text-[#92500a]' : 'text-[#085041]'}`}>Plan usage</p>
       <div className="mb-4">
         <div className="flex justify-between text-[12px] text-[#4a544a] mb-1.5">
-          <span>Clients · {clientCount} of {clientLimit} used</span>
-          <span>{usagePct}%</span>
+          <span>Clients · {clientCount} of {isPro ? '∞' : clientLimit} used</span>
+          {!isPro && <span>{usagePct}%</span>}
         </div>
-        <div className="h-1.5 rounded-full bg-[#e8eae8] overflow-hidden">
-          <div className={`h-full rounded-full ${atLimit ? 'bg-[#e24b4a]' : 'bg-[#0f6e56]'}`} style={{ width: `${usagePct}%` }} />
-        </div>
+        {!isPro && (
+          <div className="h-1.5 rounded-full bg-[#e8eae8] overflow-hidden">
+            <div className={`h-full rounded-full ${atLimit ? 'bg-[#e24b4a]' : 'bg-[#0f6e56]'}`} style={{ width: `${usagePct}%` }} />
+          </div>
+        )}
       </div>
       <div className="mb-4">
         <div className="flex justify-between text-[12px] text-[#4a544a] mb-1.5">
@@ -330,20 +343,25 @@ function PlanUsage({ clientCount, clientLimit, openRequests }) {
           </span>
         </div>
         <div className="h-1.5 rounded-full bg-[#e8eae8]" />
-        <p className="text-[11px] text-[#9ea89e] mt-1">No limit on free</p>
+        <p className="text-[11px] text-[#9ea89e] mt-1">No limit{isPro ? '' : ' on free'}</p>
       </div>
-      {atLimit ? (
-        <div className="pt-4 border-t border-[#fca5a5]/40">
-          <p className="text-[13px] font-medium text-[#92500a]">You've reached your client limit.</p>
-          <p className="text-[12px] text-[#4a544a] mt-1 mb-3">Upgrade to Pro to add unlimited clients.</p>
-          <button className="w-full flex items-center justify-center gap-2 rounded-xl bg-[#0f6e56] py-3 text-[13px] font-medium text-white hover:bg-[#0c5b47] transition-colors">
-            Upgrade to Pro <ChevronRight size={14} />
-          </button>
-        </div>
-      ) : (
-        <p className="text-[12px] text-[#4a544a]">
-          {clientLimit - clientCount} slot{clientLimit - clientCount !== 1 ? 's' : ''} remaining on Free plan.
-        </p>
+      {!isPro && (
+        atLimit ? (
+          <div className="pt-4 border-t border-[#fca5a5]/40">
+            <p className="text-[13px] font-medium text-[#92500a]">You've reached your client limit.</p>
+            <p className="text-[12px] text-[#4a544a] mt-1 mb-3">Upgrade to Pro to add unlimited clients.</p>
+            <button
+              onClick={handleUpgrade}
+              className="w-full flex items-center justify-center gap-2 rounded-xl bg-[#0f6e56] py-3 text-[13px] font-medium text-white hover:bg-[#0c5b47] transition-colors disabled:opacity-60"
+            >
+              Upgrade to Pro <ChevronRight size={14} />
+            </button>
+          </div>
+        ) : (
+          <p className="text-[12px] text-[#4a544a]">
+            {clientLimit - clientCount} slot{clientLimit - clientCount !== 1 ? 's' : ''} remaining on Free plan.
+          </p>
+        )
       )}
     </div>
   )
@@ -361,6 +379,7 @@ export default function ProviderDashboard() {
   const [stats,          setStats]          = useState(null)
   const [loadingStats,   setLoadingStats]   = useState(true)
   const [statsError,     setStatsError]     = useState(false)
+  const [isPro,          setIsPro]          = useState(false)
 
   const fetchClients = useCallback(async () => {
     try {
@@ -379,6 +398,12 @@ export default function ProviderDashboard() {
 
   useEffect(() => { fetchClients(); fetchStats() }, [fetchClients, fetchStats])
 
+  useEffect(() => {
+    getWorkspace()
+      .then(r => setIsPro(r.data.data?.plan?.name === 'pro'))
+      .catch(() => {})
+  }, [])
+
   const s = stats?.stats ?? {}
   const clientCount = s.total_clients ?? clients.length
   const clientLimit = 3
@@ -392,7 +417,7 @@ export default function ProviderDashboard() {
             title="Dashboard"
             rightSlot={<ConnectionPill connectionKey="feed" />}
             onAddClient={() => setShowAddClient(true)}
-            showAddBtn={!atLimit}
+            showAddBtn={isPro || !atLimit}
           />
         }
       >
@@ -511,7 +536,7 @@ export default function ProviderDashboard() {
               </div>
               {loadingStats ? <Skeleton className="h-[180px]" /> : <BusiestHeatmap heatmap={stats?.heatmap} />}
             </div>
-            <PlanUsage clientCount={clientCount} clientLimit={clientLimit} openRequests={s.open_requests} />
+            <PlanUsage clientCount={clientCount} clientLimit={clientLimit} openRequests={s.open_requests} isPro={isPro} />
           </div>
 
         </div>

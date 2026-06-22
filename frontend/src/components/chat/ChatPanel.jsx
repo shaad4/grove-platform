@@ -142,6 +142,7 @@ export default function ChatPanel({
   activities = [],
   wsRef,
   onSignal,
+  isPro,
 }) {
   const [messages,    setMessages]    = useState([])
   const [input,       setInput]       = useState('')
@@ -549,14 +550,16 @@ export default function ChatPanel({
           {/* AI reply suggestions */}
           <div className="mb-3">
             <div className="flex items-center justify-between mb-2">
-              <button
-                onClick={fetchSuggestions}
-                disabled={loadingSuggestions}
-                className="flex items-center gap-1.5 text-[11px] font-medium text-violet-600 hover:text-violet-700 transition-colors disabled:opacity-50"
-              >
-                <Sparkles size={12} className={loadingSuggestions ? 'animate-pulse' : ''} />
-                {loadingSuggestions ? 'Thinking of replies…' : showSuggestions ? 'Refresh suggestions' : 'Suggest replies'}
-              </button>
+             {isPro && (
+                <button
+                  onClick={fetchSuggestions}
+                  disabled={loadingSuggestions}
+                  className="flex items-center gap-1.5 text-[11px] font-medium text-violet-600 hover:text-violet-700 transition-colors disabled:opacity-50"
+                >
+                  <Sparkles size={12} className={loadingSuggestions ? 'animate-pulse' : ''} />
+                  {loadingSuggestions ? 'Thinking of replies…' : showSuggestions ? 'Refresh suggestions' : 'Suggest replies'}
+                </button>
+              )}
               {showSuggestions && !loadingSuggestions && (
                 <button onClick={() => setShowSuggestions(false)} className="text-[11px] text-slate-400 hover:text-slate-600">
                   Hide

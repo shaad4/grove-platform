@@ -9,10 +9,12 @@ import {
   LogOut,
   ChevronDown,
   PanelLeftClose,
+  Sparkles,
 } from 'lucide-react'
 
 import { useAuth } from '../../context/AuthContext'
 import PortalSwitcher from './PortalSwitcher'
+import { getWorkspace } from '../../api/settings.api'
 
 import ProviderSettingsModal from '../modals/ProviderSettingsModal'
 
@@ -45,6 +47,16 @@ export default function ProviderSidebar({
   badges = {},
 }) {
   const { user, logout } = useAuth()
+
+  const [planName, setPlanName] = useState(null)
+
+  useEffect(() => {
+    getWorkspace()
+      .then(r => setPlanName(r.data.data?.plan?.name))
+      .catch(() => {})
+  }, [])
+
+  const isPro = planName === 'pro'
 
   const [isCollapsed, setIsCollapsed] =
     useState(() => {
@@ -283,6 +295,27 @@ export default function ProviderSidebar({
               </NavLink>
             )
           )}
+
+          {planName && !isPro && (
+            <NavLink
+              to="/upgrade"
+              title={isCollapsed ? 'Upgrade to Pro' : undefined}
+              className={({ isActive }) =>
+                `relative flex items-center rounded-xl text-[14px] transition-all duration-200
+                ${isCollapsed ? 'justify-center py-2.5' : 'gap-3 px-3 py-2.5'}
+                ${isActive
+                  ? 'bg-emerald-400/15 text-emerald-300 font-medium'
+                  : 'text-emerald-300/70 hover:bg-emerald-400/10 hover:text-emerald-300'
+                }`
+              }
+            >
+              <Sparkles size={17} className="shrink-0" />
+              {!isCollapsed && (
+                <span className="flex-1 tracking-wide">Upgrade to Pro</span>
+              )}
+            </NavLink>
+          )}
+
         </nav>
 
         {/* ───────────────── Footer ───────────────── */}
@@ -363,7 +396,7 @@ export default function ProviderSidebar({
                   </p>
 
                   <p className="text-[11px] text-white/30 mt-0.5">
-                    Free plan
+                    {planName ? `${planName.charAt(0).toUpperCase()}${planName.slice(1)} plan` : '—'}
                   </p>
                 </div>
               )}

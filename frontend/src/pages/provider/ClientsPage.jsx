@@ -13,6 +13,9 @@ import AddClientModal from '../../components/modals/AddClientModal'
 import EditClientModal from '../../components/modals/EditClientModal'
 import DeleteClientModal from '../../components/modals/DeleteClientModal'
 import clientsApi from '../../api/clients.api'
+import { useDispatch } from 'react-redux'
+import { openUpgradeModal } from '../../features/billing/billingSlice'
+import { getWorkspace } from '../../api/settings.api'
 import { getTagColor, getAvatarColor, getInitials, timeAgo } from '../../utils/clientHelpers'
 
 // STATUS CONFIG 
@@ -336,6 +339,7 @@ function Toast({ message, type = 'success' }) {
 // ─── PAGE ─────────────────────────────────────────────────────
 export default function ClientsPage() {
   const navigate = useNavigate()
+  const dispatch = useDispatch()
   const [clients, setClients] = useState([])
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState('all')
@@ -348,11 +352,34 @@ export default function ClientsPage() {
   const [editTarget, setEditTarget] = useState(null)
   const [deleteTarget, setDeleteTarget] = useState(null)
   const [actionLoading, setActionLoading] = useState(null) // clientId
+  const [isPro, setIsPro] = useState(false)
+
+  useEffect(() => {
+    getWorkspace()
+      .then(r => setIsPro(r.data.data?.plan?.name === 'pro'))
+      .catch(() => {})
+  }, [])
 
   const showToast = (message, type = 'success') => {
     setToast({ message, type })
     setTimeout(() => setToast(null), 3000)
   }
+
+  const handleUpgrade = () => {
+    dispatch(openUpgradeModal({
+      reason: 'limit_reached',
+      message: "You've reached your client limit on the Free plan.",
+    }))
+  }
+
+  const handleAddClientClick = () => {
+    if (clientCount >= 3 && !isPro) {
+      handleUpgrade()
+    } else {
+      setShowAdd(true)
+    }
+  }
+
 
   const fetchClients = async () => {
     try {
@@ -438,6 +465,7 @@ export default function ClientsPage() {
             title="Clients"
             liveIndicator
             onAddClient={() => setShowAdd(true)}
+            onAddClient={handleAddClientClick}
             showAddBtn
           />
         }
@@ -536,7 +564,7 @@ export default function ClientsPage() {
               </p>
               {!search && filter === 'all' && (
                 <button
-                  onClick={() => setShowAdd(true)}
+                  onClick={handleAddClientClick}
                   className="mt-6 flex items-center gap-2 rounded-xl bg-[#0f6e56] px-5 py-2.5 text-[13px] font-medium text-white hover:bg-[#085041] transition-colors"
                 >
                   <Plus size={15} />
@@ -567,7 +595,7 @@ export default function ClientsPage() {
               ))}
 
               {/* Upgrade card if at limit */}
-              {clientCount >= 3 && (
+              {clientCount >= 3 && !isPro && (
                 <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-[#d1e8df] bg-[#f7fbf9] p-8 text-center">
                   <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#e6f5f0]">
                     <span className="text-xl">🔒</span>
@@ -576,9 +604,12 @@ export default function ClientsPage() {
                   <p className="mt-1.5 text-[12px] text-[#9ea89e]">
                     Upgrade to Pro to add unlimited clients and access advanced collaboration tools.
                   </p>
-                  <button className="mt-5 flex items-center gap-2 rounded-xl bg-[#0f6e56] px-5 py-2.5 text-[13px] font-medium text-white hover:bg-[#085041] transition-colors">
+                  <button
+                    onClick={handleUpgrade}
+                    className="mt-5 flex items-center gap-2 rounded-xl bg-[#0f6e56] px-5 py-2.5 text-[13px] font-medium text-white hover:bg-[#085041] transition-colors"
+                  >
                     Upgrade to Pro
-                    <ChevronRight size={14} />
+                   <ChevronRight size={14} />
                   </button>
                 </div>
               )}
