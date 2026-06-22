@@ -199,3 +199,15 @@ class AdminUserSendPasswordResetView(APIView):
         except UserNotFound as e:
             return Response({"success": False, "message": str(e)}, status=404)
         return Response({"success": True, "message": f"Password reset email sent to {user.email}."})
+
+
+class AdminUserDeactivateView(APIView):
+    permission_classes = [IsGroveSuperuser]
+
+    def post(self, request, user_id):
+        try:
+            user = UserAdminService.toggle_deactivate(request.user, user_id)
+        except UserNotFound as e:
+            return Response({"success": False, "message": str(e)}, status=404)
+        state = "deactivated" if not user.is_active else "reactivated"
+        return Response({"success": True, "message": f"{user.email} {state}.", "data": {"is_active": user.is_active}})
