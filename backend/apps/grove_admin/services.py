@@ -14,6 +14,7 @@ from apps.common.logger import logger
 
 from .repositories import (
     UserAdminRepository,
+    TenantAdminRepository,
 )
 
 # custom exceptions
@@ -81,4 +82,52 @@ class GroveAdminAuthService:
         admin_user = UserAdminRepository.get_or_create_admin_user(expected_email)
         logger.info(f"[grove_admin_auth] Successful admin login from IP {ip_address}.")
         return admin_user
+
+class StatsService:
+
+    @staticmethod
+    def get_dashboard_stats():
+        now = timezone.now()
+        week_ago = now - timezone.timedelta(days=7)
+        two_weeks_ago = now - timezone.timedelta(days=14)
+
+        total_tenants = TenantAdminRepository.count_total()
+        total_users = UserAdminRepository.count_total_users()
+        total_requests = Request.objects.filter(is_deleted=False).count()
+
+        free_count = TenantAdminRepository.count_by_plan("free")
+        pro_count = TenantAdminRepository.count_by_plan("pro")
+
+        signups_this_week = TenantAdminRepository.signup_count_since(week_ago)
+        signups_prior_week = TenantAdminRepository.signup_count_between(two_weeks_ago, week_ago)
+        signup_delta = signups_this_week - signups_prior_week
+
+        recent_tenants = TenantAdminRepository.recent(limit=5)
+
+        at_limit = []
+        for tenant, usage in TenantAdminRepository.free_tenants_with_usage():
+            if usage is None:
+                continue
+            client_limit = tenant.effective_client_limit
+            request_limit = tenant.plan.request_limit if tenant.plan else None
+            client_maxed = client_limit != -1 and usage.client_count >= client_limit
+            request_maxed = request_limit not in (None, -1) and usage.active_request_count >= request_limit
+            if client_maxed or request_maxed:
+                at_limit.append(tenant)
+
+        return {
+            "total_tenants": total_tenants,
+            "total_users": total_users,
+            "total_requests": total_requests,
+            "free_count": free_count,
+            "pro_count": pro_count,
+            "signups_this_week": signups_this_week,
+            "signup_delta": signup_delta,
+            "recent_tenants": recent_tenants,
+            "tenants_at_limit": at_limit,
+        }
+
+
+
+
 

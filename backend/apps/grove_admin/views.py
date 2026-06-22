@@ -9,12 +9,14 @@ from apps.common.logger import logger
 from .permissions import IsGroveSuperuser
 from .serializers import (
     GroveAdminLoginSerializer,
+    AdminStatsSerializer,
 )
 
 from .services import (
     GroveAdminAuthService,
     AccountLocked,
     InvalidAdminCredentials,
+    StatsService,
 
 
 )
@@ -59,3 +61,15 @@ class GroveAdminLoginView(APIView):
         })
         set_auth_cookies(response, refresh, cookie_name="grove_admin_refresh")
         return response
+    
+
+class AdminTenantListView(APIView):
+    permission_classes = [IsGroveSuperuser]
+
+    def get(self, request):
+        try:
+            data = StatsService.get_dashboard_stats()
+        except Exception as e:
+            logger.error(f"[grove_admin] Failed to load stats: {e}")
+            return Response({"success": False, "message": "Could not load dashboard stats."}, status=500)
+        return Response({"success": True, "data": AdminStatsSerializer(data).data})
