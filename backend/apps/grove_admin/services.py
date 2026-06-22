@@ -15,6 +15,8 @@ from apps.common.logger import logger
 from .repositories import (
     UserAdminRepository,
     TenantAdminRepository,
+    AdminActionRepository,
+    PlanAdminRepository,
 )
 
 # custom exceptions
@@ -126,6 +128,101 @@ class StatsService:
             "recent_tenants": recent_tenants,
             "tenants_at_limit": at_limit,
         }
+    
+class TenantAdminService:
+
+    @staticmethod
+    def list_tenants(search=None, plan_name=None, status=None):
+        tenants = list(TenantAdminRepository.search_and_filter(search, plan_name, status))
+        usage_map = TenantAdminRepository.usage_map([t.id for t in tenants])
+        return [{"tenant": t, "usage": usage_map.get(t.id)} for t in tenants]
+
+    @staticmethod
+    def get_tenant_detail(tenant_id):
+        tenant = TenantAdminRepository.get_by_id(tenant_id)
+        if not tenant:
+            raise TenantNotFound("Tenant not found.")
+
+        usage = TenantAdminRepository.get_usage(tenant)
+        clients = Client.objects.filter(tenant=tenant, is_deleted=False).select_related("user")
+
+        provider_membership = (
+            TenantMembership.objects
+            .filter(tenant=tenant, role=TenantMembership.Role.PROVIDER, is_active=True)
+            .select_related("user")
+            .first()
+        )
+        provider_email = provider_membership.user.email if provider_membership else None
+
+        return {
+            "tenant": tenant,
+            "usage": usage,
+            "clients": clients,
+            "provider_email": provider_email,
+        }
+
+    @staticmethod
+    @transaction.atomic
+    def upgrade_to_pro(admin, tenant_id):
+        tenant = TenantAdminRepository.get_by_id(tenant_id)
+        if not tenant:
+            raise TenantNotFound("Tenant not found.")
+        pro_plan = PlanAdminRepository.get_by_name("pro")
+        if not pro_plan:
+            raise PlanNotFound("Pro plan is not configured.")
+        TenantAdminRepository.set_plan(tenant, pro_plan)
+        AdminActionRepository.log(admin, "upgrade_plan", "tenant", tenant.id, {"new_plan": "pro"})
+        logger.info(f"[grove_admin] Tenant {tenant.slug} upgraded to Pro by {admin.email}.")
+        return tenant
+
+    @staticmethod
+    @transaction.atomic
+    def downgrade_to_free(admin, tenant_id):
+        tenant = TenantAdminRepository.get_by_id(tenant_id)
+        if not tenant:
+            raise TenantNotFound("Tenant not found.")
+        free_plan = PlanAdminRepository.get_by_name("free")
+        if not free_plan:
+            raise PlanNotFound("Free plan is not configured.")
+        TenantAdminRepository.set_plan(tenant, free_plan)
+        AdminActionRepository.log(admin, "downgrade_plan", "tenant", tenant.id, {"new_plan": "free"})
+        logger.info(f"[grove_admin] Tenant {tenant.slug} downgraded to Free by {admin.email}.")
+        return tenant
+
+    @staticmethod
+    @transaction.atomic
+    def suspend(admin, tenant_id):
+        tenant = TenantAdminRepository.get_by_id(tenant_id)
+        if not tenant:
+            raise TenantNotFound("Tenant not found.")
+        TenantAdminRepository.set_suspended(tenant, True)
+        AdminActionRepository.log(admin, "suspend_tenant", "tenant", tenant.id)
+        logger.warning(f"[grove_admin] Tenant {tenant.slug} suspended by {admin.email}.")
+        return tenant
+
+    @staticmethod
+    @transaction.atomic
+    def unsuspend(admin, tenant_id):
+        tenant = TenantAdminRepository.get_by_id(tenant_id)
+        if not tenant:
+            raise TenantNotFound("Tenant not found.")
+        TenantAdminRepository.set_suspended(tenant, False)
+        AdminActionRepository.log(admin, "unsuspend_tenant", "tenant", tenant.id)
+        logger.info(f"[grove_admin] Tenant {tenant.slug} unsuspended by {admin.email}.")
+        return tenant
+
+    @staticmethod
+    @transaction.atomic
+    def override_client_limit(admin, tenant_id, limit):
+        if limit is not None and limit != -1 and limit < 0:
+            raise InvalidLimitValue("Limit must be -1 (unlimited), null (clear override), or a positive integer.")
+        tenant = TenantAdminRepository.get_by_id(tenant_id)
+        if not tenant:
+            raise TenantNotFound("Tenant not found.")
+        TenantAdminRepository.set_client_limit_override(tenant, limit)
+        AdminActionRepository.log(admin, "override_client_limit", "tenant", tenant.id, {"limit": limit})
+        logger.info(f"[grove_admin] Tenant {tenant.slug} client limit overridden to {limit} by {admin.email}.")
+        return tenant
 
 
 

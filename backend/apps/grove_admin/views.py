@@ -10,6 +10,7 @@ from .permissions import IsGroveSuperuser
 from .serializers import (
     GroveAdminLoginSerializer,
     AdminStatsSerializer,
+    AdminTenantListSerializer,
 )
 
 from .services import (
@@ -17,6 +18,7 @@ from .services import (
     AccountLocked,
     InvalidAdminCredentials,
     StatsService,
+    TenantAdminService,
 
 
 )
@@ -62,6 +64,18 @@ class GroveAdminLoginView(APIView):
         set_auth_cookies(response, refresh, cookie_name="grove_admin_refresh")
         return response
     
+class AdminStatsView(APIView):
+    permission_classes = [IsGroveSuperuser]
+
+    def get(self, request):
+        try:
+            data = StatsService.get_dashboard_stats()
+        except Exception as e:
+            logger.error(f"[grove_admin] Failed to load stats: {e}")
+            return Response({"success": False, "message": "Could not load dashboard stats."}, status=500)
+        return Response({"success": True, "data": AdminStatsSerializer(data).data})
+
+    
 
 class AdminTenantListView(APIView):
     permission_classes = [IsGroveSuperuser]
@@ -73,3 +87,16 @@ class AdminTenantListView(APIView):
             logger.error(f"[grove_admin] Failed to load stats: {e}")
             return Response({"success": False, "message": "Could not load dashboard stats."}, status=500)
         return Response({"success": True, "data": AdminStatsSerializer(data).data})
+
+
+class AdminTenantListView(APIView):
+    permission_classes = [IsGroveSuperuser]
+
+    def get(self, request):
+        rows = TenantAdminService.list_tenants(
+            search=request.query_params.get("search"),
+            plan_name=request.query_params.get("plan"),
+            status=request.query_params.get("status"),
+        )
+        serializer = AdminTenantListSerializer(rows, many=True)
+        return Response({"success": True, "data": {"tenants": serializer.data, "total": len(rows)}})

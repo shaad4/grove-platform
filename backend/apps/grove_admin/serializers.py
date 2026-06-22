@@ -31,3 +31,19 @@ class AdminStatsSerializer(serializers.Serializer):
                 for t in data["tenants_at_limit"]
             ],
         }
+    
+class AdminTenantListSerializer(serializers.Serializer):
+    def to_representation(self, row):
+        tenant, usage = row["tenant"], row["usage"]
+        return {
+            "id": str(tenant.id),
+            "name": tenant.name,
+            "slug": tenant.slug,
+            "plan": tenant.plan.name if tenant.plan else None,
+            "client_count": usage.client_count if usage else 0,
+            "client_limit": tenant.effective_client_limit,
+            "request_count": usage.active_request_count if usage else 0,
+            "request_limit": tenant.plan.request_limit if tenant.plan else None,
+            "is_suspended": tenant.is_suspended,
+            "created_at": tenant.created_at,
+        }
