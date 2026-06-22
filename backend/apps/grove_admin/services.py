@@ -279,4 +279,39 @@ class UserAdminService:
         return user
 
 
+class PlanAdminService:
+
+    @staticmethod
+    def get_plan_overview():
+        free_count = TenantAdminRepository.count_by_plan("free")
+        pro_count = TenantAdminRepository.count_by_plan("pro")
+
+        rows = []
+        at_limit_count = 0
+        for tenant, usage in TenantAdminRepository.all_tenants_with_usage():
+            client_limit = tenant.effective_client_limit
+            request_limit = tenant.plan.request_limit if tenant.plan else None
+            client_count = usage.client_count if usage else 0
+            request_count = usage.active_request_count if usage else 0
+
+            client_maxed = client_limit != -1 and client_count >= client_limit
+            request_maxed = request_limit not in (None, -1) and request_count >= request_limit
+            if client_maxed or request_maxed:
+                at_limit_count += 1
+
+            rows.append({
+                "tenant": tenant,
+                "client_count": client_count,
+                "client_limit": client_limit,
+                "request_count": request_count,
+                "request_limit": request_limit,
+            })
+
+        return {
+            "free_count": free_count,
+            "pro_count": pro_count,
+            "at_limit_count": at_limit_count,
+            "rows": rows,
+        }
+
 

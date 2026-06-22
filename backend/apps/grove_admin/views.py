@@ -14,6 +14,7 @@ from .serializers import (
     AdminTenantDetailSerializer,
     OverrideLimitSerializer,
     AdminUserListSerializer,
+    AdminPlanOverviewSerializer,
 )
 
 from .services import (
@@ -27,6 +28,7 @@ from .services import (
     InvalidLimitValue,
     UserAdminService,
     UserNotFound,
+    PlanAdminService,
 
 
 )
@@ -211,3 +213,15 @@ class AdminUserDeactivateView(APIView):
             return Response({"success": False, "message": str(e)}, status=404)
         state = "deactivated" if not user.is_active else "reactivated"
         return Response({"success": True, "message": f"{user.email} {state}.", "data": {"is_active": user.is_active}})
+
+
+class AdminPlanListView(APIView):
+    permission_classes = [IsGroveSuperuser]
+
+    def get(self, request):
+        try:
+            data = PlanAdminService.get_plan_overview()
+        except Exception as e:
+            logger.error(f"[grove_admin] Failed to load plan overview: {e}")
+            return Response({"success": False, "message": "Could not load plan data."}, status=500)
+        return Response({"success": True, "data": AdminPlanOverviewSerializer(data).data})

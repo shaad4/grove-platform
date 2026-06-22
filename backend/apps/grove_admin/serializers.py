@@ -90,3 +90,24 @@ class AdminUserListSerializer(serializers.Serializer):
             "last_login": membership.user.last_login,
             "is_active": membership.user.is_active,
         }
+    
+
+class AdminPlanOverviewSerializer(serializers.Serializer):
+    def to_representation(self, data):
+        return {
+            "free_count": data["free_count"],
+            "pro_count": data["pro_count"],
+            "at_limit_count": data["at_limit_count"],
+            "rows": [
+                {
+                    "tenant_id": str(row["tenant"].id),
+                    "tenant_name": row["tenant"].name,
+                    "plan": row["tenant"].plan.name if row["tenant"].plan else None,
+                    "client_count": row["client_count"],
+                    "client_limit": row["client_limit"],
+                    "request_count": row["request_count"],
+                    "request_limit": row["request_limit"],
+                }
+                for row in data["rows"]
+            ],
+        }

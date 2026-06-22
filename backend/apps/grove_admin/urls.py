@@ -12,7 +12,8 @@ from .views import (
     AdminUserListView,
     AdminUserSendPasswordResetView,
     AdminUserDeactivateView,
-    
+    AdminPlanListView,
+
 
 
 )
@@ -32,5 +33,6 @@ urlpatterns = [
     path("api/users/", AdminUserListView.as_view()),
     path("api/users/<uuid:user_id>/send-password-reset/", AdminUserSendPasswordResetView.as_view()),
     path("api/users/<uuid:user_id>/deactivate/", AdminUserDeactivateView.as_view()),
+    path("api/plans/", AdminPlanListView.as_view()),
 
 ]
