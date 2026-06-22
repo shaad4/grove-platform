@@ -11,6 +11,7 @@ from .serializers import (
     GroveAdminLoginSerializer,
     AdminStatsSerializer,
     AdminTenantListSerializer,
+    AdminTenantDetailSerializer
 )
 
 from .services import (
@@ -19,6 +20,7 @@ from .services import (
     InvalidAdminCredentials,
     StatsService,
     TenantAdminService,
+    TenantNotFound,
 
 
 )
@@ -75,7 +77,6 @@ class AdminStatsView(APIView):
             return Response({"success": False, "message": "Could not load dashboard stats."}, status=500)
         return Response({"success": True, "data": AdminStatsSerializer(data).data})
 
-    
 
 class AdminTenantListView(APIView):
     permission_classes = [IsGroveSuperuser]
@@ -89,14 +90,13 @@ class AdminTenantListView(APIView):
         return Response({"success": True, "data": AdminStatsSerializer(data).data})
 
 
-class AdminTenantListView(APIView):
+class AdminTenantDetailView(APIView):
     permission_classes = [IsGroveSuperuser]
 
-    def get(self, request):
-        rows = TenantAdminService.list_tenants(
-            search=request.query_params.get("search"),
-            plan_name=request.query_params.get("plan"),
-            status=request.query_params.get("status"),
-        )
-        serializer = AdminTenantListSerializer(rows, many=True)
-        return Response({"success": True, "data": {"tenants": serializer.data, "total": len(rows)}})
+    def get(self, request, tenant_id):
+        try:
+            data = TenantAdminService.get_tenant_detail(tenant_id)
+        except TenantNotFound as e:
+            return Response({"success": False, "message": str(e)}, status=404)
+        return Response({"success": True, "data": AdminTenantDetailSerializer(data).data})
+
