@@ -4,6 +4,7 @@ from .views import (
     AdminStatsView,
     AdminTenantListView,
     AdminTenantDetailView,
+    AdminTenantUpgradeView,
     
 )
 
@@ -13,5 +14,6 @@ urlpatterns = [
     path("api/stats/", AdminStatsView.as_view()),
     path("api/tenants/", AdminTenantListView.as_view()),
     path("api/tenants/<uuid:tenant_id>/", AdminTenantDetailView.as_view()),
+    path("api/tenants/<uuid:tenant_id>/upgrade/", AdminTenantUpgradeView.as_view()),
 
 ]

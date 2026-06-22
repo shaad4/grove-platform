@@ -21,6 +21,7 @@ from .services import (
     StatsService,
     TenantAdminService,
     TenantNotFound,
+    PlanNotFound,
 
 
 )
@@ -100,3 +101,16 @@ class AdminTenantDetailView(APIView):
             return Response({"success": False, "message": str(e)}, status=404)
         return Response({"success": True, "data": AdminTenantDetailSerializer(data).data})
 
+
+class AdminTenantUpgradeView(APIView):
+    permission_classes = [IsGroveSuperuser]
+
+    def post(self, request, tenant_id):
+        try:
+            tenant = TenantAdminService.upgrade_to_pro(request.user, tenant_id)
+        except TenantNotFound as e:
+            return Response({"success": False, "message": str(e)}, status=404)
+        except PlanNotFound as e:
+            logger.error(f"[grove_admin] {e}")
+            return Response({"success": False, "message": str(e)}, status=500)
+        return Response({"success": True, "message": f"{tenant.name} upgraded to Pro."})
