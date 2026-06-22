@@ -1,7 +1,6 @@
 from django.db.models import Q
 
-from apps.tenants.models import Tenant, TenantMembership, TenantUsage
-from apps.plans.models import Plan
+from apps.tenants.models import Tenant, TenantMembership, TenantUsage, Plan
 from apps.users.models import User
 
 from .models import AdminAction

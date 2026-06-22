@@ -30,6 +30,6 @@ urlpatterns = [
     path("api/settings/", include("apps.settings.urls")),
     path("api/billing/", include("apps.plans.urls")),
     path("api/webhooks/", include(webhook_urlpatterns)),
-    path("grove-admin/", include("apps.grove_admin.urls")),  
+    path("api/grove-admin/", include("apps.grove_admin.urls")),  
 
 ]

@@ -41,6 +41,16 @@ class TenantMiddleware:
                 except Tenant.DoesNotExist:
                     pass
 
+        if request.tenant is not None and request.tenant.is_suspended:
+            return JsonResponse(
+                {
+                    "success": False,
+                    "error_type": "tenant_suspended",
+                    "message": "This workspace has been suspended.",
+                },
+                status=403,
+            )
+
         request.tenant_membership = None
         auth_user = None
 
