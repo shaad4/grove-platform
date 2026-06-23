@@ -624,6 +624,7 @@ class MembershipsView(APIView):
                 "tenant_name": m.tenant.name,
                 "tenant_slug": m.tenant.slug,
                 "tenant_logo": m.tenant.logo_url,
+                "is_suspended": m.tenant.is_suspended,  
             }
             if m.role == TenantMembership.Role.PROVIDER:
                 provider_portals.append(portal)
@@ -634,4 +635,3 @@ class MembershipsView(APIView):
             "provider_portals": provider_portals,
             "client_portals":   client_portals,
         })
- 

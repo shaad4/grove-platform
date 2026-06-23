@@ -62,7 +62,11 @@ class GroveAdminTokenRefreshView(APIView):
             logger.warning(f"[grove_admin_auth] Refresh attempted with a non-superuser token (user_id={user_id}).")
             return Response({"success": False, "message": "Invalid session."}, status=401)
 
-        return Response({"success": True, "access": str(refresh.access_token)})
+        return Response({
+            "success": True,
+            "access": str(refresh.access_token),
+            "admin": {"email": admin_user.email},
+        })
 
 
 class GroveAdminLoginView(APIView):
@@ -113,12 +117,20 @@ class AdminTenantListView(APIView):
 
     def get(self, request):
         try:
-            data = StatsService.get_dashboard_stats()
+            rows = TenantAdminService.list_tenants(
+                search=request.query_params.get("search"),
+                plan_name=request.query_params.get("plan"),
+                status=request.query_params.get("status"),
+            )
         except Exception as e:
-            logger.error(f"[grove_admin] Failed to load stats: {e}")
-            return Response({"success": False, "message": "Could not load dashboard stats."}, status=500)
-        return Response({"success": True, "data": AdminStatsSerializer(data).data})
+            logger.error(f"[grove_admin] Failed to load tenants: {e}")
+            return Response({"success": False, "message": "Could not load tenants."}, status=500)
 
+        serializer = AdminTenantListSerializer(rows, many=True)
+        return Response({
+            "success": True,
+            "data": {"results": serializer.data, "total": len(rows)},
+        })
 
 class AdminTenantDetailView(APIView):
     permission_classes = [IsGroveSuperuser]

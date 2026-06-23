@@ -1,5 +1,3 @@
-# apps/tenants/middleware.py
-
 from apps.tenants.models import Tenant, TenantMembership
 from django.http import JsonResponse
 from rest_framework_simplejwt.authentication import JWTAuthentication
@@ -10,6 +8,12 @@ SKIP_MEMBERSHIP_CHECK_PATHS = {
     '/api/auth/token/refresh/',
     '/api/auth/logout/',
 }
+
+EXCLUDED_FROM_SUSPENSION_CHECK = {
+    '/api/auth/memberships/',
+    '/api/auth/me/',
+}
+
 
 class TenantMiddleware:
     def __init__(self, get_response):
@@ -41,7 +45,11 @@ class TenantMiddleware:
                 except Tenant.DoesNotExist:
                     pass
 
-        if request.tenant is not None and request.tenant.is_suspended:
+        if (
+            request.tenant is not None
+            and request.tenant.is_suspended
+            and request.path not in EXCLUDED_FROM_SUSPENSION_CHECK
+        ):
             return JsonResponse(
                 {
                     "success": False,

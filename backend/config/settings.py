@@ -248,7 +248,8 @@ AWS_STORAGE_BUCKET_NAME = config("AWS_STORAGE_BUCKET_NAME")
 AWS_S3_REGION_NAME = config("AWS_S3_REGION_NAME", default="ap-south-1")
 AWS_S3_FILE_OVERWRITE = False
 AWS_DEFAULT_ACL = None   # bucket policy controls access, not object ACL
-
+AWS_S3_SIGNATURE_VERSION = "s3v4"
+AWS_S3_ADDRESSING_STYLE = "virtual"
 
 # Redis cache backend
 CACHES = {

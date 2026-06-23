@@ -1,4 +1,5 @@
 import boto3
+from botocore.client import Config
 from botocore.exceptions import ClientError
 from django.conf import settings
 from django.db import transaction
@@ -451,8 +452,13 @@ class FileService:
         s3 = boto3.client(
             "s3",
             region_name=settings.AWS_S3_REGION_NAME,
+            endpoint_url=f"https://s3.{settings.AWS_S3_REGION_NAME}.amazonaws.com",
             aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
             aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
+            config=Config(
+                signature_version="s3v4",
+                s3={"addressing_style": "virtual"},
+            ),
         )
  
         extension = file_name.rsplit(".", 1)[-1].lower() if "." in file_name else ""
@@ -470,8 +476,7 @@ class FileService:
                 ExpiresIn=300,  # 5 minutes
             )
         except ClientError as e:
-            raise S3PresignError(f"Could not generate upload URL: {e}")
- 
+            raise S3PresignError(f"Could not generate upload URL: {e}")   
         return {
             "upload_url": presigned["url"],
             "fields":     presigned["fields"],
@@ -526,9 +531,14 @@ class FileService:
         
         s3 = boto3.client(
             "s3",
-            region_name = settings.AWS_S3_REGION_NAME,
+            region_name=settings.AWS_S3_REGION_NAME,
+            endpoint_url=f"https://s3.{settings.AWS_S3_REGION_NAME}.amazonaws.com",
             aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
             aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
+            config=Config(
+                signature_version="s3v4",
+                s3={"addressing_style": "virtual"},
+            ),
         )
 
         return s3.generate_presigned_url(
