@@ -8,7 +8,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework import status
 
-from apps.tenants.models import TenantMembership
+from apps.tenants.models import TenantMembership, Plan
 
 from .services import(
     BillingService,
@@ -146,4 +146,23 @@ class StripeWebhookView(APIView):
         )
 
         return Response({"success" : True})
+    
+
+
+class PublicPlanPricingView(APIView):
+    """Public pricing data for the landing/upgrade pages. No auth required."""
+    permission_classes = [AllowAny]
+    authentication_classes = []
+
+    def get(self, request):
+        plans = Plan.objects.filter(is_active=True, name__in=["free", "pro"])
+        data = {
+            p.name: {
+                "price_monthly": str(p.price_monthly),
+                "client_limit": p.client_limit,
+                "request_limit": p.request_limit,
+            }
+            for p in plans
+        }
+        return Response({"success": True, "data": data})
     
