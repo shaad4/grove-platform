@@ -88,6 +88,13 @@ export default function App() {
                   {/* Public */}
                   <Route path="/" element={<LandingPage />} />
 
+                  {/* ── Upgrade (Public) ── */}
+                      <Route
+                        path="/upgrade"
+                        element={<UpgradePage />}
+                      />
+
+
                   {/* Pre-auth — no session needed */}
                   <Route path="/accept-invite" element={<AcceptInvitePage />} />
                   <Route path="/client-login"  element={<ClientLoginPage />} />
@@ -161,12 +168,6 @@ export default function App() {
                       <Route
                         path="/my-requests/:requestId"
                         element={<TenantRoute><ClientRequestDetailPage /></TenantRoute>}
-                      />
-
-                      {/* ── Upgrade (provider) ── */}
-                      <Route
-                        path="/upgrade"
-                        element={<TenantRoute><UpgradePage /></TenantRoute>}
                       />
 
                     </Route>

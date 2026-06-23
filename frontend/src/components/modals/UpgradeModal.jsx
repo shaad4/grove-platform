@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useSelector, useDispatch } from 'react-redux'
 import { X, Check, Loader2, Sparkles } from 'lucide-react'
+import { getPlanPricing } from '../../api/plans.api'
 
 import {
   selectIsUpgradeModalOpen,
@@ -77,7 +78,12 @@ function PlanCard({ name, price, features, highlighted, cta, onCta, loading }) {
 function UpgradeModalInner({ reason, message, onClose }) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
+  const [pricing, setPricing] = useState({ free: {}, pro: {} })
   const copy = REASON_COPY[reason] || REASON_COPY.limit_reached
+
+  useEffect(() => {
+    getPlanPricing().then(res => setPricing(res.data.data)).catch(() => {})
+  }, [])
 
   const handleUpgrade = async () => {
     setLoading(true)
@@ -123,12 +129,12 @@ function UpgradeModalInner({ reason, message, onClose }) {
         <div className="px-6 pb-6 pt-4 flex gap-3">
           <PlanCard
             name="Free"
-            price="$0/mo"
-            features={['3 clients', '10 active requests', 'Core request pipeline']}
+            price={`$${Number(pricing.free.price_monthly ?? 0)}/mo`}
+            features={[`${pricing.free.client_limit ?? 3} clients`, `${pricing.free.request_limit ?? 10} active requests`, 'Core request pipeline']}
           />
           <PlanCard
             name="Pro"
-            price="$19/mo"
+            price={`$${Number(pricing.pro.price_monthly ?? 0)}/mo`}
             features={PRO_FEATURES}
             highlighted
             cta="Upgrade to Pro"

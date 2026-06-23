@@ -7,6 +7,8 @@ import {
 
 import { getWorkspace } from '../../api/settings.api'
 import { createCheckoutSession, getBillingPortalUrl } from '../../api/billing.api'
+import { getPlanPricing } from '../../api/plans.api'
+import { useAuth } from '../../context/AuthContext'
 
 // ── Plan content ──────────────────────────────────────────────
 const FREE_FEATURES = [
@@ -211,13 +213,31 @@ export default function UpgradePage() {
   const [checkoutLoading, setCheckoutLoading] = useState(false)
   const [portalLoading, setPortalLoading] = useState(false)
   const [error, setError] = useState(null)
+  const [pricing, setPricing] = useState({ free: {}, pro: {} })
+
+  const freeFeatures = [
+    `Up to ${pricing.free.client_limit} clients`,
+    `Up to ${pricing.free.request_limit} active requests`,
+    'Core request pipeline',
+    'Live notifications & chat',
+  ]
+
+
+  const { tenant, isAuth } = useAuth()
 
   useEffect(() => {
-    getWorkspace()
-      .then(r => setIsPro(r.data.data?.plan?.name === 'pro'))
-      .catch(() => {})
+    getPlanPricing()
+      .then((res) => {
+        setPricing(res.data.data)
+
+        if (isAuth) {
+          setIsPro(
+            tenant?.is_pro ?? false
+          )
+        }
+      })
       .finally(() => setPlanLoading(false))
-  }, [])
+  }, [tenant, isAuth])
 
   const handleUpgrade = async () => {
     setCheckoutLoading(true)
@@ -247,7 +267,7 @@ export default function UpgradePage() {
   }
 
   // ── Loading guard ──
-  if (planLoading) {
+  if (planLoading || !pricing.pro ) {
     return (
       <div className="min-h-screen bg-[#F7F8F7] flex items-center justify-center">
         <Loader2 size={22} className="animate-spin text-[#0F6E56]" />
@@ -318,10 +338,10 @@ export default function UpgradePage() {
 
         {/* Plan cards */}
         <div className="flex flex-col sm:flex-row gap-5 mb-12">
-          <PlanCard name="Free" price="$0" period="/mo" features={FREE_FEATURES} />
+          <PlanCard name="Free" price={`$${Number(pricing.free.price_monthly)}`} period="/mo" features={freeFeatures} />
           <PlanCard
             name="Pro"
-            price="$19"
+            price={`$${Number(pricing.pro.price_monthly)}`}
             period="/mo"
             features={PRO_FEATURES}
             highlighted

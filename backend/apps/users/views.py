@@ -57,6 +57,16 @@ def _build_tenant_payload(tenant):
         "name" : tenant.name,
         "slug" : tenant.slug,
         "logo_url" : tenant.logo_url,
+        
+        "plan": {
+            "id": str(tenant.plan.id),
+            "name": tenant.plan.name,
+            "client_limit": tenant.plan.client_limit,
+            "request_limit": tenant.plan.request_limit,
+            "price_monthly": str(tenant.plan.price_monthly),
+        },
+
+        "is_pro": tenant.is_pro,
     } 
 
 

@@ -13,6 +13,7 @@ import {
   Zap,
 } from "lucide-react";
 import { useEffect, useState } from "react";
+import { getPlanPricing } from '../api/plans.api'
 
 import groveLogo from "../assets/Grove_transparent_logo(Green).png";
 
@@ -33,6 +34,11 @@ const fadeUp = {
 export default function LandingPage() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [navbarBg, setNavbarBg] = useState(false);
+  const [pricing, setPricing] = useState({ free: {}, pro: {} })
+
+  useEffect(() => {
+    getPlanPricing().then(res => setPricing(res.data.data)).catch(() => {})
+  }, [])
 
   useEffect(() => {
     const handleScroll = () => {
@@ -95,12 +101,7 @@ export default function LandingPage() {
               Dashboard
             </a>
 
-            <a
-              href="#pricing"
-              className="hover:text-[#109875] transition"
-            >
-              Pricing
-            </a>
+            <Link to="/upgrade" className="hover:text-[#109875] transition">Pricing</Link>
           </nav>
 
           {/* ACTIONS */}
@@ -148,12 +149,7 @@ export default function LandingPage() {
                   Dashboard
                 </a>
 
-                <a
-                  href="#pricing"
-                  className="block font-medium"
-                >
-                  Pricing
-                </a>
+                <Link to="/upgrade" className="block font-medium" onClick={() => setMenuOpen(false)}>Pricing</Link>
 
                 <Link
                   to="/login"
@@ -466,9 +462,7 @@ export default function LandingPage() {
               </p>
 
               <div className="mt-8">
-                <span className="text-6xl font-black">
-                  $0
-                </span>
+                <span className="text-6xl font-black">${Number(pricing.free.price_monthly ?? 0)}</span>
 
                 <span className="text-neutral-500">
                   /month
@@ -519,9 +513,7 @@ export default function LandingPage() {
                 </p>
 
                 <div className="mt-8">
-                  <span className="text-6xl font-black">
-                    $29
-                  </span>
+                  <span className="text-6xl font-black">${Number(pricing.pro.price_monthly ?? 0)}</span>
 
                   <span className="text-neutral-400">
                     /month
@@ -529,12 +521,7 @@ export default function LandingPage() {
                 </div>
 
                 <div className="mt-10 space-y-4">
-                  {[
-                    "Unlimited Clients",
-                    "White-label Branding",
-                    "Team Collaboration",
-                    "Priority Support",
-                  ].map((item) => (
+                  {[`${pricing.free.client_limit ?? 3} Clients`, "Unlimited Requests", "Real-time Dashboard", "Basic Branding"].map((item) => (
                     <div
                       key={item}
                       className="flex items-center gap-3"
