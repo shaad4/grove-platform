@@ -1,4 +1,5 @@
-import { selectAccessToken, selectTenant } from '../../features/auth/authSlice'
+import { selectAccessToken } from '../../features/auth/authSlice'
+import { getSubdomain } from '../../utils/domain'
 
 export const authRequestInterceptor = (_store, config) => {
   if (!_store) return config
@@ -10,9 +11,9 @@ export const authRequestInterceptor = (_store, config) => {
     config.headers.Authorization = `Bearer ${token}`
   }
 
-  const tenantSlug = selectTenant(state)?.slug
-  if (tenantSlug) {
-    config.headers['X-Tenant-Slug'] = tenantSlug
+  const subdomain = getSubdomain()
+  if (subdomain) {
+    config.headers['X-Tenant-Slug'] = subdomain
   }
 
   return config

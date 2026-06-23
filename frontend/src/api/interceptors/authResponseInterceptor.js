@@ -25,15 +25,24 @@ export const authResponseInterceptor = async (_store, api, error) => {
     if (isLoggingOut) {
         return Promise.reject(error)
     }
+    
+    const errorType = error.response?.data?.error_type
 
-    const errorType = error.response?.data?.errorType
+    if (error.response?.status === 403 && errorType === 'tenant_suspended') {
+        isLoggingOut = true
+        _store.dispatch(clearAuth())
+        window.location.replace(appUrl(null, '/portals'))
+        return Promise.reject(error)
+    }
+
+    const billingErrorType = error.response?.data?.errorType
 
     if (
         error.response?.status === 403 &&
-        (errorType === 'limit_reached' || errorType === 'pro_feature_required')
+        (billingErrorType === 'limit_reached' || billingErrorType === 'pro_feature_required')
     ) {
         _store.dispatch(openUpgradeModal({
-            reason: errorType,
+            reason: billingErrorType,
             message: error.response.data.message,
         }))
         return Promise.reject(error)

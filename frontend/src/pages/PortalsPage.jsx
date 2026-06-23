@@ -107,6 +107,7 @@ function AccentOrbs() {
 function PortalCard({
   portal,
   role,
+  suspended = false,
   onClick,
 }) {
 
@@ -118,13 +119,17 @@ function PortalCard({
 
   return (
     <button
-      onClick={onClick}
-      className="portal-card group w-full text-left"
-      aria-label={`Open ${portal.tenant_name} ${
-        isProvider
-          ? 'dashboard'
-          : 'portal'
+      onClick={suspended ? undefined : onClick}
+      disabled={suspended}
+      className={`portal-card group w-full text-left ${suspended ? 'portal-card-suspended' : ''}`}
+      aria-label={`${portal.tenant_name} ${
+        suspended
+          ? '— suspended, unavailable'
+          : isProvider
+            ? 'dashboard'
+            : 'portal'
       }`}
+      aria-disabled={suspended}
     >
 
       <div className="portal-card-inner">
@@ -136,13 +141,15 @@ function PortalCard({
           style={
             !portal.tenant_logo
               ? {
-                  background: `
-                    linear-gradient(
-                      135deg,
-                      ${colors.bg} 0%,
-                      ${colors.bgDark} 100%
-                    )
-                  `,
+                  background: suspended
+                    ? '#D8DCD8'
+                    : `
+                      linear-gradient(
+                        135deg,
+                        ${colors.bg} 0%,
+                        ${colors.bgDark} 100%
+                      )
+                    `,
                   color: '#fff',
                 }
               : {}
@@ -155,6 +162,7 @@ function PortalCard({
               src={portal.tenant_logo}
               alt=""
               className="h-full w-full rounded-[10px] object-cover"
+              style={suspended ? { filter: 'grayscale(1)', opacity: 0.5 } : {}}
             />
 
           ) : (
@@ -177,54 +185,64 @@ function PortalCard({
 
             <span
               className={`portal-badge ${
-                isProvider
-                  ? 'badge-provider'
-                  : 'badge-client'
+                suspended
+                  ? 'badge-suspended'
+                  : isProvider
+                    ? 'badge-provider'
+                    : 'badge-client'
               }`}
             >
-              {isProvider
-                ? 'Your portal'
-                : 'Client'}
+              {suspended
+                ? 'Suspended'
+                : isProvider
+                  ? 'Your portal'
+                  : 'Client'}
             </span>
 
           </div>
 
           <p className="portal-slug">
-            {portal.tenant_slug}.grove.co
+            {suspended
+              ? 'Access paused by the provider'
+              : `${portal.tenant_slug}.grove.co`}
           </p>
 
         </div>
 
-        {/* Arrow */}
+        {/* Arrow — hidden entirely when suspended, nothing to navigate to */}
 
-        <div className="portal-arrow">
+        {!suspended && (
+          <div className="portal-arrow">
 
-          <svg
-            width="16"
-            height="16"
-            viewBox="0 0 16 16"
-            fill="none"
-            aria-hidden="true"
-          >
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 16 16"
+              fill="none"
+              aria-hidden="true"
+            >
 
-            <path
-              d="M3 8h10M9 4l4 4-4 4"
-              stroke="currentColor"
-              strokeWidth="1.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
+              <path
+                d="M3 8h10M9 4l4 4-4 4"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
 
-          </svg>
+            </svg>
 
-        </div>
+          </div>
+        )}
 
       </div>
 
-      <div
-        className="portal-shimmer"
-        aria-hidden="true"
-      />
+      {!suspended && (
+        <div
+          className="portal-shimmer"
+          aria-hidden="true"
+        />
+      )}
 
     </button>
   )
@@ -540,6 +558,24 @@ export default function PortalsPage() {
           background: #F3F4F3;
           color: #6B7A6B;
         }
+          
+        .portal-card-suspended {
+          cursor: not-allowed;
+          opacity: 0.55;
+        }
+
+        .portal-card-suspended:hover {
+          background: transparent;
+        }
+
+        .portal-card-suspended .portal-name {
+          color: #8B958C;
+        }
+
+        .badge-suspended {
+          background: #FDF1EF;
+          color: #C73A30;
+        }
 
         .portal-arrow {
           flex-shrink: 0;
@@ -840,21 +876,22 @@ export default function PortalsPage() {
 
               <div className="portal-list">
 
-                {clientPortals.map(portal => (
+              {clientPortals.map(portal => (
 
-                  <PortalCard
-                    key={portal.tenant_slug}
-                    portal={portal}
-                    role="client"
-                    onClick={() =>
-                      goToPortal(
-                        portal.tenant_slug,
-                        'client'
-                      )
-                    }
-                  />
+                <PortalCard
+                  key={portal.tenant_slug}
+                  portal={portal}
+                  role="client"
+                  suspended={portal.is_suspended}
+                  onClick={() =>
+                    goToPortal(
+                      portal.tenant_slug,
+                      'client'
+                    )
+                  }
+                />
 
-                ))}
+              ))}
 
               </div>
 
@@ -879,6 +916,7 @@ export default function PortalsPage() {
                     key={portal.tenant_slug}
                     portal={portal}
                     role="provider"
+                    suspended={portal.is_suspended}
                     onClick={() =>
                       goToPortal(
                         portal.tenant_slug,
