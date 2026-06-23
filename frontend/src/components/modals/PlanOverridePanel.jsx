@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { ArrowUpCircle, Save } from 'lucide-react'
 import AdminSlidePanel, { PanelHeader, PanelBody } from '../ui/AdminSlidePanel'
 import { AdminButton, PlanBadge, UsageBar } from '../ui/AdminUI'
-import adminTenantsApi from '../../api/adminTenants.api'
+import adminTenantsApi from '../../api/admin/adminTenants.api'
 
 export default function PlanOverridePanel({ open, onClose, tenant, onChanged }) {
   const [clientLimit, setClientLimit] = useState('')

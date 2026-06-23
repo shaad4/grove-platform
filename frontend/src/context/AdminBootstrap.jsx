@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useDispatch } from 'react-redux'
-import adminAuthApi from '../api/adminAuth.api'
+import adminAuthApi from '../api/admin/adminAuth.api'
 import { setAdminCredentials, clearAdminAuth } from '../features/adminAuth/adminAuthSlice'
 
 export default function AdminBootstrap({ children }) {

@@ -3,7 +3,7 @@ import { Mail, Calendar, ArrowUpCircle, ArrowDownCircle, Ban, Save } from 'lucid
 import AdminSlidePanel, { PanelHeader, PanelBody } from '../ui/AdminSlidePanel'
 import { AdminButton, PlanBadge, UsageBar } from '../ui/AdminUI'
 import ConfirmActionModal from './ConfirmActionModal'
-import adminTenantsApi from '../../api/adminTenants.api'
+import adminTenantsApi from '../../api/admin/adminTenants.api'
 import { joinedLabel } from '../../utils/adminDisplay'
 
 export default function TenantDetailPanel({ open, onClose, tenant, onChanged }) {

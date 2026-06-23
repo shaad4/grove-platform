@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback, useRef } from 'react'
 import { Search, MoreHorizontal, RotateCcw } from 'lucide-react'
 import AdminLayout from '../../components/layout/AdminLayout'
-import adminUsersApi from '../../api/adminUsers.api'
+import adminUsersApi from '../../api/admin/adminUsers.api'
 import { RoleBadge, StatusPill } from '../../components/ui/AdminUI'
 import UserDetailPanel from '../../components/modals/UserDetailPanel'
 import { getInitials, getAvatarColor, joinedLabel, relativeTimeLabel } from '../../utils/adminDisplay'

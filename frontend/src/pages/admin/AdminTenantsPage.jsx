@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import { Search } from 'lucide-react'
 import AdminLayout from '../../components/layout/AdminLayout'
-import adminTenantsApi from '../../api/adminTenants.api'
+import adminTenantsApi from '../../api/admin/adminTenants.api'
 import { PlanBadge, StatusPill } from '../../components/ui/AdminUI'
 import TenantDetailPanel from '../../components/modals/TenantDetailPanel'
 import { getInitials, getAvatarColor, joinedLabel } from '../../utils/adminDisplay'

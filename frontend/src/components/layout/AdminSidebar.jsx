@@ -8,7 +8,7 @@ import {
   LogOut,
 } from 'lucide-react'
 import { selectAdminUser, clearAdminAuth } from '../../features/adminAuth/adminAuthSlice'
-import { setAdminLoggingOut } from '../../api/adminAuthResponseInterceptor'
+import { setAdminLoggingOut } from '../../api/admin/adminAuthResponseInterceptor'
 
 const NAV_ITEMS = [
   { to: '/grove-admin/dashboard', icon: LayoutDashboard, label: 'Dashboard' },

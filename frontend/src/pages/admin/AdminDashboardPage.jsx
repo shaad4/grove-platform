@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { ArrowUpRight, TrendingUp, TrendingDown } from 'lucide-react'
 import AdminLayout from '../../components/layout/AdminLayout'
 import AdminPageHeader from '../../components/layout/AdminPageHeader'
-import adminStatsApi from '../../api/adminStats.api'
+import adminStatsApi from '../../api/admin/adminStats.api'
 import { PlanBadge } from '../../components/ui/AdminUI'
 import { getInitials, getAvatarColor, joinedLabel } from '../../utils/adminDisplay'
 

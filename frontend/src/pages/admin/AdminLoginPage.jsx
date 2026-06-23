@@ -2,9 +2,9 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useDispatch } from 'react-redux'
 import { Eye, EyeOff, AlertCircle, ShieldCheck, Lock } from 'lucide-react'
-import adminAuthApi from '../../api/adminAuth.api'
+import adminAuthApi from '../../api/admin/adminAuth.api'
 import { setAdminCredentials } from '../../features/adminAuth/adminAuthSlice'
-import { setAdminLoggingOut } from '../../api/adminAuthResponseInterceptor'
+import { setAdminLoggingOut } from '../../api/admin/adminAuthResponseInterceptor'
 
 export default function AdminLoginPage() {
   const dispatch = useDispatch()

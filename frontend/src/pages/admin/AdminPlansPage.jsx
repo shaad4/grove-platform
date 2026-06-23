@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import { Search } from 'lucide-react'
 import AdminLayout from '../../components/layout/AdminLayout'
-import adminPlansApi from '../../api/adminPlans.api'
+import adminPlansApi from '../../api/admin/adminPlans.api'
 import { PlanBadge } from '../../components/ui/AdminUI'
 import PlanOverridePanel from '../../components/modals/PlanOverridePanel'
 import { getInitials, getAvatarColor } from '../../utils/adminDisplay'

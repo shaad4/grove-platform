@@ -1,4 +1,4 @@
-import { setAdminAccessToken, clearAdminAuth } from '../features/adminAuth/adminAuthSlice'
+import { setAdminAccessToken, clearAdminAuth } from '../../features/adminAuth/adminAuthSlice'
 
 let isLoggingOut = false
 export const setAdminLoggingOut = (value) => { isLoggingOut = value }

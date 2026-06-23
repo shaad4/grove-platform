@@ -3,7 +3,7 @@ import { Mail, Send, Ban, RotateCcw } from 'lucide-react'
 import AdminSlidePanel, { PanelHeader, PanelBody } from '../ui/AdminSlidePanel'
 import { RoleBadge, StatusPill } from '../ui/AdminUI'
 import ConfirmActionModal from './ConfirmActionModal'
-import adminUsersApi from '../../api/adminUsers.api'
+import adminUsersApi from '../../api/admin/adminUsers.api'
 import { joinedLabel, relativeTimeLabel } from '../../utils/adminDisplay'
 
 export default function UserDetailPanel({ open, onClose, user, onChanged }) {

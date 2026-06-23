@@ -6,7 +6,7 @@ import { store } from './app/store.js'
 import { injectStore } from './api/client.js'
 import { Provider } from 'react-redux'
 import { GoogleOAuthProvider } from '@react-oauth/google'
-import { injectAdminStore } from './api/adminClient'
+import { injectAdminStore } from './api/admin/adminClient'
 
 
 injectStore(store)
