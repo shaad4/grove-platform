@@ -85,7 +85,7 @@ def send_password_reset_email(self, user_email, display_name, token, tenant_slug
 
     if tenant_slug:
         reset_url = (
-            f"http://{tenant_slug}.{base_frontend}"
+            f"https://{tenant_slug}.{base_frontend}"
             f"/reset-password?token={token}"
         )
     else:

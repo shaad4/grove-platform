@@ -129,6 +129,7 @@ export default function LoginPage() {
     } catch (err) {
       setError(
         err.response?.data?.non_field_errors?.[0] ||
+        err.response?.data?.error?.message ||
         err.response?.data?.message ||
         'Invalid email or password.'
       )
