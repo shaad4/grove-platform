@@ -16,10 +16,12 @@ from .serializers import (
     OverrideLimitSerializer,
     AdminUserListSerializer,
     AdminPlanOverviewSerializer,
+    PlanConfigSerializer,
+    PlanUpdateSerializer,
 )
 
 from .services import (
-    GroveAdminAuthService,
+     GroveAdminAuthService,
     AccountLocked,
     InvalidAdminCredentials,
     StatsService,
@@ -27,11 +29,11 @@ from .services import (
     TenantNotFound,
     PlanNotFound,
     InvalidLimitValue,
+    InvalidPlanValue,
+    StripePriceSyncError,
     UserAdminService,
     UserNotFound,
     PlanAdminService,
-
-
 )
 
 # Create your views here.
@@ -259,3 +261,35 @@ class AdminPlanListView(APIView):
             logger.error(f"[grove_admin] Failed to load plan overview: {e}")
             return Response({"success": False, "message": "Could not load plan data."}, status=500)
         return Response({"success": True, "data": AdminPlanOverviewSerializer(data).data})
+    
+
+class AdminPlanUpdateView(APIView):
+    permission_classes = [IsGroveSuperuser]
+
+    def post(self, request, plan_id):
+        serializer = PlanUpdateSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        try:
+            plan = PlanAdminService.update_plan(
+                request.user,
+                plan_id,
+                price_monthly=serializer.validated_data.get("price_monthly"),
+                client_limit=serializer.validated_data.get("client_limit"),
+                request_limit=serializer.validated_data.get("request_limit"),
+            )
+        except PlanNotFound as e:
+            return Response({"success": False, "message": str(e)}, status=404)
+        except InvalidPlanValue as e:
+            return Response({"success": False, "message": str(e)}, status=400)
+        except StripePriceSyncError as e:
+            logger.error(f"[grove_admin] {e}")
+            return Response(
+                {"success": False, "message": f"Stripe sync failed: {e}"}, status=502
+            )
+
+        return Response({
+            "success": True,
+            "message": f"{plan.name.capitalize()} plan updated.",
+            "data": PlanConfigSerializer(plan).data,
+        })

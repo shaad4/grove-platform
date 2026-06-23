@@ -98,6 +98,8 @@ class AdminPlanOverviewSerializer(serializers.Serializer):
             "free_count": data["free_count"],
             "pro_count": data["pro_count"],
             "at_limit_count": data["at_limit_count"],
+            "total_revenue": str(data["total_revenue"]),
+            "plans": PlanConfigSerializer(data["plans"], many=True).data,
             "rows": [
                 {
                     "tenant_id": str(row["tenant"].id),
@@ -111,3 +113,19 @@ class AdminPlanOverviewSerializer(serializers.Serializer):
                 for row in data["rows"]
             ],
         }
+    
+class PlanConfigSerializer(serializers.Serializer):
+    def to_representation(self, plan):
+        return {
+            "id": str(plan.id),
+            "name": plan.name,
+            "price_monthly": str(plan.price_monthly),
+            "client_limit": plan.client_limit,
+            "request_limit": plan.request_limit,
+            "has_stripe_price": bool(plan.stripe_price_id),
+        }
+    
+class PlanUpdateSerializer(serializers.Serializer):
+    price_monthly = serializers.DecimalField(max_digits=10, decimal_places=2, required=False, allow_null=True)
+    client_limit = serializers.IntegerField(required=False, allow_null=True)
+    request_limit = serializers.IntegerField(required=False, allow_null=True)

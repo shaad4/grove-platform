@@ -1,10 +1,12 @@
 import { useEffect, useState, useCallback } from 'react'
-import { Search } from 'lucide-react'
 import AdminLayout from '../../components/layout/AdminLayout'
 import adminPlansApi from '../../api/admin/adminPlans.api'
 import { PlanBadge } from '../../components/ui/AdminUI'
 import PlanOverridePanel from '../../components/modals/PlanOverridePanel'
 import { getInitials, getAvatarColor } from '../../utils/adminDisplay'
+import { Search, Settings } from 'lucide-react'
+import PlanDetailsPanel from '../../components/modals/PlanDetailsPanel'
+
 
 export default function AdminPlansPage() {
   const [data, setData] = useState(null)
@@ -15,6 +17,9 @@ export default function AdminPlansPage() {
 
   const [activeTenant, setActiveTenant] = useState(null)
   const [panelOpen, setPanelOpen] = useState(false)
+
+  const [detailsOpen, setDetailsOpen] = useState(false)
+
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -60,14 +65,22 @@ export default function AdminPlansPage() {
           <h1 className="text-[24px] font-semibold text-[#10241C]">Plans</h1>
           <p className="mt-1 text-[14px] text-[#7C867D]">Manage plans and usage limits.</p>
         </div>
-        <span className="rounded-lg border border-[#D8DCD8] bg-white px-3.5 py-2 text-[13px] font-medium text-[#5B655C]">
-          {data?.rows?.length ?? 0} tenants
-        </span>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => setDetailsOpen(true)}
+            className="flex items-center gap-2 rounded-lg border border-[#D8DCD8] bg-white px-3.5 py-2 text-[13px] font-medium text-[#5B655C] hover:bg-[#FAFBFA]"
+          >
+            <Settings size={14} /> Manage plans
+          </button>
+          <span className="rounded-lg border border-[#D8DCD8] bg-white px-3.5 py-2 text-[13px] font-medium text-[#5B655C]">
+            {data?.rows?.length ?? 0} tenants
+          </span>
+        </div>
       </div>
 
       <div className="px-8 pb-10">
         {/* Summary */}
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-4"> 
           <div className="rounded-xl border border-[#E5E8E5] bg-white p-5">
             <span className="text-[13px] text-[#7C867D]">Free plan</span>
             <p className="mt-2 text-[28px] font-semibold text-[#10241C]">{data?.free_count ?? 0}</p>
@@ -83,6 +96,14 @@ export default function AdminPlansPage() {
             <p className="mt-2 text-[28px] font-semibold text-[#C73A30]">{data?.at_limit_count ?? 0}</p>
             <p className="mt-1 text-[12px] font-medium text-[#C73A30]">Need attention</p>
           </div>
+          <div className="rounded-xl border border-[#E5E8E5] bg-white p-5">
+            <span className="text-[13px] text-[#7C867D]">Total revenue</span>
+            <p className="mt-2 text-[28px] font-semibold text-[#10241C]">
+              {Number(data?.total_revenue ?? 0).toLocaleString('en-US', { style: 'currency', currency: 'USD' })}
+            </p>
+            <p className="mt-1 text-[12px] text-[#9BA39B]">lifetime, Stripe payments</p>
+          </div>
+          
         </div>
 
         {/* Filters */}
@@ -170,6 +191,12 @@ export default function AdminPlansPage() {
         open={panelOpen}
         onClose={() => setPanelOpen(false)}
         tenant={activeTenant}
+        onChanged={load}
+      />
+      <PlanDetailsPanel
+        open={detailsOpen}
+        onClose={() => setDetailsOpen(false)}
+        plans={data?.plans}
         onChanged={load}
       />
     </AdminLayout>

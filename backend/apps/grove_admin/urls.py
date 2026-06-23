@@ -14,6 +14,7 @@ from .views import (
     AdminUserDeactivateView,
     AdminPlanListView,
     GroveAdminTokenRefreshView,
+    AdminPlanUpdateView,
 
 
 
@@ -36,5 +37,6 @@ urlpatterns = [
     path("users/<uuid:user_id>/send-password-reset/", AdminUserSendPasswordResetView.as_view()),
     path("users/<uuid:user_id>/deactivate/", AdminUserDeactivateView.as_view()),
     path("plans/", AdminPlanListView.as_view()),
+    path("plans/<uuid:plan_id>/update/", AdminPlanUpdateView.as_view()),
 
 ]

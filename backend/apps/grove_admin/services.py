@@ -1,5 +1,5 @@
 import secrets
-
+import stripe
 from django.conf import settings
 from django.core.cache import cache
 from django.db import transaction
@@ -19,6 +19,8 @@ from .repositories import (
     PlanAdminRepository,
 )
 
+stripe.api_key = settings.STRIPE_SECRET_KEY
+
 # custom exceptions
 class InvalidAdminCredentials(Exception):
     pass
@@ -36,6 +38,12 @@ class PlanNotFound(Exception):
     pass
 
 class InvalidLimitValue(Exception):
+    pass
+
+class InvalidPlanValue(Exception):
+    pass
+
+class StripePriceSyncError(Exception):
     pass
 
 
@@ -312,6 +320,72 @@ class PlanAdminService:
             "pro_count": pro_count,
             "at_limit_count": at_limit_count,
             "rows": rows,
+            "total_revenue": PlanAdminRepository.total_revenue(),
+            "plans": PlanAdminRepository.get_all(),
         }
+    
+    @staticmethod
+    @transaction.atomic
+    def update_plan(admin, plan_id, price_monthly=None, client_limit=None, request_limit=None):
+        plan = PlanAdminRepository.get_by_id(plan_id)
+        if not plan:
+            raise PlanNotFound("Plan not found.")
 
+        fields = {}
 
+        if price_monthly is not None:
+            if price_monthly < 0:
+                raise InvalidPlanValue("Price must be zero or greater.")
+            fields["price_monthly"] = price_monthly
+
+        if client_limit is not None:
+            if client_limit != -1 and client_limit < 0:
+                raise InvalidPlanValue("Client limit must be -1 (unlimited) or a non-negative integer.")
+            fields["client_limit"] = client_limit
+
+        if request_limit is not None:
+            if request_limit != -1 and request_limit < 0:
+                raise InvalidPlanValue("Request limit must be -1 (unlimited) or a non-negative integer.")
+            fields["request_limit"] = request_limit
+
+        price_changed = "price_monthly" in fields and fields["price_monthly"] != plan.price_monthly
+        if price_changed and plan.stripe_price_id:
+            fields["stripe_price_id"] = PlanAdminService._swap_stripe_price(
+                plan, fields["price_monthly"]
+            )
+
+        if fields:
+            PlanAdminRepository.update_plan(plan, **fields)
+
+        AdminActionRepository.log(
+            admin, "update_plan", "plan", plan.id,
+            {k: str(v) for k, v in fields.items()},
+        )
+        logger.info(f"[grove_admin] Plan {plan.name} updated by {admin.email}: {fields}")
+        return plan
+    
+    @staticmethod
+    def _swap_stripe_price(plan, new_price_monthly):
+        """
+        Stripe Price objects are immutable. Existing subscriptions keep
+        referencing the old price so current Pro tenants are unaffected only new
+        checkouts pick up the new price.
+        """
+        try:
+            old_price = stripe.Price.retrieve(plan.stripe_price_id)
+
+            new_price = stripe.Price.create(
+                product=old_price["product"],
+                unit_amount=int(new_price_monthly * 100),
+                currency=old_price["currency"],
+                recurring={"interval": "month"},
+            )
+
+            stripe.Product.modify(old_price["product"], default_price=new_price["id"])
+
+            stripe.Price.modify(old_price["id"], active=False)
+        except stripe.error.StripeError as e:
+            logger.error(f"[grove_admin] Stripe price sync failed for plan {plan.name}: {e}")
+            raise StripePriceSyncError(str(e))
+
+        return new_price["id"]

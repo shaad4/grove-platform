@@ -1,6 +1,6 @@
 from django.db.models import Q
 
-from apps.tenants.models import Tenant, TenantMembership, TenantUsage, Plan
+from apps.tenants.models import Tenant, TenantMembership, TenantUsage, Plan, BillingHistory
 from apps.users.models import User
 
 from .models import AdminAction
@@ -180,4 +180,23 @@ class PlanAdminRepository:
     @staticmethod
     def get_by_name(name):
         return Plan.objects.filter(name=name).first()
+    
+    @staticmethod
+    def get_by_id(plan_id):
+        return Plan.objects.filter(id=plan_id).first()
+    
+    @staticmethod
+    def update_plan(plan, **fields):
+        for field, value in fields.items():
+            setattr(plan, field, value)
+        plan.save(update_fields=list(fields.keys()))
+        return plan
+    
+    @staticmethod
+    def total_revenue():
+        """Lifetime revenue from paid Stripe invoices/checkouts."""
+        amounts = BillingHistory.objects.filter(
+            status=BillingHistory.Status.PAID
+        ).values_list("amount", flat=True)
+        return sum(amounts) or 0
 
