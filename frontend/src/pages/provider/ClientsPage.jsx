@@ -353,10 +353,15 @@ export default function ClientsPage() {
   const [deleteTarget, setDeleteTarget] = useState(null)
   const [actionLoading, setActionLoading] = useState(null) // clientId
   const [isPro, setIsPro] = useState(false)
+  const [clientLimit, setClientLimit] = useState(3)
 
   useEffect(() => {
     getWorkspace()
-      .then(r => setIsPro(r.data.data?.plan?.name === 'pro'))
+      .then(r => {
+        const plan = r.data.data?.plan
+        setIsPro(plan?.name === 'pro')
+        setClientLimit(plan?.client_limit ?? 3)
+      })
       .catch(() => {})
   }, [])
 
@@ -373,7 +378,7 @@ export default function ClientsPage() {
   }
 
   const handleAddClientClick = () => {
-    if (clientCount >= 3 && !isPro) {
+    if (clientCount >= clientLimit && !isPro) {
       handleUpgrade()
     } else {
       setShowAdd(true)
@@ -595,7 +600,7 @@ export default function ClientsPage() {
               ))}
 
               {/* Upgrade card if at limit */}
-              {clientCount >= 3 && !isPro && (
+              {clientCount >= clientLimit && !isPro && (
                 <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-[#d1e8df] bg-[#f7fbf9] p-8 text-center">
                   <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#e6f5f0]">
                     <span className="text-xl">🔒</span>
