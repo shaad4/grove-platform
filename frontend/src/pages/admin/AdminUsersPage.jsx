@@ -57,29 +57,52 @@ export default function AdminUsersPage() {
   const [roleFilter, setRoleFilter] = useState('')
   const [statusFilter, setStatusFilter] = useState('')
   const [loading, setLoading] = useState(true)
+  const [page, setPage] = useState(1)
+  const [numPages, setNumPages] = useState(1)
+  const PAGE_SIZE = 20
 
   const [activeUser, setActiveUser] = useState(null)
   const [panelOpen, setPanelOpen] = useState(false)
 
+  const pageRef = useRef(page)
+  useEffect(() => { pageRef.current = page }, [page])
+
   const load = useCallback(async () => {
-    setLoading(true)
-    try {
-      const { data } = await adminUsersApi.list({
-        search: search || undefined,
-        role: roleFilter || undefined,
-        status: statusFilter || undefined,
-      })
-      setUsers(data.data.users)
-      setTotal(data.data.total)
-    } catch {
-      setUsers([])
-      setTotal(0)
-    } finally {
-      setLoading(false)
+  setLoading(true)
+  try {
+    const { data } = await adminUsersApi.list({
+      search: search || undefined,
+      role: roleFilter || undefined,
+      status: statusFilter || undefined,
+      page: pageRef.current,
+      page_size: PAGE_SIZE,
+    })
+    setUsers(data.data.users)
+    setTotal(data.data.total)
+    setNumPages(data.data.num_pages ?? 1)
+  } catch {
+    setUsers([])
+    setTotal(0)
+    setNumPages(1)
+  } finally {
+    setLoading(false)
+  }
+}, [search, roleFilter, statusFilter]) 
+
+  const isFirstRender = useRef(true)
+
+  useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false
+      return
     }
+    pageRef.current = 1
+    setPage(1)
+    load()
   }, [search, roleFilter, statusFilter])
 
-  useEffect(() => { load() }, [load])
+
+  useEffect(() => { load() }, [load, page])
 
   // Client-side status fallback in case backend filtering on the
   // repository layer doesn't map "active"/"deactivated" yet.
@@ -97,6 +120,14 @@ export default function AdminUsersPage() {
     load()
     setPanelOpen(false)
   }
+
+  const pageNumbers = Array.from({ length: numPages }, (_, i) => i + 1)
+    .filter((n) => n === 1 || n === numPages || Math.abs(n - page) <= 1)
+    .reduce((acc, n, idx, arr) => {
+      if (idx > 0 && n - arr[idx - 1] > 1) acc.push('ellipsis-' + n)
+      acc.push(n)
+      return acc
+    }, [])
 
   return (
     <AdminLayout>
@@ -207,6 +238,48 @@ export default function AdminUsersPage() {
             </tbody>
           </table>
         </div>
+        {numPages > 1 && (
+          <div className="mt-4 flex items-center justify-between">
+            <p className="text-[13px] text-[#7C867D]">
+              Page {page} of {numPages} · {total} users
+            </p>
+            <div className="flex items-center gap-1.5">
+              <button
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                disabled={page === 1}
+                className="h-8 rounded-lg border border-[#D8DCD8] bg-white px-3 text-[13px] text-[#5B655C] hover:bg-[#F3F5F3] disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                Previous
+              </button>
+
+              {pageNumbers.map((item) =>
+                String(item).startsWith('ellipsis') ? (
+                  <span key={item} className="px-1 text-[13px] text-[#9BA39B]">…</span>
+                ) : (
+                  <button
+                    key={item}
+                    onClick={() => setPage(item)}
+                    className={`h-8 w-8 rounded-lg border text-[13px] font-medium transition-colors ${
+                      page === item
+                        ? 'border-[#1D9E75] bg-[#1D9E75] text-white'
+                        : 'border-[#D8DCD8] bg-white text-[#5B655C] hover:bg-[#F3F5F3]'
+                    }`}
+                  >
+                    {item}
+                  </button>
+                )
+              )}
+
+              <button
+                onClick={() => setPage((p) => Math.min(numPages, p + 1))}
+                disabled={page === numPages}
+                className="h-8 rounded-lg border border-[#D8DCD8] bg-white px-3 text-[13px] text-[#5B655C] hover:bg-[#F3F5F3] disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                Next
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       <UserDetailPanel

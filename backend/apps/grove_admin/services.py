@@ -4,6 +4,7 @@ from django.conf import settings
 from django.core.cache import cache
 from django.db import transaction
 from django.utils import timezone
+from django.core.paginator import Paginator
 
 from apps.tenants.models import TenantMembership
 from apps.clients.models import Client

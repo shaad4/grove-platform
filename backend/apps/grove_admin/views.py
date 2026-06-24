@@ -6,6 +6,7 @@ from rest_framework_simplejwt.exceptions import TokenError
 from apps.users.models import User
 from apps.users.utils import set_auth_cookies
 from apps.common.logger import logger
+from django.core.paginator import Paginator
 
 from .permissions import IsGroveSuperuser
 from .serializers import (
@@ -219,13 +220,27 @@ class AdminUserListView(APIView):
     permission_classes = [IsGroveSuperuser]
 
     def get(self, request):
+        page = int(request.query_params.get("page", 1))
+        page_size = int(request.query_params.get("page_size", 20))
+
         memberships = UserAdminService.list_users(
             search=request.query_params.get("search"),
             role=request.query_params.get("role"),
             status=request.query_params.get("status"),
         )
-        serializer = AdminUserListSerializer(memberships, many=True)
-        return Response({"success": True, "data": {"users": serializer.data, "total": memberships.count()}})
+
+        paginator = Paginator(memberships, page_size)
+        page_obj = paginator.get_page(page)
+
+        serializer = AdminUserListSerializer(page_obj.object_list, many=True)
+        return Response({"success": True, "data": {
+            "users": serializer.data,
+            "total": paginator.count,
+            "page" : page,
+            "page_size": page_size,
+            "num_pages": paginator.num_pages,
+            }
+        })
 
 
 class AdminUserSendPasswordResetView(APIView):

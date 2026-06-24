@@ -69,12 +69,12 @@ export default function UserDetailPanel({ open, onClose, user, onChanged }) {
               doneLabel="Sent"
             />
 
-            <ActionRow
+            {/* <ActionRow
               icon={Mail}
               title="Resend Invite"
               description="Not available — invite status isn't tracked at the user level"
               disabled
-            />
+            /> */}
 
             {isDeactivated ? (
               <ActionRow
