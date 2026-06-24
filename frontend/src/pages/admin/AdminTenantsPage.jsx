@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useRef } from 'react'
 import { Search } from 'lucide-react'
 import AdminLayout from '../../components/layout/AdminLayout'
 import adminTenantsApi from '../../api/admin/adminTenants.api'
@@ -13,9 +13,15 @@ export default function AdminTenantsPage() {
   const [planFilter, setPlanFilter] = useState('')
   const [statusFilter, setStatusFilter] = useState('')
   const [loading, setLoading] = useState(true)
+  const [page, setPage] = useState(1)
+  const [numPages, setNumPages] = useState(1)
+  const PAGE_SIZE = 20
 
   const [activeTenant, setActiveTenant] = useState(null)
   const [panelOpen, setPanelOpen] = useState(false)
+
+  const isFirstRender = useRef(true)
+  const pageRef = useRef(1)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -24,18 +30,32 @@ export default function AdminTenantsPage() {
         search: search || undefined,
         plan: planFilter || undefined,
         status: statusFilter || undefined,
+        page: pageRef.current,
+        page_size: PAGE_SIZE,
       })
       setTenants(data.data.results)
       setTotal(data.data.total)
+      setNumPages(data.data.num_pages ?? 1)
     } catch {
       setTenants([])
       setTotal(0)
+      setNumPages(1)
     } finally {
       setLoading(false)
     }
   }, [search, planFilter, statusFilter])
 
-  useEffect(() => { load() }, [load])
+  useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false
+      return
+    }
+    pageRef.current = 1
+    setPage(1)
+    load()
+  }, [search, planFilter, statusFilter])
+
+  useEffect(() => { load() }, [load, page])
 
   const visibleTenants = tenants.filter((t) => {
     if (!statusFilter) return true
@@ -59,6 +79,14 @@ export default function AdminTenantsPage() {
     setActiveTenant(data.data)
     load()
   }
+
+  const pageNumbers = Array.from({ length: numPages }, (_, i) => i + 1)
+    .filter((n) => n === 1 || n === numPages || Math.abs(n - page) <= 1)
+    .reduce((acc, n, idx, arr) => {
+      if (idx > 0 && n - arr[idx - 1] > 1) acc.push('ellipsis-' + n)
+      acc.push(n)
+      return acc
+    }, [])
 
   return (
     <AdminLayout>
@@ -175,6 +203,48 @@ export default function AdminTenantsPage() {
             </tbody>
           </table>
         </div>
+        {numPages > 1 && (
+          <div className="mt-4 flex items-center justify-between">
+            <p className="text-[13px] text-[#7C867D]">
+              Page {page} of {numPages} · {total} tenants
+            </p>
+            <div className="flex items-center gap-1.5">
+              <button
+                onClick={() => { pageRef.current = Math.max(1, page - 1); setPage(pageRef.current); load() }}
+                disabled={page === 1}
+                className="h-8 rounded-lg border border-[#D8DCD8] bg-white px-3 text-[13px] text-[#5B655C] hover:bg-[#F3F5F3] disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                Previous
+              </button>
+
+              {pageNumbers.map((item) =>
+                String(item).startsWith('ellipsis') ? (
+                  <span key={item} className="px-1 text-[13px] text-[#9BA39B]">…</span>
+                ) : (
+                  <button
+                    key={item}
+                    onClick={() => { pageRef.current = item; setPage(item); load() }}
+                    className={`h-8 w-8 rounded-lg border text-[13px] font-medium transition-colors ${
+                      page === item
+                        ? 'border-[#1D9E75] bg-[#1D9E75] text-white'
+                        : 'border-[#D8DCD8] bg-white text-[#5B655C] hover:bg-[#F3F5F3]'
+                    }`}
+                  >
+                    {item}
+                  </button>
+                )
+              )}
+
+              <button
+                onClick={() => { pageRef.current = Math.min(numPages, page + 1); setPage(pageRef.current); load() }}
+                disabled={page === numPages}
+                className="h-8 rounded-lg border border-[#D8DCD8] bg-white px-3 text-[13px] text-[#5B655C] hover:bg-[#F3F5F3] disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                Next
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       <TenantDetailPanel

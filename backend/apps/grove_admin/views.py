@@ -119,6 +119,9 @@ class AdminTenantListView(APIView):
     permission_classes = [IsGroveSuperuser]
 
     def get(self, request):
+        page = int(request.query_params.get("page", 1))
+        page_size = int(request.query_params.get("page_size", 20))
+
         try:
             rows = TenantAdminService.list_tenants(
                 search=request.query_params.get("search"),
@@ -129,10 +132,19 @@ class AdminTenantListView(APIView):
             logger.error(f"[grove_admin] Failed to load tenants: {e}")
             return Response({"success": False, "message": "Could not load tenants."}, status=500)
 
-        serializer = AdminTenantListSerializer(rows, many=True)
+        paginator = Paginator(rows, page_size)
+        page_obj = paginator.get_page(page)
+
+        serializer = AdminTenantListSerializer(page_obj.object_list, many=True)
         return Response({
             "success": True,
-            "data": {"results": serializer.data, "total": len(rows)},
+            "data": {
+                "results": serializer.data, 
+                "total": paginator.count,
+                "page" : page,
+                "page_size" : page_size,
+                "num_pages" : paginator.num_pages,
+                },
         })
 
 class AdminTenantDetailView(APIView):
