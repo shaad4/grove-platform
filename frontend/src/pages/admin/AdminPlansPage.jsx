@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useRef } from 'react'
 import AdminLayout from '../../components/layout/AdminLayout'
 import adminPlansApi from '../../api/admin/adminPlans.api'
 import { PlanBadge } from '../../components/ui/AdminUI'
@@ -14,11 +14,14 @@ export default function AdminPlansPage() {
   const [search, setSearch] = useState('')
   const [planFilter, setPlanFilter] = useState('')
   const [usageFilter, setUsageFilter] = useState('')
+  const [page, setPage] = useState(1)
+  const PAGE_SIZE = 20
 
   const [activeTenant, setActiveTenant] = useState(null)
   const [panelOpen, setPanelOpen] = useState(false)
 
   const [detailsOpen, setDetailsOpen] = useState(false)
+  const prevFilters = useRef({ search, planFilter, usageFilter })
 
 
   const load = useCallback(async () => {
@@ -47,6 +50,26 @@ export default function AdminPlansPage() {
     if (usageFilter === 'at_limit' && !isAtLimit(r)) return false
     return true
   })
+
+  useEffect(() => {
+    const f = prevFilters.current
+    if (f.search !== search || f.planFilter !== planFilter || f.usageFilter !== usageFilter) {
+      setPage(1)
+      prevFilters.current = { search, planFilter, usageFilter }
+    }
+  }, [search, planFilter, usageFilter])
+
+  const totalRows = rows.length
+  const numPages = Math.max(1, Math.ceil(totalRows / PAGE_SIZE))
+  const pagedRows = rows.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
+
+  const pageNumbers = Array.from({ length: numPages }, (_, i) => i + 1)
+    .filter((n) => n === 1 || n === numPages || Math.abs(n - page) <= 1)
+    .reduce((acc, n, idx, arr) => {
+      if (idx > 0 && n - arr[idx - 1] > 1) acc.push('ellipsis-' + n)
+      acc.push(n)
+      return acc
+    }, [])
 
   if (loading) {
     return (
@@ -153,7 +176,7 @@ export default function AdminPlansPage() {
               {rows.length === 0 ? (
                 <tr><td colSpan={4} className="px-5 py-10 text-center text-[13px] text-[#9BA39B]">No tenants match your filters.</td></tr>
               ) : (
-                rows.map((r) => (
+                pagedRows.map((r) => (
                   <tr
                     key={r.tenant_id}
                     onClick={() => { setActiveTenant(r); setPanelOpen(true) }}
@@ -185,6 +208,48 @@ export default function AdminPlansPage() {
             </tbody>
           </table>
         </div>
+        {numPages > 1 && (
+          <div className="mt-4 flex items-center justify-between">
+            <p className="text-[13px] text-[#7C867D]">
+              Page {page} of {numPages} · {totalRows} tenants
+            </p>
+            <div className="flex items-center gap-1.5">
+              <button
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                disabled={page === 1}
+                className="h-8 rounded-lg border border-[#D8DCD8] bg-white px-3 text-[13px] text-[#5B655C] hover:bg-[#F3F5F3] disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                Previous
+              </button>
+
+              {pageNumbers.map((item) =>
+                String(item).startsWith('ellipsis') ? (
+                  <span key={item} className="px-1 text-[13px] text-[#9BA39B]">…</span>
+                ) : (
+                  <button
+                    key={item}
+                    onClick={() => setPage(item)}
+                    className={`h-8 w-8 rounded-lg border text-[13px] font-medium transition-colors ${
+                      page === item
+                        ? 'border-[#1D9E75] bg-[#1D9E75] text-white'
+                        : 'border-[#D8DCD8] bg-white text-[#5B655C] hover:bg-[#F3F5F3]'
+                    }`}
+                  >
+                    {item}
+                  </button>
+                )
+              )}
+
+              <button
+                onClick={() => setPage((p) => Math.min(numPages, p + 1))}
+                disabled={page === numPages}
+                className="h-8 rounded-lg border border-[#D8DCD8] bg-white px-3 text-[13px] text-[#5B655C] hover:bg-[#F3F5F3] disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                Next
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       <PlanOverridePanel
