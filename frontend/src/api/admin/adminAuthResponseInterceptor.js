@@ -3,6 +3,9 @@ import { setAdminAccessToken, clearAdminAuth } from '../../features/adminAuth/ad
 let isLoggingOut = false
 export const setAdminLoggingOut = (value) => { isLoggingOut = value }
 
+export const resetAdminLoggingOut = () => { isLoggingOut = false }
+
+
 let isRefreshing = false
 let pendingQueue = []
 

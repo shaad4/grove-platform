@@ -24,6 +24,7 @@ import PortalsPage        from './pages/PortalsPage'
 import ForgotPasswordPage from './pages/ForgotPasswordPage'
 import ResetPasswordPage  from './pages/ResetPasswordPage'
 import WorkspaceNotFoundPage from './pages/WorkspaceNotFoundPage'
+import NotFoundPage from './pages/NotFoundPage'
 
 // Client pages
 import AcceptInvitePage   from './pages/client/AcceptInvitePage'
@@ -74,7 +75,7 @@ export default function App() {
                   <Route path="users" element={<AdminUsersPage />} />
                   <Route path="plans" element={<AdminPlansPage />} />
                 </Route>
-                <Route path="*" element={<Navigate to="/grove-admin/login" replace />} />
+                <Route path="*" element={<NotFoundPage />} />
               </Routes>
             </AdminBootstrap>
           } />
@@ -175,7 +176,7 @@ export default function App() {
 
                   {/* Misc */}
                   <Route path="/workspace-not-found" element={<WorkspaceNotFoundPage />} />
-                  <Route path="*" element={<Navigate to="/" replace />} />
+                  <Route path="*" element={<NotFoundPage />} />
 
                 </Routes>
                 <UpgradeModal />

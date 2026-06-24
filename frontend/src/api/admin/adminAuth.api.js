@@ -6,6 +6,8 @@ const adminAuthApi = {
 
   refresh: () => adminApi.post('/token/refresh/'),
 
+  logout: () => adminApi.post('/auth/logout/'),
+
 }
 
 export default adminAuthApi

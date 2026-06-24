@@ -15,6 +15,7 @@ from .views import (
     AdminPlanListView,
     GroveAdminTokenRefreshView,
     AdminPlanUpdateView,
+    GroveAdminLogoutView
 
 
 
@@ -38,5 +39,7 @@ urlpatterns = [
     path("users/<uuid:user_id>/deactivate/", AdminUserDeactivateView.as_view()),
     path("plans/", AdminPlanListView.as_view()),
     path("plans/<uuid:plan_id>/update/", AdminPlanUpdateView.as_view()),
+    path('auth/logout/', GroveAdminLogoutView.as_view()),
+
 
 ]

@@ -9,6 +9,8 @@ import {
 } from 'lucide-react'
 import { selectAdminUser, clearAdminAuth } from '../../features/adminAuth/adminAuthSlice'
 import { setAdminLoggingOut } from '../../api/admin/adminAuthResponseInterceptor'
+import adminAuthApi from '../../api/admin/adminAuth.api'
+
 
 const NAV_ITEMS = [
   { to: '/grove-admin/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
@@ -22,8 +24,13 @@ export default function AdminSidebar() {
   const dispatch = useDispatch()
   const navigate = useNavigate()
 
-  const handleSignOut = () => {
+  const handleSignOut = async () => {
     setAdminLoggingOut(true)
+    try {
+      await adminAuthApi.logout()
+    } catch {
+      // proceed regardless
+    }
     dispatch(clearAdminAuth())
     navigate('/grove-admin/login', { replace: true })
   }

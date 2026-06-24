@@ -320,3 +320,16 @@ class AdminPlanUpdateView(APIView):
             "message": f"{plan.name.capitalize()} plan updated.",
             "data": PlanConfigSerializer(plan).data,
         })
+    
+class GroveAdminLogoutView(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        response = Response({"success": True})
+        response.delete_cookie(
+            "grove_admin_refresh",
+            path="/",
+            domain=".lvh.me",
+            samesite="None",
+        )
+        return response
