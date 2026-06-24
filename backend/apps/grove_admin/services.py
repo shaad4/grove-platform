@@ -179,6 +179,7 @@ class TenantAdminService:
         if not pro_plan:
             raise PlanNotFound("Pro plan is not configured.")
         TenantAdminRepository.set_plan(tenant, pro_plan)
+        TenantAdminRepository.set_client_limit_override(tenant, None)
         AdminActionRepository.log(admin, "upgrade_plan", "tenant", tenant.id, {"new_plan": "pro"})
         logger.info(f"[grove_admin] Tenant {tenant.slug} upgraded to Pro by {admin.email}.")
         return tenant
@@ -193,6 +194,7 @@ class TenantAdminService:
         if not free_plan:
             raise PlanNotFound("Free plan is not configured.")
         TenantAdminRepository.set_plan(tenant, free_plan)
+        TenantAdminRepository.set_client_limit_override(tenant, None)
         AdminActionRepository.log(admin, "downgrade_plan", "tenant", tenant.id, {"new_plan": "free"})
         logger.info(f"[grove_admin] Tenant {tenant.slug} downgraded to Free by {admin.email}.")
         return tenant

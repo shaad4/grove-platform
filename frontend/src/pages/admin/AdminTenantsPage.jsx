@@ -37,9 +37,6 @@ export default function AdminTenantsPage() {
 
   useEffect(() => { load() }, [load])
 
-  // Client-side status filter fallback — backend status filtering
-  // isn't confirmed to work server-side yet (repository layer not
-  // verified), so this guarantees correct behavior either way.
   const visibleTenants = tenants.filter((t) => {
     if (!statusFilter) return true
     const isSuspended = t.is_suspended
