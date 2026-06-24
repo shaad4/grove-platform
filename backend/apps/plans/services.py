@@ -22,6 +22,12 @@ class PortalSessionError(Exception):
 
 class BillingService:
 
+    _BILLING_EVENT_STATUS = {
+        "checkout.session.completed": BillingHistory.Status.PAID,
+        "invoice.payment_succeeded":  BillingHistory.Status.PAID,
+        "invoice.payment_failed":     BillingHistory.Status.FAILED,
+    }
+
     @staticmethod
     def _get_or_create_stripe_customer(tenant, user_email):
         """Ensures the tenant has a Stripe customer, creating one if needed"""
@@ -157,6 +163,13 @@ class BillingService:
     @staticmethod
     def record_billing_history(event_data, event_type):
         """Writes a BillingHistory row from a Stripe event payload."""
+
+        if event_type not in BillingService._BILLING_EVENT_STATUS:
+            # Not a payment/invoice event (e.g. subscription cancellation) —
+            # nothing to record here.
+            return
+        
+
         customer_id = event_data.get("customer")
         tenant = Tenant.objects.filter(stripe_customer_id=customer_id).first()
         if not tenant:
@@ -174,12 +187,7 @@ class BillingService:
         period = event_data.get("lines", {}).get("data", [{}])[0].get("period", {}) if event_data.get("lines") else {}
         period_start = date.fromtimestamp(period["start"]) if period.get("start") else date.today()
         period_end = date.fromtimestamp(period["end"]) if period.get("end") else date.today()
-
-        status_map = {
-            "checkout.session.completed": BillingHistory.Status.PAID,
-            "invoice.payment_failed": BillingHistory.Status.FAILED,
-        }
-
+        
         pro_plan = Plan.objects.filter(name="pro").first()
 
         BillingHistoryRepository.create(
@@ -187,7 +195,7 @@ class BillingService:
             plan=pro_plan or tenant.plan,
             amount=amount_cents / 100,
             currency=currency,
-            status=status_map.get(event_type, BillingHistory.Status.PAID),
+            status=BillingService._BILLING_EVENT_STATUS[event_type],
             period_start=period_start,
             period_end=period_end,
             stripe_invoice_id=invoice_id,
