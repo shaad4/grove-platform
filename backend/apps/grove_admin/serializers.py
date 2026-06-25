@@ -106,6 +106,7 @@ class AdminPlanOverviewSerializer(serializers.Serializer):
                 {
                     "tenant_id": str(row["tenant"].id),
                     "tenant_name": row["tenant"].name,
+                    "logo_url": row["tenant"].logo_url,
                     "plan": row["tenant"].plan.name if row["tenant"].plan else None,
                     "client_count": row["client_count"],
                     "client_limit": row["client_limit"],

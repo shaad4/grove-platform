@@ -7,6 +7,30 @@ import { getInitials, getAvatarColor } from '../../utils/adminDisplay'
 import { Search, Settings } from 'lucide-react'
 import PlanDetailsPanel from '../../components/modals/PlanDetailsPanel'
 
+function PlanTenantLogo({ row }) {
+  const [imgError, setImgError] = useState(false)
+  const showImage = row.logo_url && !imgError
+
+  if (showImage) {
+    return (
+      <img
+        src={row.logo_url}
+        alt={row.tenant_name}
+        onError={() => setImgError(true)}
+        className="h-8 w-8 shrink-0 rounded-full object-cover"
+      />
+    )
+  }
+
+  return (
+    <div
+      className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold text-white"
+      style={{ background: getAvatarColor(row.tenant_id) }}
+    >
+      {getInitials(row.tenant_name)}
+    </div>
+  )
+}
 
 export default function AdminPlansPage() {
   const [data, setData] = useState(null)
@@ -186,12 +210,7 @@ export default function AdminPlansPage() {
                   >
                     <td className="px-5 py-3.5">
                       <div className="flex items-center gap-3">
-                        <div
-                          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold text-white"
-                          style={{ background: getAvatarColor(r.tenant_id) }}
-                        >
-                          {getInitials(r.tenant_name)}
-                        </div>
+                        <PlanTenantLogo row={r} />
                         <p className="text-[13px] font-medium text-[#10241C]">{r.tenant_name}</p>
                       </div>
                     </td>
