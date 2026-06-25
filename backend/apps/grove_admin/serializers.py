@@ -39,6 +39,7 @@ class AdminTenantListSerializer(serializers.Serializer):
             "id": str(tenant.id),
             "name": tenant.name,
             "slug": tenant.slug,
+            "logo_url": tenant.logo_url,
             "plan": tenant.plan.name if tenant.plan else None,
             "client_count": usage.client_count if usage else 0,
             "client_limit": tenant.effective_client_limit,

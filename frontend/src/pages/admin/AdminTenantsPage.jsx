@@ -6,6 +6,31 @@ import { PlanBadge, StatusPill } from '../../components/ui/AdminUI'
 import TenantDetailPanel from '../../components/modals/TenantDetailPanel'
 import { getInitials, getAvatarColor, joinedLabel } from '../../utils/adminDisplay'
 
+function TenantLogo({ tenant }) {
+  const [imgError, setImgError] = useState(false)
+  const showImage = tenant.logo_url && !imgError
+
+  if (showImage) {
+    return (
+      <img
+        src={tenant.logo_url}
+        alt={tenant.name}
+        onError={() => setImgError(true)}
+        className="h-8 w-8 shrink-0 rounded-full object-cover"
+      />
+    )
+  }
+
+  return (
+    <div
+      className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold text-white"
+      style={{ background: getAvatarColor(tenant.slug) }}
+    >
+      {getInitials(tenant.name)}
+    </div>
+  )
+}
+
 export default function AdminTenantsPage() {
   const [tenants, setTenants] = useState([])
   const [total, setTotal] = useState(0)
@@ -171,12 +196,7 @@ export default function AdminTenantsPage() {
                   >
                     <td className="px-5 py-3.5">
                       <div className="flex items-center gap-3">
-                        <div
-                          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold text-white"
-                          style={{ background: getAvatarColor(t.slug) }}
-                        >
-                          {getInitials(t.name)}
-                        </div>
+                        <TenantLogo tenant={t} />
                         <span className="text-[13px] font-medium text-[#10241C]">{t.name}</span>
                       </div>
                     </td>
