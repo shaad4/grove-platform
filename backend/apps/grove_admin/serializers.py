@@ -84,6 +84,7 @@ class AdminUserListSerializer(serializers.Serializer):
             "id": str(membership.user.id),
             "email": membership.user.email,
             "display_name": membership.user.display_name,
+            "avatar_url": membership.user.avatar_url,
             "role": membership.role,
             "tenant_slug": membership.tenant.slug,
             "joined_at": membership.joined_at,

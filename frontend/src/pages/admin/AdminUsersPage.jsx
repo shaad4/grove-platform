@@ -6,6 +6,31 @@ import { RoleBadge, StatusPill } from '../../components/ui/AdminUI'
 import UserDetailPanel from '../../components/modals/UserDetailPanel'
 import { getInitials, getAvatarColor, joinedLabel, relativeTimeLabel } from '../../utils/adminDisplay'
 
+function UserAvatar({ user }) {
+  const [imgError, setImgError] = useState(false)
+  const showImage = user.avatar_url && !imgError
+
+  if (showImage) {
+    return (
+      <img
+        src={user.avatar_url}
+        alt={user.display_name}
+        onError={() => setImgError(true)}
+        className="h-8 w-8 shrink-0 rounded-full object-cover"
+      />
+    )
+  }
+
+  return (
+    <div
+      className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold text-white"
+      style={{ background: getAvatarColor(user.email) }}
+    >
+      {getInitials(user.display_name)}
+    </div>
+  )
+}
+
 function RowActionsMenu({ user, onSelect }) {
   const [open, setOpen] = useState(false)
   const ref = useRef(null)
@@ -210,12 +235,7 @@ export default function AdminUsersPage() {
                   >
                     <td className="px-5 py-3.5">
                       <div className="flex items-center gap-3">
-                        <div
-                          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold text-white"
-                          style={{ background: getAvatarColor(u.email) }}
-                        >
-                          {getInitials(u.display_name)}
-                        </div>
+                        <UserAvatar user={u} />
                         <div>
                           <p className="text-[13px] font-medium text-[#10241C]">{u.display_name}</p>
                           <p className="text-[12px] text-[#9BA39B]">{u.email}</p>
