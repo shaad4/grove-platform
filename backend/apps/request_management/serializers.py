@@ -69,6 +69,7 @@ class InternalNoteSerializer(serializers.ModelSerializer):
 class RequestListSerializer(serializers.ModelSerializer):
     client_name = serializers.SerializerMethodField()
     client_email = serializers.SerializerMethodField()
+    client_avatar_url = serializers.SerializerMethodField()
     file_count = serializers.SerializerMethodField()
     client_id = serializers.UUIDField(source="client.id", read_only=True)
  
@@ -76,7 +77,7 @@ class RequestListSerializer(serializers.ModelSerializer):
         model = Request
         fields = [
             "id", "title", "status", "is_urgent", "due_date",
-            "ai_category", "client_name", "client_email",
+            "ai_category", "client_name", "client_email", "client_avatar_url",
             "file_count", "created_at", "updated_at", "client_id",
         ]
  
@@ -89,6 +90,9 @@ class RequestListSerializer(serializers.ModelSerializer):
         if obj.client.user:
             return obj.client.user.email
         return obj.client.client_email
+    
+    def get_client_avatar_url(self, obj):
+        return obj.client.user.avatar_url if obj.client.user else None
  
     def get_file_count(self, obj):
         try:

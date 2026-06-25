@@ -137,6 +137,7 @@ function UploadChip({ attachment, onRemove }) {
 // ── Main component ─────────────────────────────────────────────
 export default function ChatPanel({
   clientName,
+  clientAvatarUrl,
   requestId,
   requestStatus,
   activities = [],
@@ -468,9 +469,11 @@ export default function ChatPanel({
                       {/* Avatar column */}
                       <div className="w-8 shrink-0 self-end pb-0.5">
                         {isLastInGroup && !isMe && (
-                          <div className={`h-8 w-8 rounded-full flex items-center justify-center text-[10px] font-bold shadow-sm
+                          <div className={`h-8 w-8 rounded-full overflow-hidden flex items-center justify-center text-[10px] font-bold shadow-sm
                             ${getAvatarColor(clientName).bg} ${getAvatarColor(clientName).text}`}>
-                            {getInitials(clientName)}
+                            {clientAvatarUrl ? (
+                              <img src={clientAvatarUrl} alt={clientName} className="w-full h-full object-cover" />
+                            ) : getInitials(clientName)}
                           </div>
                         )}
                       </div>

@@ -302,8 +302,10 @@ export default function ClientDetailPage() {
             </button>
             <ChevronRight size={13} className="text-[#d1d5d1]" />
             <div className="flex items-center gap-2">
-              <div className={`h-5 w-5 rounded-md flex items-center justify-center text-[9px] font-bold ${avatar.bg} ${avatar.text}`}>
-                {getInitials(displayName)}
+              <div className={`h-5 w-5 rounded-md overflow-hidden flex items-center justify-center text-[9px] font-bold ${avatar.bg} ${avatar.text}`}>
+                {client.avatar_url ? (
+                  <img src={client.avatar_url} alt={displayName} className="w-full h-full object-cover" />
+                ) : getInitials(displayName)}
               </div>
               <span className="text-[13px] font-medium text-[#141a14]">{displayName}</span>
             </div>
@@ -323,8 +325,12 @@ export default function ClientDetailPage() {
                   <div className="p-6">
                     <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
                       <div className="flex items-start gap-4">
-                        <div className={`h-14 w-14 shrink-0 rounded-2xl flex items-center justify-center text-[18px] font-bold ${avatar.bg} ${avatar.text}`}>
-                          {isPending ? <Mail size={20} className="opacity-70" /> : getInitials(displayName)}
+                        <div className={`h-14 w-14 shrink-0 rounded-2xl overflow-hidden flex items-center justify-center text-[18px] font-bold ${avatar.bg} ${avatar.text}`}>
+                          {isPending ? (
+                            <Mail size={20} className="opacity-70" />
+                          ) : client.avatar_url ? (
+                            <img src={client.avatar_url} alt={displayName} className="w-full h-full object-cover" />
+                          ) : getInitials(displayName)}
                         </div>
                         <div>
                           <h1 className="text-[20px] font-semibold text-[#141a14]">{displayName}</h1>

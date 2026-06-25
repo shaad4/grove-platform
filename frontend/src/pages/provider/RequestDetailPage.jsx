@@ -1435,8 +1435,10 @@ export default function RequestDetailPage() {
                 <div>
                   <span className="text-[#9ea89e] block text-[11px] font-medium uppercase tracking-wider mb-1">Requester</span>
                   <div className="flex items-center gap-1.5">
-                    <div className={`h-5 w-5 rounded-full flex items-center justify-center text-[9px] font-bold ${getAvatarColor(clientName).bg} ${getAvatarColor(clientName).text}`}>
-                      {getInitials(clientName)}
+                    <div className={`h-5 w-5 rounded-full overflow-hidden flex items-center justify-center text-[9px] font-bold ${getAvatarColor(clientName).bg} ${getAvatarColor(clientName).text}`}>
+                      {req.client_avatar_url ? (
+                        <img src={req.client_avatar_url} alt={clientName} className="w-full h-full object-cover" />
+                      ) : getInitials(clientName)}
                     </div>
                     <span className="font-medium text-[#4a544a] truncate">{clientName}</span>
                   </div>
@@ -1689,6 +1691,7 @@ export default function RequestDetailPage() {
             {/* Chat messages + input — ChatPanel handles its own scroll */}
             <ChatPanel
               clientName={clientName}
+              clientAvatarUrl={req.client_avatar_url}
               requestId={requestId}
               requestStatus={req.status}
               activities={activities}

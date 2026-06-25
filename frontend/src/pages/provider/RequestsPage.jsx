@@ -64,13 +64,15 @@ function StatusPill({ status, statusConfig, small = false }) {
   )
 }
 
-function Avatar({ name = '', size = 'sm' }) {
+function Avatar({ name = '', avatarUrl = null, size = 'sm' }) {
   const c = getAvatarColor(name)
   const initials = getInitials(name)
   const sz = size === 'sm' ? 'h-7 w-7 text-[11px]' : 'h-8 w-8 text-[12px]'
   return (
-    <div className={`rounded-full flex items-center justify-center font-semibold shrink-0 ${sz} ${c.bg} ${c.text}`}>
-      {initials}
+    <div className={`rounded-full overflow-hidden flex items-center justify-center font-semibold shrink-0 ${sz} ${c.bg} ${c.text}`}>
+      {avatarUrl ? (
+        <img src={avatarUrl} alt={name} className="w-full h-full object-cover" />
+      ) : initials}
     </div>
   )
 }
@@ -131,7 +133,7 @@ function RequestRow({  req, statusConfig, onClick, selected, onSelect }) {
       </div>
 
       <div className="hidden md:flex items-center gap-2 w-44 shrink-0">
-        <Avatar name={clientName} size="sm" />
+        <Avatar name={clientName} avatarUrl={req.client_avatar_url} size="sm" />
         <span className="text-[13px] text-[#4a544a] truncate">{clientName}</span>
       </div>
 
@@ -182,7 +184,7 @@ function PipelineCard({ req, statusConfig, onClick }) {
       <div className="p-3.5">
         <p className={`text-[13px] font-medium leading-snug mb-2 ${isOverdueOrToday ? 'text-red-950 font-semibold' : 'text-[#141a14]'}`}>{req.title}</p>
         <div className="flex items-center gap-2">
-          <Avatar name={clientName} size="sm" />
+          <Avatar name={clientName} avatarUrl={req.client_avatar_url} size="sm" />
           <span className="text-[12px] text-[#9ea89e] truncate">{clientName}</span>
           <CategoryDot category={req.ai_category} />
         </div>

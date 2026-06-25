@@ -153,9 +153,15 @@ function ClientCard({ client, onEdit, onDeactivate, onReactivate, onDelete, onRe
       <div className="p-5">
         <div className="flex items-start justify-between gap-3">
           <div className="flex items-center gap-3 min-w-0">
-            <div className={`h-11 w-11 shrink-0 rounded-full flex items-center justify-center text-[13px] font-semibold ${avatar.bg} ${avatar.text}`}>
+            <div className={`h-11 w-11 shrink-0 rounded-full overflow-hidden flex items-center justify-center text-[13px] font-semibold ${avatar.bg} ${avatar.text}`}>
               {isPending ? (
                 <Mail size={16} className="opacity-70" />
+              ) : client.avatar_url ? (
+                <img
+                  src={client.avatar_url}
+                  alt={client.display_name || client.client_name}
+                  className="w-full h-full object-cover"
+                />
               ) : initials}
             </div>
             <div className="min-w-0">
@@ -271,8 +277,16 @@ function ClientRow({ client, onEdit, onDeactivate, onReactivate, onDelete, onRes
       className="flex items-center gap-4 border-b border-[#f1f3f1] px-5 py-4 hover:bg-[#fafafa] transition-colors cursor-pointer last:border-0"
       onClick={() => !isPending && onClick()}
     >
-      <div className={`h-9 w-9 shrink-0 rounded-full flex items-center justify-center text-[12px] font-semibold ${avatar.bg} ${avatar.text}`}>
-        {isPending ? <Mail size={14} className="opacity-70" /> : initials}
+      <div className={`h-9 w-9 shrink-0 rounded-full overflow-hidden flex items-center justify-center text-[12px] font-semibold ${avatar.bg} ${avatar.text}`}>
+        {isPending ? (
+          <Mail size={14} className="opacity-70" />
+        ) : client.avatar_url ? (
+          <img
+            src={client.avatar_url}
+            alt={client.display_name || client.client_name}
+            className="w-full h-full object-cover"
+          />
+        ) : initials}
       </div>
 
       <div className="flex-1 min-w-0">

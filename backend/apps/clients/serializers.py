@@ -39,6 +39,7 @@ class TagSerializer(serializers.Serializer):
 class ClientListSerializer(serializers.ModelSerializer):
     email = serializers.SerializerMethodField()
     display_name = serializers.SerializerMethodField()
+    avatar_url = serializers.SerializerMethodField()
     last_login = serializers.SerializerMethodField()
     tags = serializers.SerializerMethodField()
     ai_insight = serializers.SerializerMethodField()
@@ -48,7 +49,7 @@ class ClientListSerializer(serializers.ModelSerializer):
 
     class Meta:
         model  = Client
-        fields = [ "id", "email", "display_name",
+        fields = [ "id", "email", "display_name", "avatar_url",
                    "status", "is_deactivated", "last_login",
                      "joined_at", "created_at", "business_type", 
                      "private_note", "tags", "client_name",
@@ -61,6 +62,9 @@ class ClientListSerializer(serializers.ModelSerializer):
     
     def get_display_name(self, obj):
         return obj.user.display_name if obj.user else obj.client_name
+    
+    def get_avatar_url(self, obj):
+        return obj.user.avatar_url if obj.user else None
     
     def get_last_login(self, obj):
         return obj.user.last_login if obj.user else None

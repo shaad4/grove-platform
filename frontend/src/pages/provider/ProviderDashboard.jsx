@@ -186,8 +186,10 @@ function ClientRow({ client, index, onClick }) {
     >
       <div className="flex items-center gap-3">
         <div className="relative shrink-0">
-          <div className={`flex h-9 w-9 items-center justify-center rounded-full text-[12px] font-semibold ${getColor(index)}`}>
-            {getInitials(name)}
+          <div className={`flex h-9 w-9 items-center justify-center overflow-hidden rounded-full text-[12px] font-semibold ${getColor(index)}`}>
+            {client.avatar_url ? (
+              <img src={client.avatar_url} alt={name} className="w-full h-full object-cover" />
+            ) : getInitials(name)}
           </div>
           {isActive && !isPending && (
             <span className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-[#1d9e75] border-2 border-white" />
