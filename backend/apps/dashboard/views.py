@@ -326,6 +326,7 @@ class ActivityFeedView(APIView):
                 "description": a.description,
                 "actor_source": a.actor_source,
                 "actor": a.actor.display_name if a.actor else None,
+                "actor_avatar_url": a.actor.avatar_url if a.actor else None,
                 "is_current_user": a.actor_id == current_user_id,
                 "metadata": a.metadata,
                 "created_at": a.created_at.isoformat(),
@@ -335,6 +336,11 @@ class ActivityFeedView(APIView):
                     "request_ref": f"#{str(a.request_id)[:8]}" if a.request_id else None,
                     "client_name": (
                         a.request.client.user.display_name
+                        if a.request and a.request.client and a.request.client.user
+                        else None
+                    ),
+                    "client_avatar_url": (
+                        a.request.client.user.avatar_url
                         if a.request and a.request.client and a.request.client.user
                         else None
                     ),

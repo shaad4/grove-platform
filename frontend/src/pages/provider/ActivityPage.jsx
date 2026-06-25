@@ -36,15 +36,55 @@ const STATUS_LABEL = {
   delivered: 'Delivered', closed: 'Closed',
 }
 
-function Avatar({ name = '', size = 'sm', isAI = false }) {
+function Avatar({ name = '', avatarUrl, size = 'sm', isAI = false }) {
+  const [imgError, setImgError] = useState(false)
+
   if (isAI) return (
     <div className="h-7 w-7 rounded-full bg-[#e6f5f0] flex items-center justify-center shrink-0">
       <span className="text-[9px] font-bold text-[#0f6e56]">AI</span>
     </div>
   )
+
+  if (avatarUrl && !imgError) {
+    return (
+      <img
+        src={avatarUrl}
+        alt={name}
+        onError={() => setImgError(true)}
+        className="h-7 w-7 rounded-full object-cover shrink-0"
+      />
+    )
+  }
+
   const c = getAvatarColor(name)
   return (
     <div className={`h-7 w-7 rounded-full flex items-center justify-center text-[10px] font-semibold shrink-0 ${c.bg} ${c.text}`}>
+      {getInitials(name)}
+    </div>
+  )
+}
+
+function ClientAvatarMini({ name, avatarUrl }) {
+  const [imgError, setImgError] = useState(false)
+  const c = getAvatarColor(name)
+
+  if (avatarUrl && !imgError) {
+    return (
+      <img
+        src={avatarUrl}
+        alt={name}
+        title={`Client: ${name}`}
+        onError={() => setImgError(true)}
+        className="h-6 w-6 rounded-full object-cover shrink-0"
+      />
+    )
+  }
+
+  return (
+    <div
+      className={`h-6 w-6 rounded-full flex items-center justify-center text-[9px] font-bold ${c.bg} ${c.text}`}
+      title={`Client: ${name}`}
+    >
       {getInitials(name)}
     </div>
   )
@@ -100,7 +140,7 @@ function ActivityRow({ activity, onNavigate }) {
         <div className={`h-2 w-2 rounded-full ${cfg.dot}`} />
       </div>
 
-      <Avatar name={actorName} isAI={isAI} />
+      <Avatar name={actorName} avatarUrl={activity.actor_avatar_url} isAI={isAI} />
 
       <div className="flex-1 min-w-0">
         <div className="text-[13px] text-[#141a14] leading-relaxed">
@@ -152,13 +192,8 @@ function ActivityRow({ activity, onNavigate }) {
 
       {/* Simplified Right Anchor Flank Container */}
       <div className="flex items-center gap-3 shrink-0 ml-auto">
-        {target.client_name && (
-          <div 
-            className={`h-6 w-6 rounded-full flex items-center justify-center text-[9px] font-bold ${getAvatarColor(target.client_name).bg} ${getAvatarColor(target.client_name).text}`}
-            title={`Client: ${target.client_name}`}
-          >
-            {getInitials(target.client_name)}
-          </div>
+       {target.client_name && (
+          <ClientAvatarMini name={target.client_name} avatarUrl={target.client_avatar_url} />
         )}
         <span className="text-[12px] text-[#9ea89e] w-16 text-right whitespace-nowrap">
           {timeAgo(activity.created_at)}

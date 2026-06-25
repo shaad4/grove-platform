@@ -273,9 +273,9 @@ function ProfileSection({ user, tenant }) {
         </FormRow>
         <FormRow label="Email address">
           <Input value={user?.email || ''} readOnly />
-          <p className="text-[11px] text-[#9EA89E] mt-1.5">
+          {/* <p className="text-[11px] text-[#9EA89E] mt-1.5">
             Contact <span className="text-[#0F6E56] font-medium">{tenant?.name || 'your provider'}</span> to change your email.
-          </p>
+          </p> */}
         </FormRow>
       </div>
 
