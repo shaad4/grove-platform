@@ -198,11 +198,13 @@ CORS_ALLOWED_ORIGINS = [
    "http://lvh.me:5173",
     "https://lvh.me:5173",          
     "http://localhost:5173",
-    "https://localhost:5173",       
+    "https://localhost:5173",  
+    "https://groven.in",     
 ]
 
 CORS_ALLOWED_ORIGIN_REGEXES = [
     r"^https?://.*\.lvh\.me:5173$",
+    r"^https://.*\.groven\.in$",
 ]
 
 CORS_ALLOW_CREDENTIALS = True
@@ -218,6 +220,8 @@ CSRF_TRUSTED_ORIGINS = [
     "https://*.lvh.me:5173",
     "https://lvh.me:8443",
     "https://*.lvh.me:8443",
+    "https://groven.in",
+    "https://*.groven.in",
 ]
 
 
