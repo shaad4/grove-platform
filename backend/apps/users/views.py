@@ -1,7 +1,7 @@
 import uuid
 from django.contrib.auth.models import update_last_login
 from django.utils import timezone
- 
+from django.conf import settings
 from rest_framework import status
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
@@ -523,7 +523,7 @@ class LogoutView(APIView):
 
                 response.delete_cookie(
                     key,
-                    domain=".lvh.me",
+                    domain=settings.COOKIE_DOMAIN,
                     path="/",
                 )
 

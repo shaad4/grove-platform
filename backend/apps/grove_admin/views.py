@@ -7,6 +7,8 @@ from apps.users.models import User
 from apps.users.utils import set_auth_cookies
 from apps.common.logger import logger
 from django.core.paginator import Paginator
+from django.conf import settings
+
 
 from .permissions import IsGroveSuperuser
 from .serializers import (
@@ -329,7 +331,7 @@ class GroveAdminLogoutView(APIView):
         response.delete_cookie(
             "grove_admin_refresh",
             path="/",
-            domain=".lvh.me",
+            domain=settings.COOKIE_DOMAIN,
             samesite="None",
         )
         return response

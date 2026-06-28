@@ -1,3 +1,5 @@
+from django.conf import settings
+
 def set_auth_cookies(response, refresh_token, cookie_name="refresh_token"):
 
     response.set_cookie(
@@ -8,7 +10,7 @@ def set_auth_cookies(response, refresh_token, cookie_name="refresh_token"):
         secure=True,
         samesite="None",
 
-        domain=".lvh.me",
+        domain=settings.COOKIE_DOMAIN,
         path="/",
 
         max_age=60 * 60 * 24 * 7,
