@@ -25,8 +25,9 @@ def send_client_invite_email(
 ):
     
     frontend_base = settings.FRONTEND_URL
-    accept_url = f"https://{tenant_slug}.{frontend_base.replace('http://', '')}/accept-invite?token={invite_token}"
-
+    base = frontend_base.replace("https://", "").replace("http://", "")
+    accept_url = f"https://{tenant_slug}.{base}/accept-invite?token={invite_token}"
+    
     subject = f"You've been invited to {provider_name}'s workspace on Grove"
 
     message = f"""Hi {client_name},
