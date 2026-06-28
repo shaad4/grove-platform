@@ -241,7 +241,7 @@ EMAIL_HOST_PASSWORD = config("EMAIL_HOST_PASSWORD", default="")
 DEFAULT_FROM_EMAIL = config("EMAIL_HOST_USER", default="logonxavi77@gmail.com")
 
 FRONTEND_URL = config("FRONTEND_URL")
-
+COOKIE_DOMAIN = config("COOKIE_DOMAIN", default=".lvh.me")
 
 GOOGLE_CLIENT_ID = config("GOOGLE_CLIENT_ID")
 
