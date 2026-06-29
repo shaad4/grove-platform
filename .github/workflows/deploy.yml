@@ -1,18 +1,14 @@
 name: Deploy to Production
-
 on:
   push:
     branches:
       - develop
-
 jobs:
   deploy:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
-
       - name: Deploy to EC2
         uses: appleboy/ssh-action@master
         with:
@@ -21,7 +17,7 @@ jobs:
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
             cd ~/grove-platform
-            git pull origin main
-            docker compose up -d --build backend daphne celery_worker celery_beat
-            docker compose restart nginx
+            git fetch origin develop
+            git reset --hard origin/develop
+            docker compose up -d --build
             docker compose ps
