@@ -85,7 +85,7 @@ dozzle:
   ports:
     - "8080:8080"
   environment:
-      - DOZZLE_AUTH_PROVIDER=simple
+    - DOZZLE_AUTH_PROVIDER=simple
 
 volumes:
   postgres_data:
