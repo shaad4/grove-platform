@@ -1,8 +1,9 @@
 import uuid
-from apps.tenants.models import Tenant, TenantMembership
-from apps.users.models import User
 
 from django.db import transaction
+
+from apps.tenants.models import Tenant, TenantMembership
+from apps.users.models import User
 
 
 class UserSettingsRepository:
@@ -14,26 +15,26 @@ class UserSettingsRepository:
             return User.objects.get(id=user_id, is_active=True)
         except User.DoesNotExist:
             return None
-        
+
     @staticmethod
     def update_display_name(user, display_name):
         user.display_name = display_name
         user.save(update_fields=["display_name", "updated_at"])
 
         return user
-    
+
     @staticmethod
     def update_avatar(user, avatar_url):
         user.avatar_url = avatar_url
-        user.save(update_fields = ["avatar_url", "updated_at"])
+        user.save(update_fields=["avatar_url", "updated_at"])
         return user
-    
+
     @staticmethod
     def update_password(user, new_password):
         user.set_password(new_password)
         user.save(update_fields=["password", "updated_at"])
         return user
-    
+
     @staticmethod
     @transaction.atomic
     def update_notification_settings(user, settings_patch):
@@ -58,12 +59,11 @@ class UserSettingsRepository:
 
         user.settings = locked_user.settings
         return locked_user
-        
+
     @staticmethod
     def get_notification_settings(user):
         settings = user.settings or {}
         return settings.get("notifications", {})
-    
 
     @staticmethod
     def deactivate_membership(user, tenant):
@@ -74,8 +74,6 @@ class UserSettingsRepository:
             is_active=True,
         ).update(is_active=False)
         return updated > 0
-
-    
 
 
 class TenantSettingsRepository:
@@ -89,7 +87,6 @@ class TenantSettingsRepository:
             )
         except Tenant.DoesNotExist:
             return None
-        
 
     @staticmethod
     def slug_taken(slug, exclude_tenant_id=None):
@@ -97,7 +94,7 @@ class TenantSettingsRepository:
         if exclude_tenant_id:
             qs = qs.exclude(id=exclude_tenant_id)
         return qs.exists()
-    
+
     @staticmethod
     def update_workspace(tenant, fields):
         """
@@ -107,8 +104,12 @@ class TenantSettingsRepository:
 
         slug_changed = False
         allowed = [
-            "name", "tagline", "slug", "accent_color",
-            "white_label_enabled", "custom_status_labels",
+            "name",
+            "tagline",
+            "slug",
+            "accent_color",
+            "white_label_enabled",
+            "custom_status_labels",
         ]
         update_fields = ["updated_at"]
 
@@ -118,17 +119,16 @@ class TenantSettingsRepository:
                     slug_changed = True
                 setattr(tenant, field, fields[field])
                 update_fields.append(field)
- 
+
         tenant.save(update_fields=update_fields)
         return tenant, slug_changed
-    
 
     @staticmethod
     def update_logo(tenant, logo_url):
         tenant.logo_url = logo_url
         tenant.save(update_fields=["logo_url", "updated_at"])
         return tenant
-    
+
     @staticmethod
     @transaction.atomic
     def deactivate_tenant_cascade(tenant):

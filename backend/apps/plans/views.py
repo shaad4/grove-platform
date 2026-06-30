@@ -1,25 +1,21 @@
 import json
+
 import stripe
 from django.conf import settings
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
-from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework import status
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework import status
 
-from apps.tenants.models import TenantMembership, Plan
-
-from .services import(
-    BillingService,
-    StripeConfigError,
-    CheckoutSessionError,
-    PortalSessionError,
-)
+from apps.common.logger import logger
+from apps.tenants.models import Plan, TenantMembership
 
 from .repositories import BillingHistoryRepository
+from .services import (BillingService, CheckoutSessionError,
+                       PortalSessionError, StripeConfigError)
 from .tasks import sync_billing_event
-from apps.common.logger import logger
 
 
 def _is_provider(request):
@@ -35,11 +31,16 @@ class CreateCheckoutSessionView(APIView):
     def post(self, request):
         if not _is_provider(request):
             return Response({"success": False, "message": "Forbidden."}, status=403)
-        
+
         tenant = request.tenant
 
-        success_url = request.data.get("success_url") or f"{settings.FRONTEND_URL}/dashboard?upgraded=true"
-        cancel_url = request.data.get("cancel_url") or f"{settings.FRONTEND_URL}/upgrade"
+        success_url = (
+            request.data.get("success_url")
+            or f"{settings.FRONTEND_URL}/dashboard?upgraded=true"
+        )
+        cancel_url = (
+            request.data.get("cancel_url") or f"{settings.FRONTEND_URL}/upgrade"
+        )
 
         try:
             checkout_url = BillingService.create_checkout_session(
@@ -54,7 +55,7 @@ class CreateCheckoutSessionView(APIView):
             return Response({"success": False, "message": str(e)}, status=502)
 
         return Response({"success": True, "data": {"checkout_url": checkout_url}})
-    
+
 
 class BillingPortalView(APIView):
     """Provider clicks 'Manage Billing' returns a Stripe Customer Portal URL."""
@@ -66,10 +67,14 @@ class BillingPortalView(APIView):
             return Response({"success": False, "message": "Forbidden."}, status=403)
 
         tenant = request.tenant
-        return_url = request.data.get("return_url") or f"{settings.FRONTEND_URL}/dashboard"
+        return_url = (
+            request.data.get("return_url") or f"{settings.FRONTEND_URL}/dashboard"
+        )
 
         try:
-            portal_url = BillingService.create_portal_session(tenant=tenant, return_url=return_url)
+            portal_url = BillingService.create_portal_session(
+                tenant=tenant, return_url=return_url
+            )
         except PortalSessionError as e:
             return Response({"success": False, "message": str(e)}, status=400)
 
@@ -137,7 +142,7 @@ class StripeWebhookView(APIView):
         else:
             logger.info(f"[StripeWebhookView] Unhandled event type: {event_type}")
             return Response({"success": True})
-        
+
         safe_event_data = json.loads(str(event_data))
 
         sync_billing_event.delay(
@@ -145,12 +150,12 @@ class StripeWebhookView(APIView):
             safe_event_data,
         )
 
-        return Response({"success" : True})
-    
+        return Response({"success": True})
 
 
 class PublicPlanPricingView(APIView):
     """Public pricing data for the landing/upgrade pages. No auth required."""
+
     permission_classes = [AllowAny]
     authentication_classes = []
 
@@ -165,4 +170,3 @@ class PublicPlanPricingView(APIView):
             for p in plans
         }
         return Response({"success": True, "data": data})
-    

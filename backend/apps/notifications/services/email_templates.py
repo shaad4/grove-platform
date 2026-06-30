@@ -236,8 +236,6 @@ def build_verification_email(display_name, verify_url):
     </html>
     """
 
-
-
     return {
         "subject": subject,
         "text_content": text_content,
@@ -366,17 +364,16 @@ def build_password_reset_email(display_name, reset_url):
 
 
 def build_notification_email(notif):
-  subject = notif.title
+    subject = notif.title
 
+    text_content = (
+        f"Hi {notif.recipient.display_name},\n\n"
+        f"{notif.body}\n\n"
+        f"Log in to Grove to view more details.\n\n"
+        f"— Grove"
+    )
 
-  text_content = (
-      f"Hi {notif.recipient.display_name},\n\n"
-      f"{notif.body}\n\n"
-      f"Log in to Grove to view more details.\n\n"
-      f"— Grove"
-  )
-
-  html_content = f"""
+    html_content = f"""
   <!DOCTYPE html>
   <html>
   <head>
@@ -577,22 +574,24 @@ def build_notification_email(notif):
   </html>
   """
 
-  return {
-      "subject": subject,
-      "text_content": text_content,
-      "html_content": html_content,
-  }
-
-
+    return {
+        "subject": subject,
+        "text_content": text_content,
+        "html_content": html_content,
+    }
 
 
 def build_weekly_summary_email(
-    display_name, tenant_name,
-    requests_received, requests_delivered,
-    pending_requests, active_clients, completion_rate
+    display_name,
+    tenant_name,
+    requests_received,
+    requests_delivered,
+    pending_requests,
+    active_clients,
+    completion_rate,
 ):
     subject = f"Your Grove week — {tenant_name}"
-    
+
     # Clean, comprehensive plain-text fallback
     text_content = (
         f"Hi {display_name},\n\n"
@@ -726,7 +725,7 @@ def build_weekly_summary_email(
     """
 
     return {
-        "subject" : subject,
-        "text_content" : text_content,
-        "html_content" : html_content,
+        "subject": subject,
+        "text_content": text_content,
+        "html_content": html_content,
     }

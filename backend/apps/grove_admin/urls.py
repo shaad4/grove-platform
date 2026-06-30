@@ -1,26 +1,13 @@
 from django.urls import path
-from .views import (
-    GroveAdminLoginView,
-    AdminStatsView,
-    AdminTenantListView,
-    AdminTenantDetailView,
-    AdminTenantUpgradeView,
-    AdminTenantDowngradeView,
-    AdminTenantSuspendView,
-    AdminTenantUnsuspendView,
-    AdminTenantOverrideLimitView,
-    AdminUserListView,
-    AdminUserSendPasswordResetView,
-    AdminUserDeactivateView,
-    AdminPlanListView,
-    GroveAdminTokenRefreshView,
-    AdminPlanUpdateView,
-    GroveAdminLogoutView
 
-
-
-)
-
+from .views import (AdminPlanListView, AdminPlanUpdateView, AdminStatsView,
+                    AdminTenantDetailView, AdminTenantDowngradeView,
+                    AdminTenantListView, AdminTenantOverrideLimitView,
+                    AdminTenantSuspendView, AdminTenantUnsuspendView,
+                    AdminTenantUpgradeView, AdminUserDeactivateView,
+                    AdminUserListView, AdminUserSendPasswordResetView,
+                    GroveAdminLoginView, GroveAdminLogoutView,
+                    GroveAdminTokenRefreshView)
 
 urlpatterns = [
     path("login/", GroveAdminLoginView.as_view()),
@@ -32,14 +19,17 @@ urlpatterns = [
     path("tenants/<uuid:tenant_id>/downgrade/", AdminTenantDowngradeView.as_view()),
     path("tenants/<uuid:tenant_id>/suspend/", AdminTenantSuspendView.as_view()),
     path("tenants/<uuid:tenant_id>/unsuspend/", AdminTenantUnsuspendView.as_view()),
-    path("tenants/<uuid:tenant_id>/override-limit/", AdminTenantOverrideLimitView.as_view()),
-
+    path(
+        "tenants/<uuid:tenant_id>/override-limit/",
+        AdminTenantOverrideLimitView.as_view(),
+    ),
     path("users/", AdminUserListView.as_view()),
-    path("users/<uuid:user_id>/send-password-reset/", AdminUserSendPasswordResetView.as_view()),
+    path(
+        "users/<uuid:user_id>/send-password-reset/",
+        AdminUserSendPasswordResetView.as_view(),
+    ),
     path("users/<uuid:user_id>/deactivate/", AdminUserDeactivateView.as_view()),
     path("plans/", AdminPlanListView.as_view()),
     path("plans/<uuid:plan_id>/update/", AdminPlanUpdateView.as_view()),
-    path('auth/logout/', GroveAdminLogoutView.as_view()),
-
-
+    path("auth/logout/", GroveAdminLogoutView.as_view()),
 ]

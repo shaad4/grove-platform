@@ -1,5 +1,5 @@
-from config.celery import app
 from apps.common.logger import logger
+from config.celery import app
 
 from .services import BillingService
 

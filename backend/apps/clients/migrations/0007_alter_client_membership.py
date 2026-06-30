@@ -7,14 +7,20 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('clients', '0006_add_client_name_email'),
-        ('tenants', '0002_initial'),
+        ("clients", "0006_add_client_name_email"),
+        ("tenants", "0002_initial"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='client',
-            name='membership',
-            field=models.OneToOneField(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, related_name='client_profile', to='tenants.tenantmembership'),
+            model_name="client",
+            name="membership",
+            field=models.OneToOneField(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.CASCADE,
+                related_name="client_profile",
+                to="tenants.tenantmembership",
+            ),
         ),
     ]

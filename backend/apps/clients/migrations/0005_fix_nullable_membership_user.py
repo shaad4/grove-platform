@@ -4,7 +4,7 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('clients', '0004_clienttagmap_tag_client_status_and_more'),
+        ("clients", "0004_clienttagmap_tag_client_status_and_more"),
     ]
 
     operations = [

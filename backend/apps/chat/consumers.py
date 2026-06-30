@@ -1,10 +1,10 @@
-from channels.generic.websocket import AsyncJsonWebsocketConsumer
 from channels.db import database_sync_to_async
+from channels.generic.websocket import AsyncJsonWebsocketConsumer
 
 from apps.common.logger import logger
 from apps.request_management.models import Request
-from .services import get_chat_group_name
 
+from .services import get_chat_group_name
 
 
 class RequestChatConsumer(AsyncJsonWebsocketConsumer):
@@ -24,7 +24,7 @@ class RequestChatConsumer(AsyncJsonWebsocketConsumer):
                 )
                 await self.close(code=4004)
                 return
-            
+
             await self.channel_layer.group_add(self.group_name, self.channel_name)
             await self.accept()
             logger.info(
@@ -39,7 +39,9 @@ class RequestChatConsumer(AsyncJsonWebsocketConsumer):
     async def disconnect(self, code):
         try:
             if hasattr(self, "group_name"):
-                await self.channel_layer.group_discard(self.group_name, self.channel_name)
+                await self.channel_layer.group_discard(
+                    self.group_name, self.channel_name
+                )
                 logger.info(
                     f"[RequestChatConsumer] {self.user.email} disconnected "
                     f"from chat {self.request_id} (code={code})"
@@ -52,51 +54,52 @@ class RequestChatConsumer(AsyncJsonWebsocketConsumer):
             event = content.get("type")
 
             if event == "ping":
-                await self.send_json({"type" : "pong"})
+                await self.send_json({"type": "pong"})
 
             elif event in ("call_offer", "call_answer", "ice_candidate", "call_end"):
                 await self.channel_layer.group_send(
                     self.group_name,
                     {
-                        "type" : "call_signal",
-                        "payload" : content,
-                        "sender_id" : str(self.user.id),
-                    }
+                        "type": "call_signal",
+                        "payload": content,
+                        "sender_id": str(self.user.id),
+                    },
                 )
         except Exception as e:
             logger.error(f"[RequestChatConsumer.receive_json] Error: {e}")
 
-
-    #Group Event Handler
+    # Group Event Handler
     async def chat_message(self, event):
         try:
-            await self.send_json({
-                "type": "message",
-                "id": event["id"],
-                "request_id": event["request_id"],
-                "sender_id": event["sender_id"],
-                "sender_name": event["sender_name"],
-                "sender_email": event["sender_email"],
-                "content": event["content"],
-                "attachments": event.get("attachments", []),
-                "is_read": event.get("is_read", False),
-                "created_at": event["created_at"],
-            })
+            await self.send_json(
+                {
+                    "type": "message",
+                    "id": event["id"],
+                    "request_id": event["request_id"],
+                    "sender_id": event["sender_id"],
+                    "sender_name": event["sender_name"],
+                    "sender_email": event["sender_email"],
+                    "content": event["content"],
+                    "attachments": event.get("attachments", []),
+                    "is_read": event.get("is_read", False),
+                    "created_at": event["created_at"],
+                }
+            )
         except Exception as e:
             logger.error(f"[RequestChatConsumer.chat_message] Error: {e}")
 
-
     async def chat_read_receipt(self, event):
         try:
-            await self.send_json({
-                "type": "read_receipt",
-                "request_id": event["request_id"],
-                "reader_id": event["reader_id"],
-            })
+            await self.send_json(
+                {
+                    "type": "read_receipt",
+                    "request_id": event["request_id"],
+                    "reader_id": event["reader_id"],
+                }
+            )
         except Exception as e:
             logger.error(f"[RequestChatConsumer.chat_read_receipt] Error: {e}")
 
-    
     async def call_signal(self, event):
         try:
             if event["sender_id"] == str(self.user.id):
@@ -105,8 +108,7 @@ class RequestChatConsumer(AsyncJsonWebsocketConsumer):
         except Exception as e:
             logger.error(f"[RequestChatConsumer.call_signal] Error: {e}")
 
-
-    #DB Helper
+    # DB Helper
     @database_sync_to_async
     def _get_request(self):
         try:
@@ -120,5 +122,3 @@ class RequestChatConsumer(AsyncJsonWebsocketConsumer):
         except Exception as e:
             logger.error(f"[RequestChatConsumer._get_request] DB error: {e}")
             return None
-        
-    

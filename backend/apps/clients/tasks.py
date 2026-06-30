@@ -1,15 +1,14 @@
+from datetime import timedelta
 
 from celery import shared_task
-from django.core.mail import send_mail
 from django.conf import settings
-from apps.common.logger import logger
-from apps.clients.models import Invite
-from django.utils import timezone
-from datetime import timedelta
 from django.core.cache import cache
+from django.core.mail import send_mail
+from django.utils import timezone
 
+from apps.clients.models import Client, Invite
+from apps.common.logger import logger
 from apps.request_management.models import Request
-from apps.clients.models import Client
 
 CLIENT_INSIGHT_TTL = settings.CLIENT_INSIGHT_TTL
 
@@ -23,11 +22,11 @@ def send_client_invite_email(
     tenant_slug: str,
     invite_token: str,
 ):
-    
+
     frontend_base = settings.FRONTEND_URL
     base = frontend_base.replace("https://", "").replace("http://", "")
     accept_url = f"https://{tenant_slug}.{base}/accept-invite?token={invite_token}"
-    
+
     subject = f"You've been invited to {provider_name}'s workspace on Grove"
 
     message = f"""Hi {client_name},
@@ -91,8 +90,6 @@ If you weren't expecting this invite, you can ignore this email.
         )
     except Exception as exc:
         raise self.retry(exc=exc)
-    
-
 
 
 @shared_task
@@ -120,23 +117,28 @@ def mark_inactive_clients():
 
     cutoff = timezone.now() - timezone.timedelta(days=90)
 
-    active_client_ids = Request.objects.filter(
-        is_deleted=False,
-        updated_at_gte=cutoff,
-    ).values_list("client_id", flat=True).distinct()
+    active_client_ids = (
+        Request.objects.filter(
+            is_deleted=False,
+            updated_at_gte=cutoff,
+        )
+        .values_list("client_id", flat=True)
+        .distinct()
+    )
 
-    updated = Client.objects.filter(
-        is_deleted=False,
-        is_deactivated=False,
-    ).exclude(
-        id__in=active_client_ids,
-    ).update(is_deactivated=True)
+    updated = (
+        Client.objects.filter(
+            is_deleted=False,
+            is_deactivated=False,
+        )
+        .exclude(
+            id__in=active_client_ids,
+        )
+        .update(is_deactivated=True)
+    )
 
     logger.info(f"[mark_inactive_clients] Deactivated {updated} inactive client(s).")
     return updated
-
-
-
 
 
 @shared_task
@@ -145,13 +147,17 @@ def generate_client_insights():
     cutoff_quiet = timezone.now() - timedelta(days=14)
     cutoff_recent = timezone.now() - timedelta(days=7)
 
-    for client in Client.objects.filter(is_deleted=False, is_deactivated=False).iterator():
+    for client in Client.objects.filter(
+        is_deleted=False, is_deactivated=False
+    ).iterator():
         recent_count = Request.objects.filter(
             client=client, is_deleted=False, created_at__gte=cutoff_recent
         ).count()
-        last_request = Request.objects.filter(
-            client=client, is_deleted=False
-        ).order_by("-created_at").first()
+        last_request = (
+            Request.objects.filter(client=client, is_deleted=False)
+            .order_by("-created_at")
+            .first()
+        )
 
         insight = None
         if last_request and last_request.created_at < cutoff_quiet:
@@ -160,11 +166,3 @@ def generate_client_insights():
             insight = "high_volume"
 
         cache.set(f"client_insight:{client.id}", insight, CLIENT_INSIGHT_TTL)
-
-
-
-
-
-
-
-

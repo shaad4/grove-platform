@@ -18,15 +18,19 @@ class Command(BaseCommand):
         pro_plan = Plan.objects.filter(name="pro").first()
 
         if not pro_plan:
-            self.stdout.write(self.style.ERROR(
-                "No 'pro' Plan row found. Seed your plans table first."
-            ))
+            self.stdout.write(
+                self.style.ERROR(
+                    "No 'pro' Plan row found. Seed your plans table first."
+                )
+            )
             return
 
         if pro_plan.stripe_price_id:
-            self.stdout.write(self.style.WARNING(
-                f"Pro plan already has stripe_price_id={pro_plan.stripe_price_id}. Skipping."
-            ))
+            self.stdout.write(
+                self.style.WARNING(
+                    f"Pro plan already has stripe_price_id={pro_plan.stripe_price_id}. Skipping."
+                )
+            )
             return
 
         product = stripe.Product.create(
@@ -43,7 +47,9 @@ class Command(BaseCommand):
 
         Plan.objects.filter(id=pro_plan.id).update(stripe_price_id=price.id)
 
-        self.stdout.write(self.style.SUCCESS(
-            f"Created Stripe product {product.id} / price {price.id} "
-            f"and linked to Plan '{pro_plan.name}'."
-        ))
+        self.stdout.write(
+            self.style.SUCCESS(
+                f"Created Stripe product {product.id} / price {price.id} "
+                f"and linked to Plan '{pro_plan.name}'."
+            )
+        )

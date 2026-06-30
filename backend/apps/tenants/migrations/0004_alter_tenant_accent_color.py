@@ -6,13 +6,15 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('tenants', '0003_tenant_tagline_accent_color'),
+        ("tenants", "0003_tenant_tagline_accent_color"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='tenant',
-            name='accent_color',
-            field=models.CharField(blank=True, default='#0F8536', max_length=7, null=True),
+            model_name="tenant",
+            name="accent_color",
+            field=models.CharField(
+                blank=True, default="#0F8536", max_length=7, null=True
+            ),
         ),
     ]

@@ -9,14 +9,18 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
-        ('clients', '0001_initial'),
-        ('tenants', '0001_initial'),
+        ("clients", "0001_initial"),
+        ("tenants", "0001_initial"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='client',
-            name='membership',
-            field=models.OneToOneField(on_delete=django.db.models.deletion.CASCADE, related_name='client_profile', to='tenants.tenantmembership'),
+            model_name="client",
+            name="membership",
+            field=models.OneToOneField(
+                on_delete=django.db.models.deletion.CASCADE,
+                related_name="client_profile",
+                to="tenants.tenantmembership",
+            ),
         ),
     ]

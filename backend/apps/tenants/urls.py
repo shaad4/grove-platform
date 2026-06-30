@@ -1,7 +1,8 @@
 from django.urls import path
-from .views import ValidateTenantView, TenantPublicInfoView
+
+from .views import TenantPublicInfoView, ValidateTenantView
 
 urlpatterns = [
-    path('validate/', ValidateTenantView.as_view(), name="tenant-validate"),
-    path('info/', TenantPublicInfoView.as_view()),
+    path("validate/", ValidateTenantView.as_view(), name="tenant-validate"),
+    path("info/", TenantPublicInfoView.as_view()),
 ]

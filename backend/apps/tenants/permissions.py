@@ -1,10 +1,12 @@
 from rest_framework.permissions import BasePermission
 
+
 class BelongsToTenant(BasePermission):
     """
     Ensures the authenticated user belongs to the tenant
     resolved from the subdomain. Prevents cross-tenant access.
     """
+
     message = "You do not have access to this workspace."
 
     def has_permission(self, request, view):

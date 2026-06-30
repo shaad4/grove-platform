@@ -6,14 +6,17 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('request_management', '0004_delivery_file_delivery_idx_deliveries_request_id_and_more'),
+        (
+            "request_management",
+            "0004_delivery_file_delivery_idx_deliveries_request_id_and_more",
+        ),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='file',
-            name='s3_key',
-            field=models.TextField(default=''),
+            model_name="file",
+            name="s3_key",
+            field=models.TextField(default=""),
             preserve_default=False,
         ),
     ]

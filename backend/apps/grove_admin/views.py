@@ -1,43 +1,26 @@
+from django.conf import settings
+from django.core.paginator import Paginator
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.exceptions import TokenError
+from rest_framework_simplejwt.tokens import RefreshToken
+
+from apps.common.logger import logger
 from apps.users.models import User
 from apps.users.utils import set_auth_cookies
-from apps.common.logger import logger
-from django.core.paginator import Paginator
-from django.conf import settings
-
 
 from .permissions import IsGroveSuperuser
-from .serializers import (
-    GroveAdminLoginSerializer,
-    AdminStatsSerializer,
-    AdminTenantListSerializer,
-    AdminTenantDetailSerializer,
-    OverrideLimitSerializer,
-    AdminUserListSerializer,
-    AdminPlanOverviewSerializer,
-    PlanConfigSerializer,
-    PlanUpdateSerializer,
-)
-
-from .services import (
-     GroveAdminAuthService,
-    AccountLocked,
-    InvalidAdminCredentials,
-    StatsService,
-    TenantAdminService,
-    TenantNotFound,
-    PlanNotFound,
-    InvalidLimitValue,
-    InvalidPlanValue,
-    StripePriceSyncError,
-    UserAdminService,
-    UserNotFound,
-    PlanAdminService,
-)
+from .serializers import (AdminPlanOverviewSerializer, AdminStatsSerializer,
+                          AdminTenantDetailSerializer,
+                          AdminTenantListSerializer, AdminUserListSerializer,
+                          GroveAdminLoginSerializer, OverrideLimitSerializer,
+                          PlanConfigSerializer, PlanUpdateSerializer)
+from .services import (AccountLocked, GroveAdminAuthService,
+                       InvalidAdminCredentials, InvalidLimitValue,
+                       InvalidPlanValue, PlanAdminService, PlanNotFound,
+                       StatsService, StripePriceSyncError, TenantAdminService,
+                       TenantNotFound, UserAdminService, UserNotFound)
 
 # Create your views here.
 
@@ -48,30 +31,45 @@ def _client_ip(request):
         return forwarded.split(",")[0].strip()
     return request.META.get("REMOTE_ADDR", "unknown")
 
+
 class GroveAdminTokenRefreshView(APIView):
     permission_classes = [AllowAny]
 
     def post(self, request):
         raw_token = request.COOKIES.get("grove_admin_refresh")
         if not raw_token:
-            return Response({"success": False, "message": "No refresh token found."}, status=401)
+            return Response(
+                {"success": False, "message": "No refresh token found."}, status=401
+            )
 
         try:
             refresh = RefreshToken(raw_token)
         except TokenError:
-            return Response({"success": False, "message": "Invalid or expired session. Please log in again."}, status=401)
+            return Response(
+                {
+                    "success": False,
+                    "message": "Invalid or expired session. Please log in again.",
+                },
+                status=401,
+            )
 
         user_id = refresh.payload.get("user_id")
         admin_user = User.objects.filter(id=user_id, is_superuser=True).first()
         if not admin_user:
-            logger.warning(f"[grove_admin_auth] Refresh attempted with a non-superuser token (user_id={user_id}).")
-            return Response({"success": False, "message": "Invalid session."}, status=401)
+            logger.warning(
+                f"[grove_admin_auth] Refresh attempted with a non-superuser token (user_id={user_id})."
+            )
+            return Response(
+                {"success": False, "message": "Invalid session."}, status=401
+            )
 
-        return Response({
-            "success": True,
-            "access": str(refresh.access_token),
-            "admin": {"email": admin_user.email},
-        })
+        return Response(
+            {
+                "success": True,
+                "access": str(refresh.access_token),
+                "admin": {"email": admin_user.email},
+            }
+        )
 
 
 class GroveAdminLoginView(APIView):
@@ -90,21 +88,33 @@ class GroveAdminLoginView(APIView):
                 ip_address=ip_address,
             )
         except AccountLocked as e:
-            return Response({"success": False, "error_type": "locked", "message": str(e)}, status=429)
+            return Response(
+                {"success": False, "error_type": "locked", "message": str(e)},
+                status=429,
+            )
         except InvalidAdminCredentials as e:
-            return Response({"success": False, "error_type": "invalid_credentials", "message": str(e)}, status=400)
-
+            return Response(
+                {
+                    "success": False,
+                    "error_type": "invalid_credentials",
+                    "message": str(e),
+                },
+                status=400,
+            )
 
         refresh = RefreshToken.for_user(admin_user)
 
-        response = Response({
-            "success": True,
-            "access": str(refresh.access_token),
-            "admin": {"email": admin_user.email},
-        })
+        response = Response(
+            {
+                "success": True,
+                "access": str(refresh.access_token),
+                "admin": {"email": admin_user.email},
+            }
+        )
         set_auth_cookies(response, refresh, cookie_name="grove_admin_refresh")
         return response
-    
+
+
 class AdminStatsView(APIView):
     permission_classes = [IsGroveSuperuser]
 
@@ -113,7 +123,10 @@ class AdminStatsView(APIView):
             data = StatsService.get_dashboard_stats()
         except Exception as e:
             logger.error(f"[grove_admin] Failed to load stats: {e}")
-            return Response({"success": False, "message": "Could not load dashboard stats."}, status=500)
+            return Response(
+                {"success": False, "message": "Could not load dashboard stats."},
+                status=500,
+            )
         return Response({"success": True, "data": AdminStatsSerializer(data).data})
 
 
@@ -132,22 +145,27 @@ class AdminTenantListView(APIView):
             )
         except Exception as e:
             logger.error(f"[grove_admin] Failed to load tenants: {e}")
-            return Response({"success": False, "message": "Could not load tenants."}, status=500)
+            return Response(
+                {"success": False, "message": "Could not load tenants."}, status=500
+            )
 
         paginator = Paginator(rows, page_size)
         page_obj = paginator.get_page(page)
 
         serializer = AdminTenantListSerializer(page_obj.object_list, many=True)
-        return Response({
-            "success": True,
-            "data": {
-                "results": serializer.data, 
-                "total": paginator.count,
-                "page" : page,
-                "page_size" : page_size,
-                "num_pages" : paginator.num_pages,
+        return Response(
+            {
+                "success": True,
+                "data": {
+                    "results": serializer.data,
+                    "total": paginator.count,
+                    "page": page,
+                    "page_size": page_size,
+                    "num_pages": paginator.num_pages,
                 },
-        })
+            }
+        )
+
 
 class AdminTenantDetailView(APIView):
     permission_classes = [IsGroveSuperuser]
@@ -157,7 +175,9 @@ class AdminTenantDetailView(APIView):
             data = TenantAdminService.get_tenant_detail(tenant_id)
         except TenantNotFound as e:
             return Response({"success": False, "message": str(e)}, status=404)
-        return Response({"success": True, "data": AdminTenantDetailSerializer(data).data})
+        return Response(
+            {"success": True, "data": AdminTenantDetailSerializer(data).data}
+        )
 
 
 class AdminTenantUpgradeView(APIView):
@@ -172,7 +192,7 @@ class AdminTenantUpgradeView(APIView):
             logger.error(f"[grove_admin] {e}")
             return Response({"success": False, "message": str(e)}, status=500)
         return Response({"success": True, "message": f"{tenant.name} upgraded to Pro."})
-    
+
 
 class AdminTenantDowngradeView(APIView):
     permission_classes = [IsGroveSuperuser]
@@ -185,7 +205,9 @@ class AdminTenantDowngradeView(APIView):
         except PlanNotFound as e:
             logger.error(f"[grove_admin] {e}")
             return Response({"success": False, "message": str(e)}, status=500)
-        return Response({"success": True, "message": f"{tenant.name} downgraded to Free."})
+        return Response(
+            {"success": True, "message": f"{tenant.name} downgraded to Free."}
+        )
 
 
 class AdminTenantSuspendView(APIView):
@@ -224,12 +246,15 @@ class AdminTenantOverrideLimitView(APIView):
             return Response({"success": False, "message": str(e)}, status=404)
         except InvalidLimitValue as e:
             return Response({"success": False, "message": str(e)}, status=400)
-        return Response({
-            "success": True,
-            "message": f"Client limit override updated for {tenant.name}.",
-            "data": {"client_limit_override": tenant.client_limit_override},
-        })
-    
+        return Response(
+            {
+                "success": True,
+                "message": f"Client limit override updated for {tenant.name}.",
+                "data": {"client_limit_override": tenant.client_limit_override},
+            }
+        )
+
+
 class AdminUserListView(APIView):
     permission_classes = [IsGroveSuperuser]
 
@@ -247,14 +272,18 @@ class AdminUserListView(APIView):
         page_obj = paginator.get_page(page)
 
         serializer = AdminUserListSerializer(page_obj.object_list, many=True)
-        return Response({"success": True, "data": {
-            "users": serializer.data,
-            "total": paginator.count,
-            "page" : page,
-            "page_size": page_size,
-            "num_pages": paginator.num_pages,
+        return Response(
+            {
+                "success": True,
+                "data": {
+                    "users": serializer.data,
+                    "total": paginator.count,
+                    "page": page,
+                    "page_size": page_size,
+                    "num_pages": paginator.num_pages,
+                },
             }
-        })
+        )
 
 
 class AdminUserSendPasswordResetView(APIView):
@@ -265,7 +294,9 @@ class AdminUserSendPasswordResetView(APIView):
             user = UserAdminService.send_password_reset(request.user, user_id)
         except UserNotFound as e:
             return Response({"success": False, "message": str(e)}, status=404)
-        return Response({"success": True, "message": f"Password reset email sent to {user.email}."})
+        return Response(
+            {"success": True, "message": f"Password reset email sent to {user.email}."}
+        )
 
 
 class AdminUserDeactivateView(APIView):
@@ -277,7 +308,13 @@ class AdminUserDeactivateView(APIView):
         except UserNotFound as e:
             return Response({"success": False, "message": str(e)}, status=404)
         state = "deactivated" if not user.is_active else "reactivated"
-        return Response({"success": True, "message": f"{user.email} {state}.", "data": {"is_active": user.is_active}})
+        return Response(
+            {
+                "success": True,
+                "message": f"{user.email} {state}.",
+                "data": {"is_active": user.is_active},
+            }
+        )
 
 
 class AdminPlanListView(APIView):
@@ -288,9 +325,13 @@ class AdminPlanListView(APIView):
             data = PlanAdminService.get_plan_overview()
         except Exception as e:
             logger.error(f"[grove_admin] Failed to load plan overview: {e}")
-            return Response({"success": False, "message": "Could not load plan data."}, status=500)
-        return Response({"success": True, "data": AdminPlanOverviewSerializer(data).data})
-    
+            return Response(
+                {"success": False, "message": "Could not load plan data."}, status=500
+            )
+        return Response(
+            {"success": True, "data": AdminPlanOverviewSerializer(data).data}
+        )
+
 
 class AdminPlanUpdateView(APIView):
     permission_classes = [IsGroveSuperuser]
@@ -317,12 +358,15 @@ class AdminPlanUpdateView(APIView):
                 {"success": False, "message": f"Stripe sync failed: {e}"}, status=502
             )
 
-        return Response({
-            "success": True,
-            "message": f"{plan.name.capitalize()} plan updated.",
-            "data": PlanConfigSerializer(plan).data,
-        })
-    
+        return Response(
+            {
+                "success": True,
+                "message": f"{plan.name.capitalize()} plan updated.",
+                "data": PlanConfigSerializer(plan).data,
+            }
+        )
+
+
 class GroveAdminLogoutView(APIView):
     permission_classes = [AllowAny]
 

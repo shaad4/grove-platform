@@ -10,47 +10,57 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
-        ('tenants', '0001_initial'),
+        ("tenants", "0001_initial"),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='tenantmembership',
-            name='user',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='memberships', to=settings.AUTH_USER_MODEL),
+            model_name="tenantmembership",
+            name="user",
+            field=models.ForeignKey(
+                on_delete=django.db.models.deletion.CASCADE,
+                related_name="memberships",
+                to=settings.AUTH_USER_MODEL,
+            ),
         ),
         migrations.AddField(
-            model_name='tenantusage',
-            name='tenant',
-            field=models.OneToOneField(on_delete=django.db.models.deletion.CASCADE, related_name='usage', to='tenants.tenant'),
+            model_name="tenantusage",
+            name="tenant",
+            field=models.OneToOneField(
+                on_delete=django.db.models.deletion.CASCADE,
+                related_name="usage",
+                to="tenants.tenant",
+            ),
         ),
         migrations.AddIndex(
-            model_name='tenant',
-            index=models.Index(fields=['slug'], name='idx_tenants_slug'),
+            model_name="tenant",
+            index=models.Index(fields=["slug"], name="idx_tenants_slug"),
         ),
         migrations.AddIndex(
-            model_name='tenant',
-            index=models.Index(fields=['plan'], name='idx_tenants_plan_id'),
+            model_name="tenant",
+            index=models.Index(fields=["plan"], name="idx_tenants_plan_id"),
         ),
         migrations.AddIndex(
-            model_name='tenant',
-            index=models.Index(fields=['is_active'], name='idx_tenants_is_active'),
+            model_name="tenant",
+            index=models.Index(fields=["is_active"], name="idx_tenants_is_active"),
         ),
         migrations.AddIndex(
-            model_name='tenantmembership',
-            index=models.Index(fields=['tenant'], name='idx_memberships_tenant_id'),
+            model_name="tenantmembership",
+            index=models.Index(fields=["tenant"], name="idx_memberships_tenant_id"),
         ),
         migrations.AddIndex(
-            model_name='tenantmembership',
-            index=models.Index(fields=['role'], name='idx_memberships_role'),
+            model_name="tenantmembership",
+            index=models.Index(fields=["role"], name="idx_memberships_role"),
         ),
         migrations.AddConstraint(
-            model_name='tenantmembership',
-            constraint=models.UniqueConstraint(fields=('user', 'tenant'), name='idx_memberships_user_tenant'),
+            model_name="tenantmembership",
+            constraint=models.UniqueConstraint(
+                fields=("user", "tenant"), name="idx_memberships_user_tenant"
+            ),
         ),
         migrations.AddIndex(
-            model_name='tenantusage',
-            index=models.Index(fields=['tenant'], name='idx_tenant_usage_tenant_id'),
+            model_name="tenantusage",
+            index=models.Index(fields=["tenant"], name="idx_tenant_usage_tenant_id"),
         ),
     ]

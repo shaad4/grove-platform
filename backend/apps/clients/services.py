@@ -1,55 +1,70 @@
+from django.core.cache import cache
 from django.db import transaction
-from django.utils import timezone
 from django.db.models import F
+from django.utils import timezone
 
-from apps.tenants.models import  TenantMembership, TenantUsage
-from apps.users.repositories import UserRepository
-from django.core.cache import cache 
+from apps.common.logger import logger
+from apps.notifications.models import Notification
+from apps.notifications.utils import create_notification
 from apps.request_management.models import Request
+from apps.tenants.models import TenantMembership, TenantUsage
+from apps.users.repositories import UserRepository
+
 from .models import Client, Invite
 from .repositories import ClientRepository, InviteRepository, TagRepository
 
-from apps.notifications.utils import create_notification
-from apps.notifications.models import Notification
-from apps.common.logger import logger
 
-#custom exceptions
+# custom exceptions
 class ClientLimitExceeded(Exception):
     pass
+
 
 class DuplicateClientEmail(Exception):
     pass
 
+
 class PendingInviteExists(Exception):
     pass
+
 
 class InvalidInviteToken(Exception):
     pass
 
+
 class ExpiredInviteToken(Exception):
     pass
+
 
 class ClientNotFound(Exception):
     pass
 
+
 class ClientAlreadyDeactivated(Exception):
     pass
+
 
 class ClientNotDeactivated(Exception):
     pass
 
+
 class CannotResendToActiveClient(Exception):
     pass
-
 
 
 class ClientService:
 
     @staticmethod
     @transaction.atomic
-    def invite_client( tenant ,provider, client_name, client_email,
-                      business_type=None, private_note=None, tags=None):
-        
+    def invite_client(
+        tenant,
+        provider,
+        client_name,
+        client_email,
+        business_type=None,
+        private_note=None,
+        tags=None,
+    ):
+
         usage = TenantUsage.objects.select_for_update().get(tenant=tenant)
         limit = tenant.effective_client_limit
 
@@ -100,9 +115,7 @@ class ClientService:
         cache.delete(f"dashboard_stats:{tenant.id}")
         cache.delete(f"sidebar_badges:{tenant.id}")
 
-        return {"invite": invite, "client" : client}
-    
-
+        return {"invite": invite, "client": client}
 
     @staticmethod
     @transaction.atomic
@@ -131,7 +144,7 @@ class ClientService:
             # user already exists globally (client of another agency)
             user = existing_user
 
-            #Check they dont already have a membership here
+            # Check they dont already have a membership here
             already_member = TenantMembership.objects.filter(
                 user=user, tenant=tenant, is_active=True
             ).exists()
@@ -141,11 +154,9 @@ class ClientService:
                 client = Client.objects.get(user=user, tenant=tenant, is_deleted=False)
                 return {"user": user, "tenant": tenant, "client": client}
         else:
-            #brand new user, set password from invite form
+            # brand new user, set password from invite form
             if not password:
-                raise InvalidInviteToken(
-                    "Password is required for new accounts."
-                )
+                raise InvalidInviteToken("Password is required for new accounts.")
 
             user = UserRepository.create_client_user(
                 email=email,
@@ -153,7 +164,7 @@ class ClientService:
                 display_name=invite.client_name,
             )
 
-        #Create membership (role=client in this tenant)
+        # Create membership (role=client in this tenant)
         membership, _ = TenantMembership.objects.update_or_create(
             user=user,
             tenant=tenant,
@@ -164,7 +175,7 @@ class ClientService:
         )
 
         client = ClientRepository.get_pending_by_invite(invite)
-        
+
         old_client_ids_to_clear = Client.objects.filter(
             membership=membership, is_deleted=True
         )
@@ -184,14 +195,13 @@ class ClientService:
                 status=Client.Status.ACTIVE,
                 joined_at=timezone.now(),
             )
-        #Update usage counter
+        # Update usage counter
         TenantUsage.objects.filter(tenant=tenant).update(
             client_count=F("client_count") + 1
         )
 
-        #Mark invite as accepted
+        # Mark invite as accepted
         InviteRepository.mark_accepted(invite)
-
 
         def _notify_invite_accepted():
             try:
@@ -208,8 +218,12 @@ class ClientService:
 
         transaction.on_commit(_notify_invite_accepted)
 
-        return {"user": user, "tenant": tenant, "client": client, "membership": membership}
-    
+        return {
+            "user": user,
+            "tenant": tenant,
+            "client": client,
+            "membership": membership,
+        }
 
     @staticmethod
     @transaction.atomic
@@ -221,7 +235,6 @@ class ClientService:
         if tags is not None:
             TagRepository.set_client_tags(client, tags, tenant)
         return client
-    
 
     @staticmethod
     @transaction.atomic
@@ -236,7 +249,7 @@ class ClientService:
             client.membership.save(update_fields=["is_active"])
         ClientRepository.deactiavte(client)
         return client
-    
+
     @staticmethod
     @transaction.atomic
     def reactivate_client(client_id, tenant):
@@ -250,7 +263,7 @@ class ClientService:
             client.membership.save(update_fields=["is_active"])
         ClientRepository.reactivate(client)
         return client
-    
+
     @staticmethod
     @transaction.atomic
     def delete_client(client_id, tenant):
@@ -282,14 +295,15 @@ class ClientService:
             TenantUsage.objects.filter(
                 tenant=tenant, active_request_count__gte=active_request_count_for_client
             ).update(
-                active_request_count=F("active_request_count") - active_request_count_for_client
+                active_request_count=F("active_request_count")
+                - active_request_count_for_client
             )
 
         cache.delete(f"dashboard_stats:{tenant.id}")
         cache.delete(f"sidebar_badges:{tenant.id}")
 
         return client
-    
+
     @staticmethod
     @transaction.atomic
     def resend_invite(client_id, tenant, provider):
@@ -314,4 +328,3 @@ class ClientService:
             client_name=client.client_name,
         )
         return {"client": client, "invite": new_invite}
-    

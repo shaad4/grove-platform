@@ -6,13 +6,23 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('notifications', '0002_add_emailed_at_to_notification'),
+        ("notifications", "0002_add_emailed_at_to_notification"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='notification',
-            name='event_type',
-            field=models.CharField(choices=[('new_request', 'New Request'), ('status_change', 'Status Change'), ('new_message', 'New Message'), ('files_delivered', 'Files Delivered'), ('invite_accepted', 'Invite Accepted'), ('request_overdue', 'Request Overdue')], max_length=50),
+            model_name="notification",
+            name="event_type",
+            field=models.CharField(
+                choices=[
+                    ("new_request", "New Request"),
+                    ("status_change", "Status Change"),
+                    ("new_message", "New Message"),
+                    ("files_delivered", "Files Delivered"),
+                    ("invite_accepted", "Invite Accepted"),
+                    ("request_overdue", "Request Overdue"),
+                ],
+                max_length=50,
+            ),
         ),
     ]

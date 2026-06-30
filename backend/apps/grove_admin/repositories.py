@@ -1,6 +1,7 @@
 from django.db.models import Q
 
-from apps.tenants.models import Tenant, TenantMembership, TenantUsage, Plan, BillingHistory
+from apps.tenants.models import (BillingHistory, Plan, Tenant,
+                                 TenantMembership, TenantUsage)
 from apps.users.models import User
 
 from .models import AdminAction
@@ -17,7 +18,7 @@ class AdminActionRepository:
             target_id=target_id,
             metadata=metadata,
         )
-    
+
 
 class TenantAdminRepository:
 
@@ -69,12 +70,16 @@ class TenantAdminRepository:
 
     @staticmethod
     def signup_count_between(start_dt, end_dt):
-        return Tenant.objects.filter(created_at__gte=start_dt, created_at__lt=end_dt).count()
+        return Tenant.objects.filter(
+            created_at__gte=start_dt, created_at__lt=end_dt
+        ).count()
 
     @staticmethod
     def free_tenants_with_usage():
         """All free-plan tenants paired with their usage row, for at-limit calc."""
-        free_tenants = list(Tenant.objects.select_related("plan").filter(plan__name="free"))
+        free_tenants = list(
+            Tenant.objects.select_related("plan").filter(plan__name="free")
+        )
         usage_map = TenantAdminRepository.usage_map([t.id for t in free_tenants])
         return [(t, usage_map.get(t.id)) for t in free_tenants]
 
@@ -112,10 +117,8 @@ class UserAdminRepository:
         one row per tenant (role + tenant slug differ per row), matching the
         documented table columns (Role, Tenant slug, Joined date per row).
         """
-        return (
-            TenantMembership.objects
-            .select_related("user", "tenant")
-            .order_by("-joined_at")
+        return TenantMembership.objects.select_related("user", "tenant").order_by(
+            "-joined_at"
         )
 
     @staticmethod
@@ -123,7 +126,8 @@ class UserAdminRepository:
         qs = UserAdminRepository.get_queryset()
         if search:
             qs = qs.filter(
-                Q(user__email__icontains=search) | Q(user__display_name__icontains=search)
+                Q(user__email__icontains=search)
+                | Q(user__display_name__icontains=search)
             )
         if role:
             qs = qs.filter(role=role)
@@ -180,18 +184,18 @@ class PlanAdminRepository:
     @staticmethod
     def get_by_name(name):
         return Plan.objects.filter(name=name).first()
-    
+
     @staticmethod
     def get_by_id(plan_id):
         return Plan.objects.filter(id=plan_id).first()
-    
+
     @staticmethod
     def update_plan(plan, **fields):
         for field, value in fields.items():
             setattr(plan, field, value)
         plan.save(update_fields=list(fields.keys()))
         return plan
-    
+
     @staticmethod
     def total_revenue():
         """Lifetime revenue from paid Stripe invoices/checkouts."""
@@ -199,4 +203,3 @@ class PlanAdminRepository:
             status=BillingHistory.Status.PAID
         ).values_list("amount", flat=True)
         return sum(amounts) or 0
-

@@ -1,18 +1,15 @@
-from config.celery import app
-from apps.common.logger import logger
-from django.utils import timezone
-
 from celery import shared_task
 from django.conf import settings
+from django.utils import timezone
 
-from apps.request_management.models import Request, File
 from apps.clients.models import Client
-
 from apps.common.ai.client import AIService
-from apps.common.ai.exceptions import AIServiceError, AIRateLimitError
+from apps.common.ai.exceptions import AIRateLimitError, AIServiceError
 from apps.common.logger import logger
+from apps.request_management.models import File, Request
+from config.celery import app
 
-from .models import Request, RequestActivity, InternalNote
+from .models import InternalNote, Request, RequestActivity
 from .repositories import RequestActivityRepository
 
 CATEGORY_OPTIONS = ["design", "dev", "content", "feedback"]
@@ -35,6 +32,7 @@ CATEGORY_OPTIONS = ["design", "dev", "content", "feedback"]
 #     TODO: implement with OpenAI when ready.
 #     """
 #     pass
+
 
 @app.task
 def purge_soft_deleted_records():
@@ -74,29 +72,39 @@ def purge_soft_deleted_records():
     }
 
 
-@shared_task(bind=True, autoretry_for=(AIRateLimitError,), retry_backoff=True, retry_backoff_max=120, max_retries=3)
+@shared_task(
+    bind=True,
+    autoretry_for=(AIRateLimitError,),
+    retry_backoff=True,
+    retry_backoff_max=120,
+    max_retries=3,
+)
 def categorise_request(self, request_id):
     try:
         request_obj = Request.objects.get(id=request_id, is_deleted=False)
     except Request.DoesNotExist:
         logger.warning(f"[categorise_request] Request {request_id} not found.")
         return
-    
+
     try:
-        category = AIService.complete(
-            system=(
-                "Categorise this freelance client request into exactly one word: "
-                f"one of {', '.join(CATEGORY_OPTIONS)}. Reply with only that single word, lowercase."
-            ),
-            user=f"Title: {request_obj.title}\nDescription: {request_obj.description}",
-            model=settings.AI_MODEL_FAST,
-            max_tokens=10,
-            temperature=0,
-        ).lower().strip()
+        category = (
+            AIService.complete(
+                system=(
+                    "Categorise this freelance client request into exactly one word: "
+                    f"one of {', '.join(CATEGORY_OPTIONS)}. Reply with only that single word, lowercase."
+                ),
+                user=f"Title: {request_obj.title}\nDescription: {request_obj.description}",
+                model=settings.AI_MODEL_FAST,
+                max_tokens=10,
+                temperature=0,
+            )
+            .lower()
+            .strip()
+        )
     except AIServiceError as e:
         logger.error(f"[categorise_request] AI call failed for {request_id}: {e}")
         return
-    
+
     if category not in CATEGORY_OPTIONS:
         category = "feedback"
 
@@ -104,7 +112,7 @@ def categorise_request(self, request_id):
 
 
 @shared_task(
-    bind=True,  
+    bind=True,
     autoretry_for=(AIRateLimitError,),
     retry_backoff=True,
     retry_backoff_max=120,
@@ -116,7 +124,7 @@ def generate_request_summary(self, request_id):
     except Request.DoesNotExist:
         logger.warning(f"[generate_request_summary] Request {request_id} not found.")
         return
-    
+
     try:
         summary = AIService.complete(
             system="Summarise this client request in 2-3 plain sentences for the service provider. No preamble.",
@@ -127,7 +135,7 @@ def generate_request_summary(self, request_id):
     except AIServiceError as e:
         logger.error(f"[generate_request_summary] AI call failed for {request_id}: {e}")
         return
-    
+
     Request.objects.filter(id=request_id).update(ai_summary=summary)
 
     RequestActivityRepository.log(
@@ -141,18 +149,19 @@ def generate_request_summary(self, request_id):
 
 @shared_task(
     bind=True,
-     autoretry_for=(AIRateLimitError,),
+    autoretry_for=(AIRateLimitError,),
     retry_backoff=True,
     retry_backoff_max=120,
     max_retries=3,
 )
 def generate_triage_note(self, request_id):
     try:
-        request_obj = Request.objects.select_related("tenant", "provider").get(id=request_id, is_deleted=False)
+        request_obj = Request.objects.select_related("tenant", "provider").get(
+            id=request_id, is_deleted=False
+        )
     except Request.DoesNotExist:
         logger.warning(f"[generate_triage_note] Request {request_id} not found.")
         return
-    
 
     try:
         note_text = AIService.complete(
@@ -168,12 +177,11 @@ def generate_triage_note(self, request_id):
     except AIServiceError as e:
         logger.error(f"[generate_triage_note] AI call failed for {request_id}: {e}")
         return
-    
 
     InternalNote.objects.create(
         request=request_obj,
         tenant=request_obj.tenant,
-        user=request_obj.provider,    
+        user=request_obj.provider,
         content=note_text,
         is_ai_generated=True,
     )
@@ -185,5 +193,3 @@ def generate_triage_note(self, request_id):
         actor=None,
         actor_source=RequestActivity.ActorSource.AI,
     )
-
-

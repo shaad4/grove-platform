@@ -1,9 +1,12 @@
 import uuid
+
 from django.db import models
+
 from apps.tenants.models import Tenant, TenantMembership
 from apps.users.models import User
 
 # Create your models here.
+
 
 class Tag(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -26,14 +29,15 @@ class Tag(models.Model):
 class Client(models.Model):
     """
     Represents a client account within a tenant's workspace.
-    """  
+    """
+
     class Status(models.TextChoices):
         PENDING = "pending", "Pending"
-        ACTIVE = "active" , "Active"
+        ACTIVE = "active", "Active"
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     tenant = models.ForeignKey(
-        Tenant, 
+        Tenant,
         on_delete=models.CASCADE,
         related_name="clients",
     )
@@ -42,7 +46,8 @@ class Client(models.Model):
         User,
         on_delete=models.CASCADE,
         related_name="client_profiles",
-        null = True, blank=True, 
+        null=True,
+        blank=True,
     )
 
     membership = models.OneToOneField(
@@ -62,7 +67,9 @@ class Client(models.Model):
     client_name = models.CharField(max_length=255, blank=True, default="")
     client_email = models.EmailField(blank=True, default="")
 
-    status = models.CharField(max_length=20, choices=Status.choices, default=Status.PENDING)
+    status = models.CharField(
+        max_length=20, choices=Status.choices, default=Status.PENDING
+    )
     business_type = models.CharField(max_length=100, null=True, blank=True)
     private_note = models.TextField(null=True, blank=True)
 
@@ -70,7 +77,7 @@ class Client(models.Model):
     is_deleted = models.BooleanField(default=False)
     deleted_at = models.DateTimeField(null=True, blank=True)
 
-    joined_at = models.DateTimeField(null =True, blank=True)
+    joined_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -83,16 +90,18 @@ class Client(models.Model):
             models.Index(fields=["is_deleted"], name="idx_clients_deleted"),
             models.Index(fields=["is_deactivated"], name="idx_clients_deactivated"),
         ]
- 
+
     def __str__(self):
         if self.user:
             return f"{self.user.display_name} @ {self.tenant.slug}"
         return f"Pending client @ {self.tenant.slug}"
-    
+
 
 class ClientTagMap(models.Model):
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=True )
-    client = models.ForeignKey(Client, on_delete=models.CASCADE, related_name="tag_maps")
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=True)
+    client = models.ForeignKey(
+        Client, on_delete=models.CASCADE, related_name="tag_maps"
+    )
     tag = models.ForeignKey(Tag, on_delete=models.CASCADE, related_name="client_maps")
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -118,7 +127,6 @@ class Invite(models.Model):
         ACCEPTED = "accepted", "Accepted"
         EXPIRED = "expired", "Expired"
         CANCELLED = "cancelled", "Cancelled"
- 
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
 
@@ -136,7 +144,7 @@ class Invite(models.Model):
     client_email = models.EmailField()
     client_name = models.CharField(max_length=255)
 
-    #unique token
+    # unique token
     token = models.UUIDField(default=uuid.uuid4, unique=True)
 
     status = models.CharField(
@@ -157,6 +165,6 @@ class Invite(models.Model):
             models.Index(fields=["client_email"], name="idx_invites_client_email"),
             models.Index(fields=["expires_at"], name="idx_invites_expires_at"),
         ]
- 
+
     def __str__(self):
         return f"Invite → {self.client_email} [{self.status}]"

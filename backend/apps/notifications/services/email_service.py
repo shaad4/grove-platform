@@ -18,6 +18,3 @@ def send_email(
 
     email.attach_alternative(html_content, "text/html")
     email.send()
-
-
-    

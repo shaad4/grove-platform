@@ -6,13 +6,13 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('request_management', '0005_file_s3_key'),
+        ("request_management", "0005_file_s3_key"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='request',
-            name='overdue_notified_at',
+            model_name="request",
+            name="overdue_notified_at",
             field=models.DateTimeField(blank=True, null=True),
         ),
     ]

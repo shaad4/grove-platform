@@ -1,17 +1,18 @@
-from apps.tenants.models import Tenant, TenantMembership
 from django.http import JsonResponse
 from rest_framework_simplejwt.authentication import JWTAuthentication
+
+from apps.tenants.models import Tenant, TenantMembership
 
 EXCLUDED_SUBDOMAINS = {"api", "www", "admin"}
 
 SKIP_MEMBERSHIP_CHECK_PATHS = {
-    '/api/auth/token/refresh/',
-    '/api/auth/logout/',
+    "/api/auth/token/refresh/",
+    "/api/auth/logout/",
 }
 
 EXCLUDED_FROM_SUSPENSION_CHECK = {
-    '/api/auth/memberships/',
-    '/api/auth/me/',
+    "/api/auth/memberships/",
+    "/api/auth/me/",
 }
 
 
@@ -20,12 +21,11 @@ class TenantMiddleware:
         self.get_response = get_response
 
     def __call__(self, request):
-        host  = request.get_host().split(":")[0]
+        host = request.get_host().split(":")[0]
         parts = host.split(".")
 
-        is_subdomain = (
-            (len(parts) == 3) or
-            (len(parts) == 2 and parts[1] == "localhost")
+        is_subdomain = (len(parts) == 3) or (
+            len(parts) == 2 and parts[1] == "localhost"
         )
 
         request.tenant = None
@@ -65,7 +65,7 @@ class TenantMiddleware:
         if request.tenant is not None:
             try:
                 jwt_auth = JWTAuthentication()
-                result   = jwt_auth.authenticate(request)
+                result = jwt_auth.authenticate(request)
                 if result is not None:
                     auth_user, _ = result
             except Exception:
@@ -84,7 +84,10 @@ class TenantMiddleware:
 
             if membership is None:
                 return JsonResponse(
-                    {"success": False, "message": "You do not have access to this workspace."},
+                    {
+                        "success": False,
+                        "message": "You do not have access to this workspace.",
+                    },
                     status=403,
                 )
 

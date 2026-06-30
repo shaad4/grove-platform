@@ -9,12 +9,14 @@ https://docs.djangoproject.com/en/6.0/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/6.0/ref/settings/
 """
+
 import os
-from pathlib import Path
-from decouple import config
-from corsheaders.defaults import default_headers
 from datetime import timedelta
+from pathlib import Path
+
 from celery.schedules import crontab
+from corsheaders.defaults import default_headers
+from decouple import config
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -38,14 +40,12 @@ AUTH_USER_MODEL = "users.User"
 
 INSTALLED_APPS = [
     "daphne",
-
-    'django.contrib.admin',
-    'django.contrib.auth',
-    'django.contrib.contenttypes',
-    'django.contrib.sessions',
-    'django.contrib.messages',
-    'django.contrib.staticfiles',
-
+    "django.contrib.admin",
+    "django.contrib.auth",
+    "django.contrib.contenttypes",
+    "django.contrib.sessions",
+    "django.contrib.messages",
+    "django.contrib.staticfiles",
     # third party
     "channels",
     "rest_framework",
@@ -54,7 +54,6 @@ INSTALLED_APPS = [
     "corsheaders",
     "storages",
     "log_request_id",
-
     # Grove apps
     "apps.users",
     "apps.clients",
@@ -66,44 +65,41 @@ INSTALLED_APPS = [
     "apps.chat",
     "apps.settings",
     "apps.grove_admin",
-
 ]
 
 MIDDLEWARE = [
-    'django.middleware.security.SecurityMiddleware',
-    "corsheaders.middleware.CorsMiddleware",   
-    'django.contrib.sessions.middleware.SessionMiddleware',
-    'django.middleware.common.CommonMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
-    'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'apps.tenants.middleware.TenantMiddleware', #tenant middleware
-    'django.contrib.messages.middleware.MessageMiddleware',
-    'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    "django.middleware.security.SecurityMiddleware",
+    "corsheaders.middleware.CorsMiddleware",
+    "django.contrib.sessions.middleware.SessionMiddleware",
+    "django.middleware.common.CommonMiddleware",
+    "django.middleware.csrf.CsrfViewMiddleware",
+    "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "apps.tenants.middleware.TenantMiddleware",  # tenant middleware
+    "django.contrib.messages.middleware.MessageMiddleware",
+    "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "log_request_id.middleware.RequestIDMiddleware",
     "config.request_logging.RequestLoggingMiddleware",
-
 ]
 
-ROOT_URLCONF = 'config.urls'
+ROOT_URLCONF = "config.urls"
 
 TEMPLATES = [
     {
-        'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
-        'APP_DIRS': True,
-        'OPTIONS': {
-            'context_processors': [
-                'django.template.context_processors.request',
-                'django.contrib.auth.context_processors.auth',
-                'django.contrib.messages.context_processors.messages',
+        "BACKEND": "django.template.backends.django.DjangoTemplates",
+        "DIRS": [],
+        "APP_DIRS": True,
+        "OPTIONS": {
+            "context_processors": [
+                "django.template.context_processors.request",
+                "django.contrib.auth.context_processors.auth",
+                "django.contrib.messages.context_processors.messages",
             ],
         },
     },
 ]
 
 
-
-WSGI_APPLICATION = 'config.wsgi.application'
+WSGI_APPLICATION = "config.wsgi.application"
 
 
 # Database
@@ -121,24 +117,22 @@ DATABASES = {
 }
 
 
-
 # Password validation
 # https://docs.djangoproject.com/en/6.0/ref/settings/#auth-password-validators
 
 
-
 AUTH_PASSWORD_VALIDATORS = [
     {
-        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
+        "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
     },
     {
-        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
+        "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
     },
     {
-        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
+        "NAME": "django.contrib.auth.password_validation.CommonPasswordValidator",
     },
     {
-        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
+        "NAME": "django.contrib.auth.password_validation.NumericPasswordValidator",
     },
 ]
 
@@ -146,9 +140,9 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/6.0/topics/i18n/
 
-LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = "en-us"
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = "UTC"
 
 USE_I18N = True
 
@@ -161,7 +155,7 @@ CELERY_ENABLE_UTC = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
-STATIC_URL = 'static/'
+STATIC_URL = "static/"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
@@ -173,8 +167,8 @@ SIMPLE_JWT = {
     "REFRESH_TOKEN_LIFETIME": timedelta(days=7),
     "ROTATE_REFRESH_TOKENS": False,
     "BLACKLIST_AFTER_ROTATION": False,
-    "USER_ID_FIELD" : "id",
-    "USER_ID_CLAIM" : "user_id",
+    "USER_ID_FIELD": "id",
+    "USER_ID_CLAIM": "user_id",
 }
 
 # DRF
@@ -186,20 +180,18 @@ REST_FRAMEWORK = {
         "rest_framework.permissions.IsAuthenticated",
         "apps.tenants.permissions.BelongsToTenant",
     ),
-    "DEFAULT_RENDERER_CLASSES": (
-        "rest_framework.renderers.JSONRenderer",
-    ),
+    "DEFAULT_RENDERER_CLASSES": ("rest_framework.renderers.JSONRenderer",),
     "EXCEPTION_HANDLER": "config.exceptions.grove_exception_handler",
 }
 
 
 # CORS
 CORS_ALLOWED_ORIGINS = [
-   "http://lvh.me:5173",
-    "https://lvh.me:5173",          
+    "http://lvh.me:5173",
+    "https://lvh.me:5173",
     "http://localhost:5173",
-    "https://localhost:5173",  
-    "https://groven.in",     
+    "https://localhost:5173",
+    "https://groven.in",
 ]
 
 CORS_ALLOWED_ORIGIN_REGEXES = [
@@ -251,7 +243,7 @@ AWS_SECRET_ACCESS_KEY = config("AWS_SECRET_ACCESS_KEY")
 AWS_STORAGE_BUCKET_NAME = config("AWS_STORAGE_BUCKET_NAME")
 AWS_S3_REGION_NAME = config("AWS_S3_REGION_NAME", default="ap-south-1")
 AWS_S3_FILE_OVERWRITE = False
-AWS_DEFAULT_ACL = None   # bucket policy controls access, not object ACL
+AWS_DEFAULT_ACL = None  # bucket policy controls access, not object ACL
 AWS_S3_SIGNATURE_VERSION = "s3v4"
 AWS_S3_ADDRESSING_STYLE = "virtual"
 
@@ -272,7 +264,7 @@ CHANNEL_LAYERS = {
     }
 }
 
-#Celery Beat Configs
+# Celery Beat Configs
 
 CELERY_BEAT_SCHEDULE = {
     # Every hour — expire stale invites
@@ -280,48 +272,41 @@ CELERY_BEAT_SCHEDULE = {
         "task": "apps.clients.tasks.expire_old_invites",
         "schedule": crontab(minute=0),  # top of every hour
     },
-
     # Nightly 2am IST — purge soft-deleted records older than 30 days
     "purge-soft-deleted-records": {
         "task": "apps.request_management.tasks.purge_soft_deleted_records",
         "schedule": crontab(hour=2, minute=0),
     },
-
     # Nightly 3am IST — deactivate clients silent for 90+ days
     "mark-inactive-clients": {
         "task": "apps.clients.tasks.mark_inactive_clients",
         "schedule": crontab(hour=3, minute=0),
     },
-    
     # Every 15 min — email fallback for users who missed WS notifications
     "email-fallback-offline-users": {
         "task": "apps.notifications.tasks.email_fallback_for_offline_users",
         "schedule": crontab(minute="*/15"),
     },
-
     # Monday 8am IST — weekly provider digest
     "weekly-provider-summary": {
         "task": "apps.notifications.tasks.send_weekly_provider_summary",
         "schedule": crontab(hour=2, minute=30),
     },
-
     # Every 30 min — refresh Redis tenant usage cache
     "cache-tenant-usage-stats": {
         "task": "apps.tenants.tasks.cache_tenant_usage_stats",
         "schedule": crontab(minute="*/30"),
     },
-
     # Every Hour - Check for any overdue and alert (In-app/Email)
     "notify-overdue-requests": {
         "task": "apps.notifications.tasks.notify_overdue_requests",
         "schedule": crontab(minute=0),  # top of every hour
     },
-    # clinet insights 
+    # clinet insights
     "generate-client-insights": {
         "task": "apps.clients.tasks.generate_client_insights",
         "schedule": crontab(hour=4, minute=0),
     },
-    
 }
 
 
@@ -329,25 +314,17 @@ CELERY_BEAT_SCHEDULE = {
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
-
     "formatters": {
         "standard": {
-            "format": (
-                "[{asctime}] "
-                "{levelname:<8} "
-                "{name:<25} "
-                "{message}"
-            ),
+            "format": ("[{asctime}] " "{levelname:<8} " "{name:<25} " "{message}"),
             "style": "{",
         },
     },
-
     "handlers": {
         "console": {
             "class": "logging.StreamHandler",
             "formatter": "standard",
         },
-
         "file": {
             "class": "logging.handlers.RotatingFileHandler",
             "filename": BASE_DIR / "logs" / "grove.log",
@@ -355,7 +332,6 @@ LOGGING = {
             "backupCount": 5,
             "formatter": "standard",
         },
-
         "app_file": {
             "class": "logging.handlers.RotatingFileHandler",
             "filename": BASE_DIR / "logs" / "grove_app.log",
@@ -364,7 +340,6 @@ LOGGING = {
             "formatter": "standard",
         },
     },
-
     "loggers": {
         "apps.common.logger": {
             "handlers": ["console", "app_file"],
@@ -372,7 +347,6 @@ LOGGING = {
             "propagate": False,  # stops it also going into grove.log
         },
     },
-
     "root": {
         "handlers": ["console", "file"],
         "level": "INFO",
@@ -384,8 +358,8 @@ SECURE_CROSS_ORIGIN_OPENER_POLICY = "unsafe-none"
 # AI (Config)
 GEMINI_API_KEY = config("GEMINI_API_KEY")
 GEMINI_BASE_URL = "https://generativelanguage.googleapis.com/v1beta/openai/"
-AI_MODEL_FAST = "gemini-2.5-flash-lite" #categorisation cheap, high frequency
-AI_MODEL_QUALITY = "gemini-2.5-flash-lite" # summaries, notes, replies
+AI_MODEL_FAST = "gemini-2.5-flash-lite"  # categorisation cheap, high frequency
+AI_MODEL_QUALITY = "gemini-2.5-flash-lite"  # summaries, notes, replies
 
 
 GROQ_API_KEY = config("GROQ_API_KEY", default="")
@@ -400,17 +374,20 @@ STRIPE_PRICE_ID_PRO = config("STRIPE_PRICE_ID_PRO", default="")
 
 # Configuration
 
-EMAIL_FALLBACK_DELAY_MINUTES = 5  # Email Fallback Message Delay Time (notification-tasks)
+EMAIL_FALLBACK_DELAY_MINUTES = (
+    5  # Email Fallback Message Delay Time (notification-tasks)
+)
 
-LOGO_URL_BRANDING = "https://grove-uploads.s3.ap-south-1.amazonaws.com/branding/grove-logo-green.png"
+LOGO_URL_BRANDING = (
+    "https://grove-uploads.s3.ap-south-1.amazonaws.com/branding/grove-logo-green.png"
+)
 
-CACHE_TTL = 120 #Dashboard stats cash timeout (Dashboard - views)
+CACHE_TTL = 120  # Dashboard stats cash timeout (Dashboard - views)
 
-PAGE_SIZE = 500 #Activity Page size
+PAGE_SIZE = 500  # Activity Page size
 
 
-CLIENT_INSIGHT_TTL = 60 * 60 * 36 
+CLIENT_INSIGHT_TTL = 60 * 60 * 36
 
 GROVE_ADMIN_EMAIL = config("GROVE_ADMIN_EMAIL")
 GROVE_ADMIN_PASSWORD = config("GROVE_ADMIN_PASSWORD")
-

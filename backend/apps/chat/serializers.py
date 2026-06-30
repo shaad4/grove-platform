@@ -1,13 +1,17 @@
 from rest_framework import serializers
-from .models import Message, MessageAttachment
+
 from apps.request_management.services import FileService
+
+from .models import Message, MessageAttachment
 
 
 class MessageAttachmentsSerializer(serializers.ModelSerializer):
     id = serializers.UUIDField(source="file.id", read_only=True)
     file_name = serializers.CharField(source="file.file_name", read_only=True)
     file_type = serializers.CharField(source="file.file_type", read_only=True)
-    file_size_bytes = serializers.IntegerField(source="file.file_size_bytes", read_only=True)
+    file_size_bytes = serializers.IntegerField(
+        source="file.file_size_bytes", read_only=True
+    )
     download_url = serializers.SerializerMethodField()
 
     class Meta:
@@ -26,14 +30,28 @@ class MessageSerializer(serializers.ModelSerializer):
         child=serializers.UUIDField(), required=False, default=list, write_only=True
     )
 
-
     class Meta:
         model = Message
         fields = [
-            "id", "request", "sender", "sender_name", "sender_email",
-            "content", "is_read", "read_at", "created_at", "attachment_ids", "attachments",
+            "id",
+            "request",
+            "sender",
+            "sender_name",
+            "sender_email",
+            "content",
+            "is_read",
+            "read_at",
+            "created_at",
+            "attachment_ids",
+            "attachments",
         ]
         read_only_fields = [
-            "id", "sender", "sender_name", "sender_email",
-            "is_read", "read_at", "created_at","attachments"
+            "id",
+            "sender",
+            "sender_name",
+            "sender_email",
+            "is_read",
+            "read_at",
+            "created_at",
+            "attachments",
         ]

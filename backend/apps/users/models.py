@@ -1,5 +1,7 @@
 import uuid
-from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
+
+from django.contrib.auth.models import (AbstractBaseUser, BaseUserManager,
+                                        PermissionsMixin)
 from django.db import models
 
 
@@ -37,9 +39,9 @@ class User(AbstractBaseUser, PermissionsMixin):
     New model has: globally unique email, no tenant, no role
     """
 
-    id  = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    email = models.EmailField(unique=True)          # globally unique now
-    display_name  = models.CharField(max_length=255)
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    email = models.EmailField(unique=True)  # globally unique now
+    display_name = models.CharField(max_length=255)
     avatar_url = models.TextField(null=True, blank=True)
     is_active = models.BooleanField(default=True)
     is_email_verified = models.BooleanField(default=False)
@@ -58,7 +60,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     class Meta:
         db_table = "users"
         indexes = [
-            models.Index(fields=["email"],     name="idx_users_email"),
+            models.Index(fields=["email"], name="idx_users_email"),
             models.Index(fields=["is_active"], name="idx_users_active"),
         ]
 
@@ -71,13 +73,17 @@ class EmailVerificationToken(models.Model):
 
     class Status(models.TextChoices):
         PENDING = "pending", "Pending"
-        USED = "used",    "Used"
+        USED = "used", "Used"
         EXPIRED = "expired", "Expired"
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="verification_tokens")
+    user = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name="verification_tokens"
+    )
     token = models.UUIDField(default=uuid.uuid4, unique=True)
-    status = models.CharField(max_length=20, choices=Status.choices, default=Status.PENDING)
+    status = models.CharField(
+        max_length=20, choices=Status.choices, default=Status.PENDING
+    )
     expires_at = models.DateTimeField()
     used_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -94,13 +100,17 @@ class PasswordResetToken(models.Model):
 
     class Status(models.TextChoices):
         PENDING = "pending", "Pending"
-        USED = "used",    "Used"
+        USED = "used", "Used"
         EXPIRED = "expired", "Expired"
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="password_reset_tokens")
+    user = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name="password_reset_tokens"
+    )
     token = models.UUIDField(default=uuid.uuid4, unique=True)
-    status = models.CharField(max_length=20, choices=Status.choices, default=Status.PENDING)
+    status = models.CharField(
+        max_length=20, choices=Status.choices, default=Status.PENDING
+    )
     expires_at = models.DateTimeField()
     used_at = models.DateTimeField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -108,10 +118,10 @@ class PasswordResetToken(models.Model):
     class Meta:
         db_table = "password_reset_tokens"
         indexes = [
-            models.Index(fields=["token"],      name="idx_prt_token"),
-            models.Index(fields=["user"],        name="idx_prt_user"),
-            models.Index(fields=["status"],      name="idx_prt_status"),
-            models.Index(fields=["expires_at"],  name="idx_prt_expires"),
+            models.Index(fields=["token"], name="idx_prt_token"),
+            models.Index(fields=["user"], name="idx_prt_user"),
+            models.Index(fields=["status"], name="idx_prt_status"),
+            models.Index(fields=["expires_at"], name="idx_prt_expires"),
         ]
 
     def __str__(self):

@@ -1,6 +1,6 @@
-from rest_framework.views import exception_handler
-from rest_framework.response import Response
 from rest_framework import status
+from rest_framework.response import Response
+from rest_framework.views import exception_handler
 
 
 def grove_exception_handler(exc, context):
@@ -19,18 +19,16 @@ def grove_exception_handler(exc, context):
         elif isinstance(error_detail, dict):
             first_key = next(iter(error_detail))
             first_val = error_detail[first_key]
-            message = (
-                first_val[0] if isinstance(first_val, list) else str(first_val)
-            )
+            message = first_val[0] if isinstance(first_val, list) else str(first_val)
         else:
             message = str(error_detail)
 
         response.data = {
-            "success" : False,
-            "error" : {
-                "code" : _resolve_error_code(response.status_code),
-                "message" : str(message),
-                "fields" : error_detail if isinstance(error_detail, dict) else None,
+            "success": False,
+            "error": {
+                "code": _resolve_error_code(response.status_code),
+                "message": str(message),
+                "fields": error_detail if isinstance(error_detail, dict) else None,
             },
         }
 

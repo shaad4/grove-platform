@@ -1,12 +1,14 @@
 from urllib.parse import parse_qs
-from channels.middleware import BaseMiddleware
-from channels.db import database_sync_to_async
-from django.contrib.auth.models import AnonymousUser
-from rest_framework_simplejwt.tokens import AccessToken
-from rest_framework_simplejwt.exceptions import InvalidToken,TokenError
 
-from apps.users.models import User
+from channels.db import database_sync_to_async
+from channels.middleware import BaseMiddleware
+from django.contrib.auth.models import AnonymousUser
+from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
+from rest_framework_simplejwt.tokens import AccessToken
+
 from apps.tenants.models import Tenant, TenantMembership
+from apps.users.models import User
+
 
 @database_sync_to_async
 def get_user(user_id):
@@ -14,7 +16,7 @@ def get_user(user_id):
         return User.objects.get(id=user_id, is_active=True)
     except User.DoesNotExist:
         return AnonymousUser()
-    
+
 
 @database_sync_to_async
 def get_tenant(slug):
@@ -22,7 +24,8 @@ def get_tenant(slug):
         return Tenant.objects.get(slug=slug, is_active=True)
     except Tenant.DoesNotExist:
         return None
-    
+
+
 @database_sync_to_async
 def get_membership(user, tenant):
     try:
@@ -33,7 +36,7 @@ def get_membership(user, tenant):
         )
     except TenantMembership.DoesNotExist:
         return None
-    
+
 
 class JWTTenantAuthMiddleware(BaseMiddleware):
     """
@@ -59,36 +62,36 @@ class JWTTenantAuthMiddleware(BaseMiddleware):
         if not token_list or not slug_list:
             await self._close_unauthorized(send)
             return
-        
+
         raw_token = token_list[0]
         slug = slug_list[0]
 
-        #Validating JWT
+        # Validating JWT
         try:
             validated = AccessToken(raw_token)
             user_id = validated["user_id"]
         except (InvalidToken, TokenError, KeyError):
             await self._close_unauthorized(send)
-            return 
-        
-        #Resolve user
+            return
+
+        # Resolve user
         user = await get_user(user_id)
         if isinstance(user, AnonymousUser):
             await self._close_unauthorized(send)
-            return 
-        
-        #Resolve tenant
+            return
+
+        # Resolve tenant
         tenant = await get_tenant(slug)
         if tenant is None:
             await self._close_unauthorized(send)
-            return 
-        
-        #confirm membership
+            return
+
+        # confirm membership
         membership = await get_membership(user, tenant)
         if membership is None:
             await self._close_unauthorized(send)
             return
-        
+
         scope["user"] = user
         scope["tenant"] = tenant
         scope["tenant_membership"] = membership
@@ -96,10 +99,9 @@ class JWTTenantAuthMiddleware(BaseMiddleware):
         await super().__call__(scope, receive, send)
 
     async def _close_unauthorized(self, send):
-        await send({
-            "type" : "websocket.close",
-            "code" : 4001,
-        })
-
-
-
+        await send(
+            {
+                "type": "websocket.close",
+                "code": 4001,
+            }
+        )

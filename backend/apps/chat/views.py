@@ -1,13 +1,15 @@
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework import status
 from django.db import DatabaseError
-from apps.request_management.models import Request
+from rest_framework import status
+from rest_framework.response import Response
+from rest_framework.views import APIView
+
 from apps.common.logger import logger
+from apps.request_management.models import Request
 
 from .repositories import MessageRepository
 from .serializers import MessageSerializer
 from .services import create_message, mark_messages_read
+
 # Create your views here.
 
 
@@ -26,27 +28,27 @@ def _get_request_or_none(request_id, tenant):
 
 
 class MessageListCreateView(APIView):
-    
+
     def get(self, request, request_id):
         try:
             req_obj = _get_request_or_none(request_id, request.tenant)
             if req_obj is None:
                 return Response(
-                    {"success" : False, "message": "Request not found."},
+                    {"success": False, "message": "Request not found."},
                     status=status.HTTP_404_NOT_FOUND,
                 )
-            
+
             messages = MessageRepository.get_for_request(request_id, request.tenant.id)
             serializer = MessageSerializer(messages, many=True)
             return Response({"success": True, "results": serializer.data})
-        
+
         except Exception as e:
             logger.error(f"[MessageListCreateView.get] Unexpected error: {e}")
             return Response(
                 {"success": False, "message": "Something went wrong."},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
-        
+
     def post(self, request, request_id):
         try:
             req_obj = _get_request_or_none(request_id, request.tenant)
@@ -55,22 +57,28 @@ class MessageListCreateView(APIView):
                     {"success": False, "message": "Request not found."},
                     status=status.HTTP_404_NOT_FOUND,
                 )
-            
+
             if req_obj.status == Request.Status.CLOSED:
                 return Response(
-                    {"success": False, "message": "Cannot send messages on a closed request."},
+                    {
+                        "success": False,
+                        "message": "Cannot send messages on a closed request.",
+                    },
                     status=status.HTTP_400_BAD_REQUEST,
                 )
-            
+
             content = request.data.get("content", "").strip()
             attachment_ids = request.data.get("attachment_ids", [])
 
             if not content and not attachment_ids:
                 return Response(
-                    {"success": False, "message": "Message content or an attachment is required."},
+                    {
+                        "success": False,
+                        "message": "Message content or an attachment is required.",
+                    },
                     status=status.HTTP_400_BAD_REQUEST,
                 )
-            
+
             message = create_message(req_obj, request.user, content, attachment_ids)
             serializer = MessageSerializer(message)
             return Response(
@@ -101,7 +109,7 @@ class MarkMessagesReadView(APIView):
                     {"success": False, "message": "Request not found."},
                     status=status.HTTP_404_NOT_FOUND,
                 )
-            
+
             updated = mark_messages_read(req_obj, request.user)
             return Response({"success": True, "marked_read": updated})
 
@@ -111,10 +119,3 @@ class MarkMessagesReadView(APIView):
                 {"success": False, "message": "Something went wrong."},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
-
-
-
-
-
-
-        

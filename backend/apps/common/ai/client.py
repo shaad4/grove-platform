@@ -1,9 +1,9 @@
 from django.conf import settings
-from openai import OpenAI, RateLimitError, APIError, APIConnectionError
+from openai import APIConnectionError, APIError, OpenAI, RateLimitError
 
-from .exceptions import AIRateLimitError, AIServiceError
 from apps.common.logger import logger
 
+from .exceptions import AIRateLimitError, AIServiceError
 
 _gemini_client = OpenAI(
     api_key=settings.GEMINI_API_KEY,
@@ -26,11 +26,18 @@ class AIService:
     def complete(system, user, model=None, max_tokens=300, temperature=0.4):
         model = model or settings.AI_MODEL_QUALITY
         try:
-            return AIService._call(_gemini_client, model, system, user, max_tokens, temperature)
+            return AIService._call(
+                _gemini_client, model, system, user, max_tokens, temperature
+            )
         except (AIRateLimitError, AIServiceError) as e:
             logger.info(f"[AIService] Gemini unavailable ({e}), falling back to Groq")
             return AIService._call(
-                _groq_client, settings.AI_FALLBACK_MODEL, system, user, max_tokens, temperature
+                _groq_client,
+                settings.AI_FALLBACK_MODEL,
+                system,
+                user,
+                max_tokens,
+                temperature,
             )
 
     @staticmethod

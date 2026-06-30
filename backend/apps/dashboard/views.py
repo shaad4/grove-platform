@@ -1,26 +1,25 @@
 import base64
 import csv
-from io import StringIO
-from django.http import StreamingHttpResponse
-from django.db.models import Q
-from django.shortcuts import render
 from datetime import timedelta
-
-from django.core.cache import cache
-from django.db.models import Count
-from django.db.models.functions import TruncDate, ExtractHour, ExtractWeekDay
-from django.utils import timezone
-
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
+from io import StringIO
 
 from django.conf import settings
+from django.core.cache import cache
+from django.db.models import Count, Q
+from django.db.models.functions import ExtractHour, ExtractWeekDay, TruncDate
+from django.http import StreamingHttpResponse
+from django.shortcuts import render
+from django.utils import timezone
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from rest_framework.views import APIView
 
-from apps.tenants.models import TenantMembership
 from apps.clients.models import Client
 from apps.request_management.models import Request, RequestActivity
+from apps.tenants.models import TenantMembership
+
 # Create your views here.
+
 
 def _require_provider(request):
     m = getattr(request, "tenant_membership", None)
@@ -30,14 +29,14 @@ def _require_provider(request):
 class DashboardStatsView(APIView):
     """
     GET /dashboard/stats/
- 
+
     Single cached endpoint for the provider dashboard.
     Payload is cached in Redis per tenant (TTL 2 min).
     Cache is invalidated from RequestService / ClientService after mutations.
     """
-    
+
     permission_classes = [IsAuthenticated]
-    CACHE_TTL = settings.CACHE_TTL 
+    CACHE_TTL = settings.CACHE_TTL
 
     def get(self, request):
         if not _require_provider(request):
@@ -49,12 +48,10 @@ class DashboardStatsView(APIView):
         cached = cache.get(cache_key)
         if cached:
             return Response({"success": True, "data": cached, "cached": True})
-        
 
         data = self._build_stats(tenant)
         cache.set(cache_key, data, timeout=self.CACHE_TTL)
         return Response({"success": True, "data": data, "cached": False})
-    
 
     def _build_stats(self, tenant):
         tid = tenant.id
@@ -63,7 +60,7 @@ class DashboardStatsView(APIView):
         thirty_days_ago = now - timedelta(days=30)
         five_days_ago = now - timedelta(days=5)
 
-        #counters
+        # counters
         total_clients = Client.objects.filter(
             tenant_id=tid,
             is_deleted=False,
@@ -81,11 +78,10 @@ class DashboardStatsView(APIView):
             ],
         ).count()
 
-
-        #Deliverd this week counts
+        # Deliverd this week counts
 
         delivered_this_week = Request.objects.filter(
-            tenant_id = tid,
+            tenant_id=tid,
             status=Request.Status.DELIVERED,
             is_deleted=False,
             client__is_deleted=False,
@@ -93,36 +89,50 @@ class DashboardStatsView(APIView):
         ).count()
 
         closed_this_week = RequestActivity.objects.filter(
-            tenant_id = tid,
+            tenant_id=tid,
             event_type=RequestActivity.EventType.STATUS_CHANGE,
             metadata__to="closed",
             created_at__gte=week_start,
             request__client__is_deleted=False,
         ).count()
 
-        #Inactive clients count
+        # Inactive clients count
 
-        active_client_ids = Request.objects.filter(
-            tenant_id=tid,
-            is_deleted=False,
-            client__is_deleted=False,
-            created_at__gte=five_days_ago,
-        ).values_list("client_id", flat=True).distinct()
+        active_client_ids = (
+            Request.objects.filter(
+                tenant_id=tid,
+                is_deleted=False,
+                client__is_deleted=False,
+                created_at__gte=five_days_ago,
+            )
+            .values_list("client_id", flat=True)
+            .distinct()
+        )
 
-        inactive_clients =Client.objects.filter(
-            tenant_id = tid,
-            is_deleted=False,
-            is_deactivated=False,
-        ).exclude(id__in=active_client_ids).count()
+        inactive_clients = (
+            Client.objects.filter(
+                tenant_id=tid,
+                is_deleted=False,
+                is_deactivated=False,
+            )
+            .exclude(id__in=active_client_ids)
+            .count()
+        )
 
-        #Recent Requests - 5
+        # Recent Requests - 5
         raw_recent = (
-            Request.objects.filter(tenant_id=tid, is_deleted=False, client__is_deleted=False)
+            Request.objects.filter(
+                tenant_id=tid, is_deleted=False, client__is_deleted=False
+            )
             .select_related("client__user")
             .order_by("-created_at")[:5]
             .values(
-                "id", "title", "status", "is_urgent",
-                "created_at", "updated_at",
+                "id",
+                "title",
+                "status",
+                "is_urgent",
+                "created_at",
+                "updated_at",
                 "client__user__display_name",
                 "client__client_name",
             )
@@ -136,33 +146,35 @@ class DashboardStatsView(APIView):
                 "is_urgent": r["is_urgent"],
                 "created_at": r["created_at"].isoformat(),
                 "updated_at": r["updated_at"].isoformat(),
-                "client_name": r["client__user__display_name"] or r["client__client_name"] or "Unknown",
+                "client_name": r["client__user__display_name"]
+                or r["client__client_name"]
+                or "Unknown",
             }
             for r in raw_recent
         ]
 
-        
-
-        #Busiest Time Heatmap
+        # Busiest Time Heatmap
 
         heatmap = list(
             Request.objects.filter(
-                tenant_id=tid, is_deleted=False, client__is_deleted=False,
+                tenant_id=tid,
+                is_deleted=False,
+                client__is_deleted=False,
                 created_at__gte=thirty_days_ago,
             )
             .annotate(
                 dow=ExtractWeekDay("created_at"),
                 hour=ExtractHour("created_at"),
             )
-            .values("dow","hour")
+            .values("dow", "hour")
             .annotate(count=Count("id"))
         )
 
-        #Status Breakdown
+        # Status Breakdown
 
         status_breakdown = list(
             Request.objects.filter(
-                tenant_id = tid,
+                tenant_id=tid,
                 is_deleted=False,
                 client__is_deleted=False,
                 status__in=[
@@ -196,9 +208,10 @@ class SidebarBadgesView(APIView):
     def get(self, request):
         if not _require_provider(request):
             return Response(
-                {"success": False, "message": "Forbidden."}, status=403,
+                {"success": False, "message": "Forbidden."},
+                status=403,
             )
-        
+
         tenant = request.tenant
 
         cache_key = f"sidebar_badges:{tenant.id}"
@@ -209,10 +222,10 @@ class SidebarBadgesView(APIView):
                 {
                     "success": True,
                     "data": cached,
-                    "cached" : True,
+                    "cached": True,
                 }
             )
-        
+
         tid = tenant.id
 
         data = {
@@ -237,12 +250,11 @@ class SidebarBadgesView(APIView):
 
         return Response(
             {
-                "success" : True,
-                "data" : data,
-                "cached" : False,
+                "success": True,
+                "data": data,
+                "cached": False,
             }
         )
-
 
 
 class ActivityFeedView(APIView):
@@ -261,11 +273,14 @@ class ActivityFeedView(APIView):
                 decoded = base64.b64decode(cursor.encode()).decode()
                 ts, uid = decoded.split("|", 1)
                 qs = qs.filter(
-                    Q(created_at__lt=ts) | Q(created_at=ts) | Q(created_at=ts, id__lt=uid)
+                    Q(created_at__lt=ts)
+                    | Q(created_at=ts)
+                    | Q(created_at=ts, id__lt=uid)
                 )
             except Exception:
-                return Response({"success": False, "message": "Invalid cursor."}, status=400)
-
+                return Response(
+                    {"success": False, "message": "Invalid cursor."}, status=400
+                )
 
         page = list(qs[: self.PAGE_SIZE + 1])
         has_next = len(page) > self.PAGE_SIZE
@@ -277,17 +292,16 @@ class ActivityFeedView(APIView):
             raw = f"{last.created_at.isoformat()}|{last.id}"
             next_cursor = base64.b64encode(raw.encode()).decode()
 
-        return Response({
-            "success": True,
-            "data": {
-                "results": self._serialize(page),
-                "next_cursor": next_cursor,
-                "has_next": has_next,
-            },
-        })
-
-
-
+        return Response(
+            {
+                "success": True,
+                "data": {
+                    "results": self._serialize(page),
+                    "next_cursor": next_cursor,
+                    "has_next": has_next,
+                },
+            }
+        )
 
     def _build_queryset(self, request):
         tid = request.tenant.id
@@ -296,7 +310,9 @@ class ActivityFeedView(APIView):
         qs = (
             RequestActivity.objects.filter(tenant_id=tid)
             .filter(Q(request__isnull=True) | Q(request__client__is_deleted=False))
-            .select_related("actor", "request", "request__client", "request__client__user")
+            .select_related(
+                "actor", "request", "request__client", "request__client__user"
+            )
             .order_by("-created_at", "-id")
         )
 
@@ -316,7 +332,7 @@ class ActivityFeedView(APIView):
             qs = qs.filter(request__client_id=p["client_id"])
 
         return qs
-    
+
     def _serialize(self, activities):
         current_user_id = self.request.user.id
         return [
@@ -333,7 +349,9 @@ class ActivityFeedView(APIView):
                 "target_info": {
                     "request_id": str(a.request_id) if a.request_id else None,
                     "request_title": a.request.title if a.request else None,
-                    "request_ref": f"#{str(a.request_id)[:8]}" if a.request_id else None,
+                    "request_ref": (
+                        f"#{str(a.request_id)[:8]}" if a.request_id else None
+                    ),
                     "client_name": (
                         a.request.client.user.display_name
                         if a.request and a.request.client and a.request.client.user
@@ -356,20 +374,23 @@ class ActivityExportView(APIView):
     def get(self, request):
         if not _require_provider(request):
             return Response({"success": False, "message": "Forbidden."}, status=403)
-        
+
         qs = ActivityFeedView._build_queryset(ActivityFeedView(), request)
 
-        response = StreamingHttpResponse(
-            self._stream_csv(qs),
-            content_type="text/csv"
-        )
+        response = StreamingHttpResponse(self._stream_csv(qs), content_type="text/csv")
         response["Content-Disposition"] = 'attachment; filename="activity.csv"'
         return response
-    
+
     def _stream_csv(self, qs):
         columns = [
-            "id", "event_type", "description", "actor_source",
-            "actor", "request_id", "request_title", "created_at",
+            "id",
+            "event_type",
+            "description",
+            "actor_source",
+            "actor",
+            "request_id",
+            "request_title",
+            "created_at",
         ]
 
         buffer = StringIO()
@@ -380,24 +401,16 @@ class ActivityExportView(APIView):
         for a in qs.iterator(chunk_size=500):
             buffer = StringIO()
             writer = csv.writer(buffer)
-            writer.writerow([
-                str(a.id),
-                a.event_type,
-                a.description,
-                a.actor_source,
-                a.actor.display_name if a.actor else "",
-                str(a.request_id),
-                a.request.title if a.request else "",
-                a.created_at.isoformat(),
-            ])
+            writer.writerow(
+                [
+                    str(a.id),
+                    a.event_type,
+                    a.description,
+                    a.actor_source,
+                    a.actor.display_name if a.actor else "",
+                    str(a.request_id),
+                    a.request.title if a.request else "",
+                    a.created_at.isoformat(),
+                ]
+            )
             yield buffer.getvalue()
-
-
-
-
-
-
-
-
-
-

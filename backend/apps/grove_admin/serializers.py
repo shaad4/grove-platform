@@ -1,9 +1,9 @@
 from rest_framework import serializers
 
+
 class GroveAdminLoginSerializer(serializers.Serializer):
     email = serializers.EmailField()
     password = serializers.CharField()
-
 
 
 class AdminStatsSerializer(serializers.Serializer):
@@ -31,7 +31,8 @@ class AdminStatsSerializer(serializers.Serializer):
                 for t in data["tenants_at_limit"]
             ],
         }
-    
+
+
 class AdminTenantListSerializer(serializers.Serializer):
     def to_representation(self, row):
         tenant, usage = row["tenant"], row["usage"]
@@ -48,7 +49,7 @@ class AdminTenantListSerializer(serializers.Serializer):
             "is_suspended": tenant.is_suspended,
             "created_at": tenant.created_at,
         }
-    
+
 
 class AdminTenantDetailSerializer(serializers.Serializer):
     def to_representation(self, data):
@@ -75,9 +76,11 @@ class AdminTenantDetailSerializer(serializers.Serializer):
                 for c in data["clients"]
             ],
         }
-    
+
+
 class OverrideLimitSerializer(serializers.Serializer):
     limit = serializers.IntegerField(required=False, allow_null=True)
+
 
 class AdminUserListSerializer(serializers.Serializer):
     def to_representation(self, membership):
@@ -92,7 +95,7 @@ class AdminUserListSerializer(serializers.Serializer):
             "last_login": membership.user.last_login,
             "is_active": membership.user.is_active,
         }
-    
+
 
 class AdminPlanOverviewSerializer(serializers.Serializer):
     def to_representation(self, data):
@@ -116,7 +119,8 @@ class AdminPlanOverviewSerializer(serializers.Serializer):
                 for row in data["rows"]
             ],
         }
-    
+
+
 class PlanConfigSerializer(serializers.Serializer):
     def to_representation(self, plan):
         return {
@@ -127,8 +131,11 @@ class PlanConfigSerializer(serializers.Serializer):
             "request_limit": plan.request_limit,
             "has_stripe_price": bool(plan.stripe_price_id),
         }
-    
+
+
 class PlanUpdateSerializer(serializers.Serializer):
-    price_monthly = serializers.DecimalField(max_digits=10, decimal_places=2, required=False, allow_null=True)
+    price_monthly = serializers.DecimalField(
+        max_digits=10, decimal_places=2, required=False, allow_null=True
+    )
     client_limit = serializers.IntegerField(required=False, allow_null=True)
     request_limit = serializers.IntegerField(required=False, allow_null=True)

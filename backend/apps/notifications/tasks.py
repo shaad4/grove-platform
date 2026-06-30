@@ -2,64 +2,56 @@ from celery import shared_task
 from django.conf import settings
 from django.utils import timezone
 
-from .services.email_service import send_email
-from .services.email_templates import (
-    build_verification_email,
-    build_password_reset_email,
-    build_notification_email,
-    build_weekly_summary_email,
-)
+from apps.clients.models import Client
 from apps.common.logger import logger
 from apps.notifications.models import Notification
-from apps.tenants.models import TenantMembership
-from apps.request_management.models import Request
-from apps.clients.models import Client
-from apps.settings.repositories import UserSettingsRepository
 from apps.notifications.models import Notification as NotifModel
 from apps.notifications.utils import create_notification
+from apps.request_management.models import Request
+from apps.settings.repositories import UserSettingsRepository
+from apps.tenants.models import TenantMembership
 
-#Email Prefrence Helper
+from .services.email_service import send_email
+from .services.email_templates import (build_notification_email,
+                                       build_password_reset_email,
+                                       build_verification_email,
+                                       build_weekly_summary_email)
+
+# Email Prefrence Helper
 _EMAIL_PREF_KEY = {
-    "new_request":              "new_request",
-    "new_message":              ("client_reply", "new_message"),
-    "status_change":            "status_change",
-    "files_delivered":          "files_delivered",
-    "invite_accepted":          "client_accepted_invite",
-    "client_viewed_delivery":   None,  
-    "request_overdue":          "request_overdue",
+    "new_request": "new_request",
+    "new_message": ("client_reply", "new_message"),
+    "status_change": "status_change",
+    "files_delivered": "files_delivered",
+    "invite_accepted": "client_accepted_invite",
+    "client_viewed_delivery": None,
+    "request_overdue": "request_overdue",
 }
 
 
 def _wants_email(user, event_type: str) -> bool:
     mapping = _EMAIL_PREF_KEY.get(event_type)
     if mapping is None:
-        return False  
-    email_prefs = UserSettingsRepository.get_notification_settings(user).get("email", {})
+        return False
+    email_prefs = UserSettingsRepository.get_notification_settings(user).get(
+        "email", {}
+    )
     if isinstance(mapping, tuple):
         return any(email_prefs.get(k, True) for k in mapping)
     return email_prefs.get(mapping, True)
 
 
 @shared_task(bind=True, max_retries=3, default_retry_delay=60)
-def send_verification_email(
-    self,
-    user_email,
-    display_name,
-    token
-):
+def send_verification_email(self, user_email, display_name, token):
     """
     Sends Grove verification email with HTML UI.
     Retries automatically on failure.
     """
 
-    verify_url = (
-        f"{settings.FRONTEND_URL}"
-        f"/verify-email?token={token}"
-    )
+    verify_url = f"{settings.FRONTEND_URL}" f"/verify-email?token={token}"
 
     email_data = build_verification_email(
-        display_name=display_name,
-        verify_url=verify_url
+        display_name=display_name, verify_url=verify_url
     )
 
     try:
@@ -80,24 +72,19 @@ def send_password_reset_email(self, user_email, display_name, token, tenant_slug
     Sends Grove password reset email with HTML UI.
     Retries automatically on failure.
     """
-    
+
     base_frontend = settings.FRONTEND_URL.replace("http://", "").replace("https://", "")
 
     if tenant_slug:
         reset_url = (
-            f"https://{tenant_slug}.{base_frontend}"
-            f"/reset-password?token={token}"
+            f"https://{tenant_slug}.{base_frontend}" f"/reset-password?token={token}"
         )
     else:
-        reset_url = (
-            f"{settings.FRONTEND_URL}"
-            f"/reset-password?token={token}"
-        )
+        reset_url = f"{settings.FRONTEND_URL}" f"/reset-password?token={token}"
 
-    
     email_data = build_password_reset_email(
-        display_name = display_name,
-        reset_url = reset_url,
+        display_name=display_name,
+        reset_url=reset_url,
     )
 
     try:
@@ -109,8 +96,8 @@ def send_password_reset_email(self, user_email, display_name, token, tenant_slug
         )
 
     except Exception as exc:
-        raise self.retry(exc=exc)   
-    
+        raise self.retry(exc=exc)
+
 
 @shared_task
 def email_fallback_for_offline_users():
@@ -155,9 +142,7 @@ def email_fallback_for_offline_users():
         except Exception as e:
             logger.error(f"[email_fallback] Failed for notification {notif.id}: {e}")
 
-    logger.info(
-        f"[email_fallback_for_offline_users] sent={sent} opted_out={opted_out}"
-    )
+    logger.info(f"[email_fallback_for_offline_users] sent={sent} opted_out={opted_out}")
     return sent
 
 
@@ -168,7 +153,7 @@ def send_weekly_provider_summary():
     Each provider is emailed only on their preferred day.
     Respects the weekly_summary toggle and weekly_summary_day preference.
     """
-    today_abbr = timezone.now().strftime("%a") 
+    today_abbr = timezone.now().strftime("%a")
     one_week_ago = timezone.now() - timezone.timedelta(days=7)
 
     provider_memberships = TenantMembership.objects.filter(
@@ -180,9 +165,11 @@ def send_weekly_provider_summary():
 
     for membership in provider_memberships:
         tenant = membership.tenant
-        user   = membership.user
+        user = membership.user
 
-        email_prefs = UserSettingsRepository.get_notification_settings(user).get("email", {})
+        email_prefs = UserSettingsRepository.get_notification_settings(user).get(
+            "email", {}
+        )
 
         # Respect the weekly_summary toggle
         if not email_prefs.get("weekly_summary", True):
@@ -226,7 +213,8 @@ def send_weekly_provider_summary():
 
         completion_rate = (
             round((requests_delivered / requests_received) * 100)
-            if requests_received else 0
+            if requests_received
+            else 0
         )
 
         if requests_received == 0 and requests_delivered == 0:
@@ -266,7 +254,7 @@ def notify_overdue_requests():
     """
 
     today = timezone.now().date()
-    now   = timezone.now()
+    now = timezone.now()
 
     overdue = Request.objects.filter(
         due_date__lt=today,
@@ -284,7 +272,7 @@ def notify_overdue_requests():
 
     for req in overdue:
         provider = req.provider
-        due_str  = req.due_date.strftime("%b %d")
+        due_str = req.due_date.strftime("%b %d")
 
         try:
             # In-app
@@ -298,7 +286,7 @@ def notify_overdue_requests():
                 related_client=req.client,
             )
 
-            # Email 
+            # Email
             if _wants_email(provider, "request_overdue"):
                 temp = NotifModel(
                     tenant=req.tenant,
@@ -325,10 +313,3 @@ def notify_overdue_requests():
 
     logger.info(f"[notify_overdue_requests] processed={notified}")
     return notified
-
-    
-
-
-
-          
-        

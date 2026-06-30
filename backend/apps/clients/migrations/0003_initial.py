@@ -10,67 +10,91 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
-        ('clients', '0002_initial'),
-        ('tenants', '0001_initial'),
+        ("clients", "0002_initial"),
+        ("tenants", "0001_initial"),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='client',
-            name='provider',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='managed_clients', to=settings.AUTH_USER_MODEL),
+            model_name="client",
+            name="provider",
+            field=models.ForeignKey(
+                on_delete=django.db.models.deletion.CASCADE,
+                related_name="managed_clients",
+                to=settings.AUTH_USER_MODEL,
+            ),
         ),
         migrations.AddField(
-            model_name='client',
-            name='tenant',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='clients', to='tenants.tenant'),
+            model_name="client",
+            name="tenant",
+            field=models.ForeignKey(
+                on_delete=django.db.models.deletion.CASCADE,
+                related_name="clients",
+                to="tenants.tenant",
+            ),
         ),
         migrations.AddField(
-            model_name='client',
-            name='user',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='client_profiles', to=settings.AUTH_USER_MODEL),
+            model_name="client",
+            name="user",
+            field=models.ForeignKey(
+                on_delete=django.db.models.deletion.CASCADE,
+                related_name="client_profiles",
+                to=settings.AUTH_USER_MODEL,
+            ),
         ),
         migrations.AddField(
-            model_name='invite',
-            name='provider',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='sent_invites', to=settings.AUTH_USER_MODEL),
+            model_name="invite",
+            name="provider",
+            field=models.ForeignKey(
+                on_delete=django.db.models.deletion.CASCADE,
+                related_name="sent_invites",
+                to=settings.AUTH_USER_MODEL,
+            ),
         ),
         migrations.AddField(
-            model_name='invite',
-            name='tenant',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='invites', to='tenants.tenant'),
+            model_name="invite",
+            name="tenant",
+            field=models.ForeignKey(
+                on_delete=django.db.models.deletion.CASCADE,
+                related_name="invites",
+                to="tenants.tenant",
+            ),
         ),
         migrations.AddIndex(
-            model_name='client',
-            index=models.Index(fields=['tenant'], name='idx_clients_tenant_id'),
+            model_name="client",
+            index=models.Index(fields=["tenant"], name="idx_clients_tenant_id"),
         ),
         migrations.AddIndex(
-            model_name='client',
-            index=models.Index(fields=['provider'], name='idx_clients_provider_id'),
+            model_name="client",
+            index=models.Index(fields=["provider"], name="idx_clients_provider_id"),
         ),
         migrations.AddIndex(
-            model_name='client',
-            index=models.Index(fields=['is_deleted'], name='idx_clients_deleted'),
+            model_name="client",
+            index=models.Index(fields=["is_deleted"], name="idx_clients_deleted"),
         ),
         migrations.AddIndex(
-            model_name='client',
-            index=models.Index(fields=['is_deactivated'], name='idx_clients_deactivated'),
+            model_name="client",
+            index=models.Index(
+                fields=["is_deactivated"], name="idx_clients_deactivated"
+            ),
         ),
         migrations.AddIndex(
-            model_name='invite',
-            index=models.Index(fields=['token'], name='idx_invites_token'),
+            model_name="invite",
+            index=models.Index(fields=["token"], name="idx_invites_token"),
         ),
         migrations.AddIndex(
-            model_name='invite',
-            index=models.Index(fields=['tenant'], name='idx_invites_tenant_id'),
+            model_name="invite",
+            index=models.Index(fields=["tenant"], name="idx_invites_tenant_id"),
         ),
         migrations.AddIndex(
-            model_name='invite',
-            index=models.Index(fields=['client_email'], name='idx_invites_client_email'),
+            model_name="invite",
+            index=models.Index(
+                fields=["client_email"], name="idx_invites_client_email"
+            ),
         ),
         migrations.AddIndex(
-            model_name='invite',
-            index=models.Index(fields=['expires_at'], name='idx_invites_expires_at'),
+            model_name="invite",
+            index=models.Index(fields=["expires_at"], name="idx_invites_expires_at"),
         ),
     ]

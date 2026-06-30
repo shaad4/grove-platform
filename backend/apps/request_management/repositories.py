@@ -1,10 +1,11 @@
-from django.utils import timezone
 from django.db.models import Q
+from django.utils import timezone
 
-
-from .models import Request, RequestActivity, InternalNote, Delivery, File
-from apps.notifications.utils import push_activity
 from apps.common.logger import logger
+from apps.notifications.utils import push_activity
+
+from .models import Delivery, File, InternalNote, Request, RequestActivity
+
 
 class RequestRepository:
 
@@ -17,15 +18,16 @@ class RequestRepository:
         """
 
         qs = (
-            Request.objects
-            .filter(tenant_id=tenant_id, is_deleted=False, client__is_deleted=False)
+            Request.objects.filter(
+                tenant_id=tenant_id, is_deleted=False, client__is_deleted=False
+            )
             .select_related("client__user", "provider")
             .order_by("-created_at")
         )
 
         if not filter:
             return qs
-        
+
         if filter.get("client_id"):
             qs = qs.filter(client_id=filter["client_id"])
 
@@ -53,22 +55,22 @@ class RequestRepository:
             qs = qs.order_by("-created_at")
 
         return qs
-    
 
     @staticmethod
     def get_all_for_client(tenant_id, client_id, filter=None):
         """Client sees only their own requests."""
 
         qs = (
-            Request.objects
-            .filter(tenant_id=tenant_id, client_id=client_id, is_deleted=False)
+            Request.objects.filter(
+                tenant_id=tenant_id, client_id=client_id, is_deleted=False
+            )
             .select_related("client__user", "provider")
             .order_by("-created_at")
         )
 
         if not filter:
             return qs
-        
+
         if filter.get("status"):
             qs = qs.filter(status=filter["status"])
 
@@ -79,23 +81,25 @@ class RequestRepository:
             qs = qs.order_by("-created_at")
 
         return qs
-    
 
     @staticmethod
     def get_by_id(request_id, tenant_id):
         return (
-            Request.objects
-            .filter(id=request_id, tenant_id=tenant_id, is_deleted=False)
+            Request.objects.filter(id=request_id, tenant_id=tenant_id, is_deleted=False)
             .select_related("client__user", "provider")
             .prefetch_related("files", "deliveries__files")
             .first()
         )
-    
+
     @staticmethod
     def get_by_id_for_client(request_id, tenant_id, client_id):
         return (
-            Request.objects
-            .filter(id=request_id, tenant_id=tenant_id, client_id=client_id, is_deleted=False)
+            Request.objects.filter(
+                id=request_id,
+                tenant_id=tenant_id,
+                client_id=client_id,
+                is_deleted=False,
+            )
             .select_related("client__user", "provider")
             .prefetch_related("files", "deliveries__files")
             .first()
@@ -110,14 +114,13 @@ class RequestRepository:
             title=title,
             description=description,
         )
-    
+
     @staticmethod
     def update_status(request_obj, new_status):
         request_obj.status = new_status
         request_obj.save(update_fields=["status", "updated_at"])
 
         return request_obj
-    
 
     @staticmethod
     def update_content(request_obj, title=None, description=None):
@@ -127,11 +130,10 @@ class RequestRepository:
             request_obj.title = title
         if description is not None:
             request_obj.description = description
-        
+
         request_obj.save(update_fields=["title", "description", "updated_at"])
 
         return request_obj
-    
 
     @staticmethod
     def set_urgent(request_obj, is_urgent):
@@ -139,7 +141,7 @@ class RequestRepository:
         request_obj.save(update_fields=["is_urgent", "updated_at"])
 
         return request_obj
-    
+
     @staticmethod
     def set_due_date(request_obj, due_date):
         request_obj.due_date = due_date
@@ -151,15 +153,18 @@ class RequestRepository:
         request_obj.deleted_at = timezone.now()
         request_obj.save(update_fields=["is_deleted", "deleted_at", "updated_at"])
         return request_obj
-    
+
     @staticmethod
     def get_open_count_for_client(client_id, tenant_id):
-        return Request.objects.filter(
-            client_id=client_id,
-            tenant_id=tenant_id,
-            is_deleted=False,
-        ).exclude(status__in=[Request.Status.DELIVERED, Request.Status.CLOSED]).count()
- 
+        return (
+            Request.objects.filter(
+                client_id=client_id,
+                tenant_id=tenant_id,
+                is_deleted=False,
+            )
+            .exclude(status__in=[Request.Status.DELIVERED, Request.Status.CLOSED])
+            .count()
+        )
 
     @staticmethod
     def get_delivered_count_for_client(client_id, tenant_id):
@@ -169,13 +174,20 @@ class RequestRepository:
             is_deleted=False,
             status=Request.Status.DELIVERED,
         ).count()
-    
+
+
 class RequestActivityRepository:
 
     @staticmethod
-    def log(request_obj, event_type, description, actor=None,
-            actor_source=RequestActivity.ActorSource.USER, metadata=None):
-        
+    def log(
+        request_obj,
+        event_type,
+        description,
+        actor=None,
+        actor_source=RequestActivity.ActorSource.USER,
+        metadata=None,
+    ):
+
         activity = RequestActivity.objects.create(
             request=request_obj,
             tenant=request_obj.tenant,
@@ -195,18 +207,15 @@ class RequestActivityRepository:
             logger.error(f"[RequestActivityRepository.log] push_activity failed: {e}")
 
         return activity
-    
 
-    
     @staticmethod
     def get_for_request(request_id, tenant_id):
         return (
-            RequestActivity.objects
-            .filter(request_id=request_id, tenant_id=tenant_id)
+            RequestActivity.objects.filter(request_id=request_id, tenant_id=tenant_id)
             .select_related("actor")
             .order_by("created_at")
         )
-    
+
 
 class InternalNoteRepository:
 
@@ -219,30 +228,27 @@ class InternalNoteRepository:
             content=content,
             is_ai_generated=is_ai_generated,
         )
-    
+
     @staticmethod
     def get_for_request(request_id, tenant_id):
         return (
-            InternalNote.objects
-            .filter(request_id=request_id, tenant_id=tenant_id)
+            InternalNote.objects.filter(request_id=request_id, tenant_id=tenant_id)
             .select_related("user")
             .order_by("created_at")
         )
-    
+
 
 class DeliveryRepository:
 
     @staticmethod
     def get_next_delivery_number(request_id):
         last = (
-            Delivery.objects
-            .filter(request_id=request_id)
+            Delivery.objects.filter(request_id=request_id)
             .order_by("-delivery_number")
             .values_list("delivery_number", flat=True)
             .first()
         )
         return (last or 0) + 1
-    
 
     @staticmethod
     def create(request_obj, created_by, message=None, links=None):
@@ -255,33 +261,43 @@ class DeliveryRepository:
             links=links,
             delivery_number=number,
         )
-    
+
     @staticmethod
     def get_for_request(request_id):
         return (
-            Delivery.objects
-            .filter(request_id=request_id)
+            Delivery.objects.filter(request_id=request_id)
             .prefetch_related("files")
             .order_by("delivery_number")
         )
-    
+
     @staticmethod
     def get_by_id(delivery_id, request_id, tenant_id):
         return (
-            Delivery.objects
-            .filter(id=delivery_id, request_id=request_id, tenant_id=tenant_id)
+            Delivery.objects.filter(
+                id=delivery_id, request_id=request_id, tenant_id=tenant_id
+            )
             .prefetch_related("files")
             .first()
         )
-    
+
 
 class FileRepository:
 
     @staticmethod
-    def create(tenant, request_obj, uploaded_by, file_name, file_url, s3_key,
-               file_size_bytes, file_type, file_extension,
-               delivery=None, is_delivery_file=False):
-        
+    def create(
+        tenant,
+        request_obj,
+        uploaded_by,
+        file_name,
+        file_url,
+        s3_key,
+        file_size_bytes,
+        file_type,
+        file_extension,
+        delivery=None,
+        is_delivery_file=False,
+    ):
+
         return File.objects.create(
             tenant=tenant,
             request=request_obj,
@@ -295,7 +311,6 @@ class FileRepository:
             delivery=delivery,
             is_delivery_file=is_delivery_file,
         )
-    
 
     @staticmethod
     def get_for_request(request_id, tenant_id, delivery_files_only=False):
@@ -307,15 +322,17 @@ class FileRepository:
         if delivery_files_only:
             qs = qs.filter(is_delivery_file=True)
         return qs.order_by("created_at")
-    
+
     @staticmethod
     def get_by_id(file_id, tenant_id):
-        return File.objects.filter(id=file_id, tenant_id=tenant_id, is_deleted=False).first()
- 
+        return File.objects.filter(
+            id=file_id, tenant_id=tenant_id, is_deleted=False
+        ).first()
+
     @staticmethod
     def soft_delete(file_obj):
         file_obj.is_deleted = True
         file_obj.deleted_at = timezone.now()
         file_obj.save(update_fields=["is_deleted", "deleted_at"])
-        
+
         return file_obj

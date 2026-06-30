@@ -1,29 +1,28 @@
 from django.db import transaction
 from django.utils import timezone
 
-
-from apps.tenants.models import Plan, TenantUsage
-
-from .repositories import (
-    UserRepository,
-    EmailVerificationTokenRepository,
-    PasswordResetTokenRepository,
-)
-
-from apps.tenants.models import Tenant, TenantMembership
 from apps.common.logger import logger
+from apps.tenants.models import Plan, Tenant, TenantMembership, TenantUsage
 
-#custom Exceptions
+from .repositories import (EmailVerificationTokenRepository,
+                           PasswordResetTokenRepository, UserRepository)
+
+# custom Exceptions
+
 
 class EmailAlreadyVerified(Exception):
     pass
- 
+
+
 class InvalidOrExpiredToken(Exception):
     pass
 
+
 class NoProviderMembership(Exception):
     """User exists but has no provider membership in the resolved tenant."""
+
     pass
+
 
 class AccountDeactivated(Exception):
     pass
@@ -43,7 +42,7 @@ class ProviderSignupService:
         Create a new (unverified) global user and issue a verification token.
         Returns {user, verification_token} for the view to dispatch the email task.
         """
-        
+
         user = UserRepository.create_user(
             email=email,
             password=password,
@@ -52,14 +51,12 @@ class ProviderSignupService:
         )
 
         verification_token = EmailVerificationTokenRepository.create(
-            user=user,
-            expires_at=timezone.now() + timezone.timedelta(minutes=30)
+            user=user, expires_at=timezone.now() + timezone.timedelta(minutes=30)
         )
 
         logger.info("user_registered user_id=%s email=%s", user.id, user.email)
 
-        return { "user" : user, "verification_token" : verification_token }
-    
+        return {"user": user, "verification_token": verification_token}
 
     @staticmethod
     @transaction.atomic
@@ -73,14 +70,13 @@ class ProviderSignupService:
         if token is None:
             logger.warning("email_verification_token_invalid token=%s", token_value)
             raise InvalidOrExpiredToken("Invalid or already-used verification token.")
-        
 
         if token.expires_at < timezone.now():
             token.status = token.Status.EXPIRED
             token.save(update_fields=["status"])
             logger.warning("email_verfication_token_expired user_id=%s", token.user_id)
             raise InvalidOrExpiredToken("This verification link has expired.")
-        
+
         user = token.user
 
         UserRepository.activate(user)
@@ -89,15 +85,15 @@ class ProviderSignupService:
 
         logger.info("user_verified_email user_id=%s email=%s", user.id, user.email)
 
-        return {"user" : user}
-    
+        return {"user": user}
+
     @staticmethod
     @transaction.atomic
     def setup_workspace(user, buisness_name, slug):
         """
         Create the tenant workspace and give the provider their membership.
         """
-        
+
         free_plan = Plan.objects.get(name="free")
 
         tenant = Tenant.objects.create(
@@ -108,21 +104,25 @@ class ProviderSignupService:
 
         TenantUsage.objects.create(tenant=tenant)
 
-        #This membership is what makes the user a "provider" in this tenant
+        # This membership is what makes the user a "provider" in this tenant
         membership = TenantMembership.objects.create(
             user=user,
             tenant=tenant,
             role=TenantMembership.Role.PROVIDER,
         )
-        logger.info("membership_created tenant_id=%s provider_id=%s slug=%s", tenant.id, user.id, tenant.slug)
-        return {"tenant" : tenant, "membership" : membership }
-    
+        logger.info(
+            "membership_created tenant_id=%s provider_id=%s slug=%s",
+            tenant.id,
+            user.id,
+            tenant.slug,
+        )
+        return {"tenant": tenant, "membership": membership}
 
 
 class ProviderLoginService:
     """
     Resolves role from TenantMembership after credential check
-    """ 
+    """
 
     @staticmethod
     def resolve_provider_membership(user, tenant):
@@ -139,13 +139,15 @@ class ProviderLoginService:
         ).first()
 
         if membership is None:
-            logger.warning("provider_membership_not_found user_id=%s tenant_id=%s", user.id, tenant.id)
-            raise NoProviderMembership(
-                "No provider account found for this workspace."
+            logger.warning(
+                "provider_membership_not_found user_id=%s tenant_id=%s",
+                user.id,
+                tenant.id,
             )
-        
+            raise NoProviderMembership("No provider account found for this workspace.")
+
         return membership
-    
+
 
 class PasswordResetService:
     """
@@ -161,20 +163,20 @@ class PasswordResetService:
 
         user = UserRepository.get_by_email(email)
         if user is None or not user.is_active:
-            logger.warning("password_reset_requested_for_invalid_user email=%s", user.email)
+            logger.warning(
+                "password_reset_requested_for_invalid_user email=%s", user.email
+            )
             return None
-        
+
         PasswordResetTokenRepository.expire_pending_for_user(user)
 
         reset_token = PasswordResetTokenRepository.create(
-            user=user,
-            expires_at=timezone.now() + timezone.timedelta(minutes=30)
+            user=user, expires_at=timezone.now() + timezone.timedelta(minutes=30)
         )
 
         logger.info("password_reset_requested user=%s email=%s", user.id, user.email)
 
-        return {"user" : user, "reset_token" : reset_token}
-    
+        return {"user": user, "reset_token": reset_token}
 
     @staticmethod
     @transaction.atomic
@@ -186,15 +188,15 @@ class PasswordResetService:
         if token is None:
             logger.warning("password_reset_token_invalid")
             raise InvalidOrExpiredToken("Invalid or already-used reset link.")
-        
+
         if token.expires_at < timezone.now():
-            logger.warning("password_reset_token_expired user=%s", token.user.id )
+            logger.warning("password_reset_token_expired user=%s", token.user.id)
             PasswordResetTokenRepository.mark_expired(token)
-            raise InvalidOrExpiredToken("Reset link has expired. Please request a new one.")
+            raise InvalidOrExpiredToken(
+                "Reset link has expired. Please request a new one."
+            )
 
         UserRepository.set_password(token.user, new_password)
         PasswordResetTokenRepository.mark_used(token)
 
         logger.info("password_reset_completed user=%s", token.user.id)
-
-        

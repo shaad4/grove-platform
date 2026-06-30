@@ -6,23 +6,23 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('notifications', '0001_initial'),
+        ("notifications", "0001_initial"),
     ]
 
     operations = [
         migrations.RenameIndex(
-            model_name='notification',
-            new_name='idx_notifi_recipient_unread',
-            old_name='idx_notifications_recipient_unread',
+            model_name="notification",
+            new_name="idx_notifi_recipient_unread",
+            old_name="idx_notifications_recipient_unread",
         ),
         migrations.RenameIndex(
-            model_name='notification',
-            new_name='idx_notifi_feed',
-            old_name='idx_notifications_feed',
+            model_name="notification",
+            new_name="idx_notifi_feed",
+            old_name="idx_notifications_feed",
         ),
         migrations.AddField(
-            model_name='notification',
-            name='emailed_at',
+            model_name="notification",
+            name="emailed_at",
             field=models.DateTimeField(blank=True, null=True),
         ),
     ]

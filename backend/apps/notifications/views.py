@@ -1,10 +1,13 @@
-from rest_framework.response import Response
-from rest_framework.views import APIView
-from rest_framework.permissions import IsAuthenticated
-from apps.tenants.permissions import BelongsToTenant
-from .models import Notification
 from django.utils import timezone
 from rest_framework import status
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from rest_framework.views import APIView
+
+from apps.tenants.permissions import BelongsToTenant
+
+from .models import Notification
+
 # Create your views here.
 
 
@@ -29,14 +32,18 @@ class NotificationListView(APIView):
 
         data = [
             {
-                "id":                 str(n.id),
-                "event_type":         n.event_type,
-                "title":              n.title,
-                "body":               n.body,
-                "related_request_id": str(n.related_request_id) if n.related_request_id else None,
-                "related_client_id":  str(n.related_client_id)  if n.related_client_id  else None,
-                "is_read":            n.is_read,
-                "created_at":         n.created_at.isoformat(),
+                "id": str(n.id),
+                "event_type": n.event_type,
+                "title": n.title,
+                "body": n.body,
+                "related_request_id": (
+                    str(n.related_request_id) if n.related_request_id else None
+                ),
+                "related_client_id": (
+                    str(n.related_client_id) if n.related_client_id else None
+                ),
+                "is_read": n.is_read,
+                "created_at": n.created_at.isoformat(),
             }
             for n in qs
         ]
@@ -55,9 +62,9 @@ class MarkNotificationReadView(APIView):
 
         if not updated:
             return Response({"detail": "Not found."}, status=status.HTTP_404_NOT_FOUND)
-        
+
         return Response({"detail": "Marked as read."})
-    
+
 
 class MarkAllReadView(APIView):
     permission_classes = [IsAuthenticated, BelongsToTenant]
