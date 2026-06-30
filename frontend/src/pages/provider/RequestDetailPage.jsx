@@ -1382,9 +1382,9 @@ export default function RequestDetailPage() {
                 Close request
               </button>
             )}
-            <button className="h-8 w-8 flex items-center justify-center rounded-lg border border-[#e8eae8] text-[#9ea89e] hover:bg-[#f7f8f7] transition-colors">
+            {/* <button className="h-8 w-8 flex items-center justify-center rounded-lg border border-[#e8eae8] text-[#9ea89e] hover:bg-[#f7f8f7] transition-colors">
               <MoreHorizontal size={16} />
-            </button>
+            </button> */}
           </div>
         </div>
 
