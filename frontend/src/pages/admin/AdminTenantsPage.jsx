@@ -40,7 +40,7 @@ export default function AdminTenantsPage() {
   const [loading, setLoading] = useState(true)
   const [page, setPage] = useState(1)
   const [numPages, setNumPages] = useState(1)
-  const PAGE_SIZE = 20
+  const PAGE_SIZE = 10
 
   const [activeTenant, setActiveTenant] = useState(null)
   const [panelOpen, setPanelOpen] = useState(false)
