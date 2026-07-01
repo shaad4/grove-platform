@@ -135,7 +135,7 @@ class AdminTenantListView(APIView):
 
     def get(self, request):
         page = int(request.query_params.get("page", 1))
-        page_size = int(request.query_params.get("page_size", 20))
+        page_size = int(request.query_params.get("page_size", 10))
 
         try:
             rows = TenantAdminService.list_tenants(
