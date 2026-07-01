@@ -140,12 +140,12 @@ export default function AdminDashboardPage() {
                     <p className="text-[14px] font-medium text-[#10241C]">{t.name}</p>
                     <p className="text-[12px] text-[#9BA39B]">{t.slug}.grove.co</p>
                   </div>
-                  <button
-                    onClick={() => navigate('/grove-admin/tenants')}
+                  {/* <button
+                    onClick={() => navigate('/grove-admin/tenants/')}
                     className="text-[13px] font-medium text-[#0F6E56] hover:underline"
                   >
                     View →
-                  </button>
+                  </button> */}
                 </div>
               ))}
             </div>
