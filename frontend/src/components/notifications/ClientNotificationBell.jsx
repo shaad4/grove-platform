@@ -13,6 +13,7 @@ import {
   Paperclip,
 } from 'lucide-react'
 import { useBadges } from '../../hooks/useBadges'
+import { useTenantBranding } from '../../context/TenantBrandingContext'
 
 // ── helpers ───────────────────────────────────────────────────
 
@@ -47,21 +48,19 @@ function groupByDay(notifications) {
   return groups
 }
 
-// ── event config — client light theme ────────────────────────
-
-const EVENT_CONFIG = {
-  new_request:     { Icon: PlusCircle,    bg: 'bg-primary-light', iconColor: 'text-primary',      border: 'border-grove-100' },
-  status_change:   { Icon: RefreshCw,     bg: 'bg-primary-light', iconColor: 'text-primary',      border: 'border-grove-100' },
-  new_message:     { Icon: MessageSquare, bg: 'bg-purple-50',     iconColor: 'text-purple-600',   border: 'border-purple-100' },
-  files_delivered: { Icon: Package,       bg: 'bg-amber-50',      iconColor: 'text-amber-600',    border: 'border-amber-100' },
-  invite_accepted: { Icon: CheckCircle2,  bg: 'bg-primary-light', iconColor: 'text-primary',      border: 'border-grove-100' },
+const EVENT_ICON = {
+  new_request:     PlusCircle,
+  status_change:   RefreshCw,
+  new_message:     MessageSquare,
+  files_delivered: Package,
+  invite_accepted: CheckCircle2,
 }
 
 const STATUS_META = {
   received:    { label: 'Submitted',   bg: 'bg-surface',      text: 'text-text-sub' },
   in_review:   { label: 'In Review',   bg: 'bg-amber-50',     text: 'text-amber-700' },
   in_progress: { label: 'In Progress', bg: 'bg-indigo-50',    text: 'text-indigo-700' },
-  delivered:   { label: 'Ready',       bg: 'bg-primary-light',text: 'text-primary-dark' },
+  delivered:   { label: 'Ready',       isBrand: true },
   closed:      { label: 'Done',        bg: 'bg-surface',      text: 'text-text-sub' },
 }
 
@@ -80,34 +79,37 @@ function parseStatusTransition(notification) {
   return null
 }
 
-function StatusPills({ from, to }) {
+function StatusPills({ from, to, accent, accentSoft, accentDark }) {
   const fromMeta = STATUS_META[from]
   const toMeta   = STATUS_META[to]
   if (!fromMeta || !toMeta) return null
   return (
     <div className="flex items-center gap-1.5 mt-2">
-      <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${fromMeta.bg} ${fromMeta.text}`}>
-        {fromMeta.label}
-      </span>
+      {fromMeta.isBrand
+        ? <span className="rounded-full px-2 py-0.5 text-[10px] font-bold" style={{ background: accentSoft, color: accentDark }}>{fromMeta.label}</span>
+        : <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${fromMeta.bg} ${fromMeta.text}`}>{fromMeta.label}</span>
+      }
       <span className="text-[10px] text-text-dim">→</span>
-      <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${toMeta.bg} ${toMeta.text}`}>
-        {toMeta.label}
-      </span>
+      {toMeta.isBrand
+        ? <span className="rounded-full px-2 py-0.5 text-[10px] font-bold" style={{ background: accentSoft, color: accentDark }}>{toMeta.label}</span>
+        : <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${toMeta.bg} ${toMeta.text}`}>{toMeta.label}</span>
+      }
     </div>
   )
 }
 
 // ── notification item ─────────────────────────────────────────
 
-function NotificationItem({ notification, onRead }) {
-  const navigate = useNavigate()
-  const cfg        = EVENT_CONFIG[notification.event_type] || EVENT_CONFIG.status_change
-  const { Icon, bg, iconColor, border } = cfg
+function NotificationItem({ notification, onRead, accent, accentSoft }) {
+  const navigate   = useNavigate()
+  const Icon       = EVENT_ICON[notification.event_type] || RefreshCw
+  const isPrimary  = ['new_request', 'status_change', 'invite_accepted'].includes(notification.event_type)
+  const isMessage  = notification.event_type === 'new_message'
+  const isDelivery = notification.event_type === 'files_delivered'
   const transition = parseStatusTransition(notification)
 
-  const snippet   = notification.event_type === 'new_message' ? notification.body : null
-  const fileCount = notification.event_type === 'files_delivered' && notification.metadata?.file_count
-    ? notification.metadata.file_count : null
+  const snippet   = isMessage ? notification.body : null
+  const fileCount = isDelivery && notification.metadata?.file_count ? notification.metadata.file_count : null
 
   const handleClick = () => {
     if (!notification.is_read) onRead(notification.id)
@@ -119,16 +121,29 @@ function NotificationItem({ notification, onRead }) {
   return (
     <button
       onClick={handleClick}
-      className={`w-full text-left flex items-start gap-3 px-4 py-3.5 transition-all duration-200 border-b border-border/40 last:border-none hover:bg-surface/80 ${
-        !notification.is_read ? 'bg-primary-light/20' : 'bg-transparent'
-      }`}
+      className="w-full text-left flex items-start gap-3 px-4 py-3.5 transition-all duration-200 border-b border-border/40 last:border-none hover:bg-surface/80"
+      style={!notification.is_read ? { background: `${accentSoft}` } : {}}
     >
       <div className="relative shrink-0 mt-0.5">
-        <div className={`h-8 w-8 rounded-xl ${bg} border ${border} flex items-center justify-center shadow-sm`}>
-          <Icon size={14} className={iconColor} />
+        <div
+          className={`h-8 w-8 rounded-xl flex items-center justify-center shadow-sm ${
+            isMessage  ? 'bg-purple-50 border border-purple-100' :
+            isDelivery ? 'bg-amber-50 border border-amber-100' :
+            'border'
+          }`}
+          style={isPrimary ? { background: accentSoft, borderColor: `${accent}30` } : {}}
+        >
+          <Icon
+            size={14}
+            className={isMessage ? 'text-purple-600' : isDelivery ? 'text-amber-600' : ''}
+            style={isPrimary ? { color: accent } : {}}
+          />
         </div>
         {!notification.is_read && (
-          <span className="absolute -top-1 -right-1 h-2.5 w-2.5 rounded-full bg-primary border-2 border-white shadow-sm" />
+          <span
+            className="absolute -top-1 -right-1 h-2.5 w-2.5 rounded-full border-2 border-white shadow-sm"
+            style={{ background: accent }}
+          />
         )}
       </div>
 
@@ -150,7 +165,14 @@ function NotificationItem({ notification, onRead }) {
             {fileCount} file{fileCount !== 1 ? 's' : ''} delivered
           </div>
         )}
-        {transition && <StatusPills from={transition.from} to={transition.to} />}
+        {transition && (
+          <StatusPills
+            from={transition.from}
+            to={transition.to}
+            accent={accent}
+            accentSoft={accentSoft}
+          />
+        )}
       </div>
     </button>
   )
@@ -164,6 +186,8 @@ export default function ClientNotificationBell({ collapsed = false, isMobileNav 
   const bellRef     = useRef(null)
   const dropdownRef = useRef(null)
   const navigate    = useNavigate()
+  const { colors }  = useTenantBranding()
+  const { accent, accentDark, accentSoft } = colors
 
   const isMobile = typeof window !== 'undefined' && window.innerWidth < 1024
 
@@ -176,10 +200,8 @@ export default function ClientNotificationBell({ collapsed = false, isMobileNav 
     loadNotifications,
   } = useBadges()
 
-  // ── compute dropdown position from bell button's actual rect ──────────────
   const computePosition = useCallback(() => {
-    if (isMobile) return {} // Mobile relies purely on Tailwind inset-0
-
+    if (isMobile) return {}
     if (!bellRef.current) return {}
     const rect = bellRef.current.getBoundingClientRect()
     const vpW  = window.innerWidth
@@ -225,15 +247,21 @@ export default function ClientNotificationBell({ collapsed = false, isMobileNav 
       <button
         ref={bellRef}
         onClick={(e) => { e.stopPropagation(); setOpen(o => !o); }}
-        className={isMobileNav 
-          ? `relative flex flex-col items-center justify-center gap-1 min-w-[64px] rounded-xl px-1 py-2 transition-all duration-200 ${open ? 'text-primary' : 'text-text-dim hover:text-text-sub'}`
-          : `relative flex items-center justify-center rounded-xl transition-all duration-200 h-9 w-9 ${open ? 'bg-primary-light text-primary' : 'text-text-dim hover:bg-border/30 hover:text-text-main'}`
+        className={isMobileNav
+          ? 'relative flex flex-col items-center justify-center gap-1 min-w-[64px] rounded-xl px-1 py-2 transition-all duration-200'
+          : 'relative flex items-center justify-center rounded-xl transition-all duration-200 h-9 w-9'
+        }
+        style={isMobileNav
+          ? { color: open ? accent : undefined }
+          : open
+            ? { background: accentSoft, color: accent }
+            : {}
         }
       >
         <div className="relative">
           <Bell size={isMobileNav ? 22 : 18} strokeWidth={2} />
           {unreadCount > 0 && (
-            <span className={`absolute -top-1.5 -right-1.5 flex items-center justify-center rounded-full bg-red-500 text-white text-[9px] font-bold border-2 border-[#f0f9f6] ${isMobileNav ? 'h-4 w-4' : 'h-4 w-4'}`}>
+            <span className={`absolute -top-1.5 -right-1.5 flex items-center justify-center rounded-full bg-red-500 text-white text-[9px] font-bold border-2 border-white ${isMobileNav ? 'h-4 w-4' : 'h-4 w-4'}`}>
               {unreadCount > 99 ? '99+' : unreadCount}
             </span>
           )}
@@ -241,13 +269,12 @@ export default function ClientNotificationBell({ collapsed = false, isMobileNav 
         {isMobileNav && <span className="text-[9px] font-bold uppercase tracking-wide">Alerts</span>}
       </button>
 
-      {/* Render via Portal to escape containing blocks like backdrop-blur */}
       {open && typeof document !== 'undefined' && createPortal(
         <div
           ref={dropdownRef}
           className={`
-            ${isMobile 
-              ? 'fixed inset-0 z-[300] bg-white flex flex-col animate-in slide-in-from-bottom-8 duration-300' 
+            ${isMobile
+              ? 'fixed inset-0 z-[300] bg-white flex flex-col animate-in slide-in-from-bottom-8 duration-300'
               : 'z-[300] rounded-2xl border border-border/60 bg-white/95 backdrop-blur-xl shadow-soft overflow-hidden flex flex-col animate-in fade-in slide-in-from-left-2 duration-200'}
           `}
           style={isMobile ? {} : dropdownStyle}
@@ -257,7 +284,10 @@ export default function ClientNotificationBell({ collapsed = false, isMobileNav 
             <div className="flex items-center gap-2.5">
               <span className="text-base md:text-sm font-semibold text-text-main">Notifications</span>
               {unreadCount > 0 && (
-                <span className="text-[10px] font-bold bg-primary text-white px-2 py-0.5 rounded-full shadow-sm">
+                <span
+                  className="text-[10px] font-bold text-white px-2 py-0.5 rounded-full shadow-sm"
+                  style={{ background: accent }}
+                >
                   {unreadCount}
                 </span>
               )}
@@ -266,7 +296,8 @@ export default function ClientNotificationBell({ collapsed = false, isMobileNav 
               {unreadCount > 0 && (
                 <button
                   onClick={markAllRead}
-                  className="text-xs font-medium text-primary hover:text-primary-dark transition-colors"
+                  className="text-xs font-medium transition-colors"
+                  style={{ color: accent }}
                 >
                   Mark all read
                 </button>
@@ -296,8 +327,11 @@ export default function ClientNotificationBell({ collapsed = false, isMobileNav 
               </div>
             ) : notifications.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-full min-h-[250px] px-6 text-center">
-                <div className="h-12 w-12 rounded-2xl bg-primary-light/50 border border-border/50 flex items-center justify-center mb-4 shadow-sm">
-                  <Bell size={20} className="text-primary" />
+                <div
+                  className="h-12 w-12 rounded-2xl border border-border/50 flex items-center justify-center mb-4 shadow-sm"
+                  style={{ background: accentSoft }}
+                >
+                  <Bell size={20} style={{ color: accent }} />
                 </div>
                 <p className="text-sm font-semibold text-text-main">All caught up</p>
                 <p className="text-xs text-text-sub mt-1">No notifications yet.</p>
@@ -314,10 +348,10 @@ export default function ClientNotificationBell({ collapsed = false, isMobileNav 
                     <NotificationItem
                       key={n.id}
                       notification={n}
-                      onRead={(id) => {
-                        markRead(id)
-                        setOpen(false)
-                      }}
+                      onRead={(id) => { markRead(id); setOpen(false) }}
+                      accent={accent}
+                      accentSoft={accentSoft}
+                      accentDark={accentDark}
                     />
                   ))}
                 </div>
@@ -329,10 +363,10 @@ export default function ClientNotificationBell({ collapsed = false, isMobileNav 
           {notifications.length > 0 && (
             <div className="shrink-0 border-t border-border/50 px-4 py-4 md:py-3 bg-white md:bg-surface/50 pb-[max(1rem,env(safe-area-inset-bottom))] md:pb-3">
               <div className="flex items-center justify-center gap-2">
-                <CheckCheck size={16} md:size={14} className="text-primary" />
+                <CheckCheck size={14} style={{ color: accent }} />
                 <p className="text-sm md:text-xs font-medium text-text-sub">
                   {unreadCount > 0
-                    ? <><span className="font-bold text-primary">{unreadCount}</span> unread</>
+                    ? <><span className="font-bold" style={{ color: accent }}>{unreadCount}</span> unread</>
                     : 'All caught up'
                   }
                 </p>

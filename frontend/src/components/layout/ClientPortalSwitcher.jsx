@@ -54,7 +54,7 @@ function PortalAvatar({ name, logo, size = 'sm' }) {
 }
 
 // ───────────────── Component ─────────────────
-export default function ClientPortalSwitcher() {
+export default function ClientPortalSwitcher({ isMobile = false }) {
   const tenant = useSelector(selectTenant)
   const memberships = useSelector(selectMemberships)
   const totalPortals = useSelector(selectTotalPortalCount)
@@ -95,14 +95,20 @@ export default function ClientPortalSwitcher() {
     <div className="relative" ref={ref}>
       {/* ───────────────── Trigger ───────────────── */}
       <button
-        onClick={() => showDropdown && setOpen((v) => !v)}
+        onClick={() => {
+          if (isMobile) {
+            window.location.replace(appUrl(null, '/portals'))
+          } else if (showDropdown) {
+            setOpen((v) => !v)
+          }
+        }}
         className={`
           flex w-full items-center gap-3
           rounded-xl
           px-2 py-2
           transition-all duration-200
           hover:bg-surface
-          ${showDropdown ? 'cursor-pointer' : 'cursor-default'}
+          ${(isMobile || showDropdown) ? 'cursor-pointer' : 'cursor-default'}
         `}
       >
         <PortalAvatar name={tenant?.name} logo={tenant?.logo_url} size="lg" />
@@ -116,7 +122,7 @@ export default function ClientPortalSwitcher() {
           </p>
         </div>
 
-        {showDropdown && (
+        {((!isMobile && showDropdown) || isMobile) && (
           <ChevronDown
             size={14}
             className={`
@@ -130,7 +136,7 @@ export default function ClientPortalSwitcher() {
       </button>
 
       {/* ───────────────── Dropdown ───────────────── */}
-      {open && (
+      {open && !isMobile && (
         <div
           className="
             absolute

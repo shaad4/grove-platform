@@ -10,7 +10,7 @@ import requestsApi from '../../api/requests.api'
 import { timeAgo } from '../../utils/clientHelpers'
 import { useAuth } from '../../context/AuthContext'
 import { useBadges } from '../../hooks/useBadges'
-import { pre } from 'framer-motion/client'
+import { useTenantBranding } from '../../context/TenantBrandingContext'
 
 const CARDS_PER_PAGE = 4
 
@@ -33,7 +33,7 @@ const STATUS_FILTER_TABS = [
 ]
 
 // ── Scaled-Up Stat Card ──────────────────────────────────────
-function StatCard({ title, value, subtitle, icon: Icon, iconColor }) {
+function StatCard({ title, value, subtitle, icon: Icon, iconColor, iconBgOverride, iconColorOverride }) {
   return (
     <div className="bg-white rounded-2xl border border-border/60 p-5 flex items-center justify-between shadow-sm transition-all hover:shadow-soft">
       <div className="space-y-1">
@@ -41,7 +41,10 @@ function StatCard({ title, value, subtitle, icon: Icon, iconColor }) {
         <p className="text-3xl font-semibold text-text-main tracking-tight leading-none pt-1">{value}</p>
         <p className="text-xs text-text-sub font-medium">{subtitle}</p>
       </div>
-      <div className={`h-11 w-11 rounded-xl flex items-center justify-center shrink-0 ${iconColor}`}>
+      <div 
+        className={`h-11 w-11 rounded-xl flex items-center justify-center shrink-0 ${iconBgOverride ? '' : iconColor}`}
+        style={iconBgOverride ? { backgroundColor: iconBgOverride, color: iconColorOverride } : {}}
+      >
         <Icon size={20} />
       </div>
     </div>
@@ -50,6 +53,8 @@ function StatCard({ title, value, subtitle, icon: Icon, iconColor }) {
 
 // ── Clean Pagination ──────────────────────────────────────────
 function Pagination({ page, total, perPage, onChange }) {
+  const { colors } = useTenantBranding()
+  const { accent } = colors
   const totalPages = Math.ceil(total / perPage)
   if (totalPages <= 1) return null
   
@@ -70,8 +75,9 @@ function Pagination({ page, total, perPage, onChange }) {
           <button
             key={p}
             onClick={() => onChange(p)}
-            className={`h-8 w-8 flex items-center justify-center rounded-lg text-xs font-semibold transition-all
-              ${p === page ? 'bg-primary text-white shadow-sm' : 'bg-white border border-border/60 text-text-sub hover:bg-surface'}`}
+            className="h-8 w-8 flex items-center justify-center rounded-lg text-xs font-semibold transition-all"
+            style={p === page ? { backgroundColor: accent, color: '#ffffff' } : {}}
+            {...(p !== page ? { className: "bg-white border border-border/60 text-text-sub hover:bg-surface" } : {})}
           >
             {p}
           </button>
@@ -90,22 +96,39 @@ function Pagination({ page, total, perPage, onChange }) {
 
 // ── Roomier, More Impactful List Row ───────────────────────
 function RequestRow({ req, onClick }) {
+  const { colors } = useTenantBranding()
+  const { accent, accentSoft, accentDark } = colors
+  const [hovered, setHovered] = useState(false)
   const cfg = STATUS_CONFIG[req.status] || STATUS_CONFIG.received
   const hasDeliveries = req.deliveries?.length > 0
+  const isDelivered = req.status === 'delivered'
 
   return (
     <div
       onClick={onClick}
-      className="group flex items-center justify-between gap-4 p-5 bg-white border border-border/60 rounded-xl hover:border-border hover:shadow-soft hover:-translate-y-[1px] transition-all duration-200 cursor-pointer"
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      className="group flex items-center justify-between gap-4 p-5 bg-white border border-border/60 rounded-xl hover:shadow-soft hover:-translate-y-[1px] transition-all duration-200 cursor-pointer"
+      style={hovered ? { borderColor: accent } : {}}
     >
       {/* Left Context Group */}
       <div className="flex items-center gap-4 flex-1 min-w-0">
-        <div className="hidden sm:flex items-center justify-center h-10 w-10 rounded-xl bg-surface text-text-dim group-hover:bg-primary-light group-hover:text-primary transition-colors shrink-0">
+        <div 
+          className="hidden sm:flex items-center justify-center h-10 w-10 rounded-xl transition-colors shrink-0"
+          style={
+            hovered 
+              ? { backgroundColor: accentSoft, color: accent } 
+              : { backgroundColor: '#F7F8F7', color: '#9EA89E' }
+          }
+        >
           <FileText size={18} />
         </div>
         <div className="min-w-0 space-y-1">
           <div className="flex items-center gap-2.5 flex-wrap">
-            <h3 className="text-sm font-semibold text-text-main group-hover:text-primary transition-colors truncate max-w-[200px] sm:max-w-[350px] md:max-w-[550px]">
+            <h3 
+              className="text-sm font-semibold text-text-main transition-colors truncate max-w-[200px] sm:max-w-[350px] md:max-w-[550px]"
+              style={hovered ? { color: accent } : {}}
+            >
               {req.title}
             </h3>
             {req.category && (
@@ -126,13 +149,28 @@ function RequestRow({ req, onClick }) {
       {/* Right Metrics & Steppers */}
       <div className="flex items-center gap-5 shrink-0">
         {hasDeliveries && (
-          <span className="hidden md:flex items-center gap-1.5 text-[11px] font-bold text-primary-dark bg-primary-light border border-grove-100 px-2.5 py-1 rounded-md">
+          <span 
+            className="hidden md:flex items-center gap-1.5 text-[11px] font-bold px-2.5 py-1 rounded-md border"
+            style={{ color: accentDark, backgroundColor: accentSoft, borderColor: `${accent}20` }}
+          >
             <CheckCircle2 size={12} /> Files ready
           </span>
         )}
         
-        <span className={`inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1 text-[11px] font-bold tracking-wide ${cfg.pill}`}>
-          <span className={`h-1.5 w-1.5 rounded-full ${cfg.dot}`} />
+        <span 
+          className="inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1 text-[11px] font-bold tracking-wide"
+          style={
+            isDelivered
+              ? { backgroundColor: accentSoft, color: accentDark, borderColor: `${accent}33` }
+              : undefined
+          }
+          {...(!isDelivered ? { className: `inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1 text-[11px] font-bold tracking-wide ${cfg.pill}` } : {})}
+        >
+          <span 
+            className="h-1.5 w-1.5 rounded-full"
+            style={{ backgroundColor: isDelivered ? accent : undefined }}
+            {...(!isDelivered ? { className: `h-1.5 w-1.5 rounded-full ${cfg.dot}` } : {})}
+          />
           {cfg.label}
         </span>
 
@@ -141,15 +179,17 @@ function RequestRow({ req, onClick }) {
           {[1, 2, 3, 4, 5].map((stepNumber) => (
             <div 
               key={stepNumber}
-              className={`h-1.5 w-5 rounded-full transition-all duration-300 ${
-                stepNumber <= cfg.step ? 'bg-primary' : 'bg-surface border border-border/40'
-              }`}
+              className="h-1.5 w-5 rounded-full transition-all duration-300"
+              style={{
+                backgroundColor: stepNumber <= cfg.step ? accent : '#F7F8F7',
+                border: stepNumber <= cfg.step ? 'none' : '1px solid rgba(0,0,0,0.06)'
+              }}
             />
           ))}
         </div>
 
         <div className="text-text-dim group-hover:text-text-main transition-colors pl-1">
-          <ChevronRight size={18} className="transform group-hover:translate-x-0.5 transition-transform" />
+          <ChevronRight size={18} className="transform group-hover:translate-x-0.5 transition-transform" style={hovered ? { color: accent } : {}} />
         </div>
       </div>
     </div>
@@ -160,6 +200,8 @@ function RequestRow({ req, onClick }) {
 export default function ClientRequestsPage() {
   const navigate = useNavigate()
   const { tenant } = useAuth()
+  const { colors } = useTenantBranding()
+  const { accent, accentSoft, accentDark } = colors
   const [requests, setRequests] = useState([])
   const [loading, setLoading] = useState(true)
   const [showNew, setShowNew] = useState(false)
@@ -167,6 +209,10 @@ export default function ClientRequestsPage() {
   const [searchQuery, setSearchQuery] = useState('')
   const [page, setPage] = useState(1)
   const { registerPortalListener } = useBadges()
+
+  const [hoveredNew, setHoveredNew] = useState(false)
+  const [hoveredEmptyCreate, setHoveredEmptyCreate] = useState(false)
+  const [focusedSearch, setFocusedSearch] = useState(false)
 
   const providerName = tenant?.name || 'your provider'
 
@@ -225,7 +271,10 @@ export default function ClientRequestsPage() {
           </div>
           <button
             onClick={() => setShowNew(true)}
-            className="flex items-center justify-center gap-2 rounded-xl bg-primary px-5 h-10 text-sm font-semibold text-white hover:bg-primary-dark active:scale-[0.98] transition-all w-full sm:w-auto shadow-sm"
+            onMouseEnter={() => setHoveredNew(true)}
+            onMouseLeave={() => setHoveredNew(false)}
+            className="flex items-center justify-center gap-2 rounded-xl px-5 h-10 text-sm font-semibold text-white active:scale-[0.98] transition-all w-full sm:w-auto shadow-sm"
+            style={{ backgroundColor: hoveredNew ? accentDark : accent }}
           >
             <Plus size={16} />
             New Request
@@ -236,7 +285,14 @@ export default function ClientRequestsPage() {
         <div className="hidden sm:grid gap-4 grid-cols-2 lg:grid-cols-4">
           <StatCard title="Total Requests" value={totalCount} subtitle="All items created" icon={Layers} iconColor="bg-surface text-text-sub" />
           <StatCard title="In Progress" value={dynamicActiveCount} subtitle="Currently being built" icon={Clock} iconColor="bg-indigo-50 text-indigo-600" />
-          <StatCard title="Ready For Review" value={dynamicReadyCount} subtitle="Awaiting your approval" icon={CheckCircle2} iconColor="bg-primary-light text-primary" />
+          <StatCard 
+            title="Ready For Review" 
+            value={dynamicReadyCount} 
+            subtitle="Awaiting your approval" 
+            icon={CheckCircle2} 
+            iconBgOverride={accentSoft}
+            iconColorOverride={accent}
+          />
           <StatCard title="Completed" value={dynamicClosedCount} subtitle="Finished requests" icon={CheckCircle} iconColor="bg-surface/50 text-text-dim" />
         </div>
 
@@ -272,7 +328,14 @@ export default function ClientRequestsPage() {
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
               placeholder="Search by title..."
-              className="w-full h-9 rounded-lg border border-border/60 bg-surface/30 pl-9 pr-4 text-sm outline-none focus:border-primary focus:bg-white transition-all placeholder:text-text-dim text-text-main shadow-sm"
+              className="w-full h-9 rounded-lg border bg-surface/30 pl-9 pr-4 text-sm outline-none transition-all placeholder:text-text-dim text-text-main shadow-sm"
+              style={{
+                borderColor: focusedSearch ? accent : 'rgba(0,0,0,0.06)',
+                boxShadow: focusedSearch ? `0 0 0 2px ${accentSoft}` : '',
+                backgroundColor: focusedSearch ? '#ffffff' : ''
+              }}
+              onFocus={() => setFocusedSearch(true)}
+              onBlur={() => setFocusedSearch(false)}
             />
           </div>
         </div>
@@ -280,7 +343,7 @@ export default function ClientRequestsPage() {
         {/* Central Display Layer */}
         {loading ? (
           <div className="flex items-center justify-center py-24">
-            <Loader2 size={24} className="animate-spin text-primary" />
+            <Loader2 size={24} className="animate-spin" style={{ color: accent }} />
           </div>
         ) : filtered.length === 0 ? (
           <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border/60 bg-white py-20 text-center px-4">
@@ -294,7 +357,10 @@ export default function ClientRequestsPage() {
             {(statusFilter === 'all' && !searchQuery.trim()) && (
               <button
                 onClick={() => setShowNew(true)}
-                className="flex items-center gap-2 rounded-xl bg-primary px-5 h-10 text-sm font-semibold text-white hover:bg-primary-dark active:scale-[0.98] transition-all shadow-sm"
+                onMouseEnter={() => setHoveredEmptyCreate(true)}
+                onMouseLeave={() => setHoveredEmptyCreate(false)}
+                className="flex items-center gap-2 rounded-xl px-5 h-10 text-sm font-semibold text-white active:scale-[0.98] transition-all shadow-sm"
+                style={{ backgroundColor: hoveredEmptyCreate ? accentDark : accent }}
               >
                 <Plus size={16} />
                 Create a Request

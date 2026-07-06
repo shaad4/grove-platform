@@ -20,6 +20,7 @@ import { useAuth } from '../../context/AuthContext'
 import { useBadges } from '../../hooks/useBadges'
 import ClientLayout from '../../components/layout/ClientLayout'
 import NewRequestModal from '../../components/modals/NewRequestModal'
+import { useTenantBranding } from '../../context/TenantBrandingContext'
 
 // ─── Status config (Updated to Tailwind Semantic Tokens) ──────
 const STATUS_CONFIG = {
@@ -106,17 +107,20 @@ function Skeleton({ className = '' }) {
 
 // ─── Top welcome bar ──────────────────────────────────────────
 function WelcomeBar({ firstName, providerName, logoUrl, onNew }) {
+  const { colors } = useTenantBranding()
+  const { accent, accentDark, bg1 } = colors
+  const [hovered, setHovered] = useState(false)
   const initials = providerName
     ? providerName.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()
     : '?'
 
   return (
-    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 sm:mb-8">
       <div className="flex items-center gap-4">
         {logoUrl ? (
           <img src={logoUrl} alt={providerName} className="h-12 w-12 rounded-xl object-cover shadow-sm border border-border/50" />
         ) : (
-          <div className="h-12 w-12 rounded-xl bg-sidebar flex items-center justify-center text-sm font-bold text-white shrink-0 shadow-sm">
+          <div className="h-12 w-12 rounded-xl flex items-center justify-center text-sm font-bold text-white shrink-0 shadow-sm" style={{ backgroundColor: bg1 }}>
             {initials}
           </div>
         )}
@@ -130,7 +134,10 @@ function WelcomeBar({ firstName, providerName, logoUrl, onNew }) {
 
       <button
         onClick={onNew}
-        className="hidden sm:flex items-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-white hover:bg-primary-dark active:scale-[0.98] transition-all shadow-sm"
+        className="hidden sm:flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold text-white active:scale-[0.98] transition-all shadow-sm"
+        style={{ backgroundColor: hovered ? accentDark : accent }}
+        onMouseEnter={() => setHovered(true)}
+        onMouseLeave={() => setHovered(false)}
       >
         <Plus size={16} />
         New Request
@@ -141,82 +148,149 @@ function WelcomeBar({ firstName, providerName, logoUrl, onNew }) {
 
 // ─── Summary cards ────────────────────────────────────────────
 function SummaryCards({ active, needsReview, completed, loading }) {
+  const { colors } = useTenantBranding()
+  const { accent, accentSoft } = colors
   const cards = [
     {
       label: 'Active Requests',
       value: active,
       icon: Clock,
-      iconColor: 'text-indigo-600',
-      iconBg: 'bg-indigo-50',
+      style: {
+        iconColor: 'text-indigo-600',
+        iconBg: 'bg-indigo-50',
+      },
       border: 'border-border/50',
+      inlineStyle: {},
     },
     {
       label: 'Needs Review',
       value: needsReview,
       icon: Zap,
-      iconColor: needsReview > 0 ? 'text-primary' : 'text-text-dim',
-      iconBg: needsReview > 0 ? 'bg-primary-light' : 'bg-surface',
-      border: needsReview > 0 ? 'border-primary/20 ring-1 ring-primary/10 shadow-sm' : 'border-border/50',
+      style: {},
+      border: 'border-border/50',
+      inlineStyle: needsReview > 0 ? {
+        borderColor: `${accent}33`,
+        boxShadow: `0 1px 3px 0 ${accentSoft}`,
+      } : {},
+      iconColorOverride: needsReview > 0 ? accent : undefined,
+      iconBgOverride: needsReview > 0 ? accentSoft : undefined,
     },
     {
       label: 'Completed',
       value: completed,
       icon: CheckCircle2,
-      iconColor: 'text-text-dim',
-      iconBg: 'bg-surface',
+      style: {
+        iconColor: 'text-text-dim',
+        iconBg: 'bg-surface',
+      },
       border: 'border-border/50',
+      inlineStyle: {},
     },
   ]
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
-      {cards.map(card => (
-        <div
-          key={card.label}
-          className={`relative overflow-hidden rounded-2xl border bg-white p-5 transition-all ${card.border}`}
-        >
-          <div className="flex items-center justify-between mb-4">
-            <div className={`h-10 w-10 rounded-xl flex items-center justify-center ${card.iconBg}`}>
-              <card.icon size={18} className={card.iconColor} />
+    <div className="grid grid-cols-3 gap-2.5 sm:gap-4 mb-6 sm:mb-8">
+      {cards.map(card => {
+        const mobileLabel = card.label === 'Active Requests' ? 'Active' : card.label
+        return (
+          <div
+            key={card.label}
+            className={`relative overflow-hidden rounded-xl sm:rounded-2xl border bg-white p-3 sm:p-5 transition-all ${card.border}`}
+            style={card.inlineStyle}
+          >
+            {/* Mobile View: Minimal, compact style */}
+            <div className="flex flex-col sm:hidden">
+              <div className="flex items-center justify-between">
+                {loading ? (
+                  <Skeleton className="h-6 w-8 border-none" />
+                ) : (
+                  <span className="text-xl font-bold text-text-main tracking-tight">
+                    {card.value}
+                  </span>
+                )}
+                <div
+                  className={`h-7 w-7 rounded-lg flex items-center justify-center shrink-0 ${card.style.iconBg || ''}`}
+                  style={card.iconBgOverride ? { backgroundColor: card.iconBgOverride } : {}}
+                >
+                  <card.icon
+                    size={13}
+                    className={card.style.iconColor || ''}
+                    style={card.iconColorOverride ? { color: card.iconColorOverride } : {}}
+                  />
+                </div>
+              </div>
+              <p className="text-[10px] font-semibold text-text-sub mt-2 tracking-wide truncate">
+                {mobileLabel}
+              </p>
             </div>
-            {loading ? (
-              <Skeleton className="h-8 w-10 border-none" />
-            ) : (
-              <span className="text-3xl font-semibold text-text-main tracking-tight">
-                {card.value}
-              </span>
-            )}
+
+            {/* Desktop View: Full-size cards */}
+            <div className="hidden sm:flex flex-col">
+              <div className="flex items-center justify-between mb-4">
+                <div
+                  className={`h-10 w-10 rounded-xl flex items-center justify-center ${card.style.iconBg || ''}`}
+                  style={card.iconBgOverride ? { backgroundColor: card.iconBgOverride } : {}}
+                >
+                  <card.icon
+                    size={18}
+                    className={card.style.iconColor || ''}
+                    style={card.iconColorOverride ? { color: card.iconColorOverride } : {}}
+                  />
+                </div>
+                {loading ? (
+                  <Skeleton className="h-8 w-10 border-none" />
+                ) : (
+                  <span className="text-3xl font-semibold text-text-main tracking-tight">
+                    {card.value}
+                  </span>
+                )}
+              </div>
+              <p className="text-xs font-medium text-text-sub">{card.label}</p>
+            </div>
           </div>
-          <p className="text-xs font-medium text-text-sub">{card.label}</p>
-        </div>
-      ))}
+        )
+      })}
     </div>
   )
 }
 
 // ─── Request row ──────────────────────────────────────────────
 function RequestRow({ req, onClick, isNew }) {
+  const { colors } = useTenantBranding()
+  const { accent, accentSoft, accentDark } = colors
+  const [hovered, setHovered] = useState(false)
   const cfg = STATUS_CONFIG[req.status] || STATUS_CONFIG.received
   const isDelivered = req.status === 'delivered'
 
   return (
     <div
       onClick={onClick}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
       className={`
         group relative flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-xl border bg-white p-4 
         cursor-pointer transition-all duration-200 hover:-translate-y-[1px] hover:shadow-soft
-        ${isNew ? 'animate-slide-in ring-1 ring-primary' : ''}
-        ${isDelivered ? 'border-grove-200' : 'border-border/60 hover:border-border'}
       `}
+      style={{
+        boxShadow: isNew ? `0 0 0 1px ${accent}` : '',
+        borderColor: isDelivered ? accent : hovered ? '#9EA89E' : 'rgba(0,0,0,0.06)'
+      }}
     >
       {/* Left side: Status Dot + Title */}
       <div className="flex items-start sm:items-center gap-4 min-w-0">
-        <div className={`mt-1.5 sm:mt-0 h-2.5 w-2.5 rounded-full shrink-0 ${cfg.dot}`} />
+        <div 
+          className="mt-1.5 sm:mt-0 h-2.5 w-2.5 rounded-full shrink-0" 
+          style={{ backgroundColor: isDelivered ? accent : undefined }}
+          {...(!isDelivered ? { className: `mt-1.5 sm:mt-0 h-2.5 w-2.5 rounded-full shrink-0 ${cfg.dot}` } : {})}
+        />
         <div className="min-w-0">
           <div className="flex items-center gap-2.5 mb-1">
             <h3 className="text-sm font-semibold text-text-main truncate">{req.title}</h3>
             {req._hasUnreadMessage && (
-              <span className="flex items-center gap-1 shrink-0 text-[9px] font-bold uppercase tracking-wider text-primary-dark bg-primary-light rounded px-1.5 py-0.5">
+              <span 
+                className="flex items-center gap-1 shrink-0 text-[9px] font-bold uppercase tracking-wider rounded px-1.5 py-0.5"
+                style={{ color: accentDark, backgroundColor: accentSoft }}
+              >
                 <MessageSquareDot size={10} /> New Message
               </span>
             )}
@@ -232,12 +306,21 @@ function RequestRow({ req, onClick, isNew }) {
       {/* Right side: Pill + Arrow */}
       <div className="flex items-center justify-between sm:justify-end gap-4 w-full sm:w-auto mt-2 sm:mt-0 pl-6 sm:pl-0">
         <span
-          className={`shrink-0 text-[11px] font-bold tracking-wide rounded-md px-2.5 py-1 border ${cfg.bg} ${cfg.text} ${cfg.border}`}
+          className={`shrink-0 text-[11px] font-bold tracking-wide rounded-md px-2.5 py-1 border`}
+          style={
+            isDelivered
+              ? { backgroundColor: accentSoft, color: accentDark, borderColor: `${accent}33` }
+              : undefined
+          }
+          {...(!isDelivered ? { className: `shrink-0 text-[11px] font-bold tracking-wide rounded-md px-2.5 py-1 border ${cfg.bg} ${cfg.text} ${cfg.border}` } : {})}
         >
           {cfg.label}
         </span>
-        <div className="h-8 w-8 rounded-full bg-surface flex items-center justify-center group-hover:bg-primary transition-colors shrink-0">
-          <ChevronRight size={16} className="text-text-dim group-hover:text-white transition-colors" />
+        <div 
+          className="h-8 w-8 rounded-full flex items-center justify-center shrink-0 transition-colors"
+          style={{ backgroundColor: hovered ? accent : '#F7F8F7' }}
+        >
+          <ChevronRight size={16} className={`transition-colors ${hovered ? 'text-white' : 'text-text-dim'}`} />
         </div>
       </div>
     </div>
@@ -341,6 +424,9 @@ function StatusGuide() {
 
 // ─── Quick action card ────────────────────────────────────────
 function QuickActions({ onNew, needsReview, requests, navigate }) {
+  const { colors } = useTenantBranding()
+  const { accent, accentSoft, accentDark } = colors
+  const [hoveredNew, setHoveredNew] = useState(false)
   const deliveredReq = requests.find(r => r.status === 'delivered')
 
   return (
@@ -348,31 +434,38 @@ function QuickActions({ onNew, needsReview, requests, navigate }) {
       {needsReview > 0 && deliveredReq && (
         <button
           onClick={() => navigate(`/my-requests/${deliveredReq.id}`)}
-          className="w-full flex items-center gap-3 rounded-2xl border border-grove-200 bg-primary-light px-4 py-4 hover:bg-primary-light/80 transition-colors text-left shadow-sm group"
+          className="w-full flex items-center gap-3 rounded-2xl border px-4 py-4 transition-colors text-left shadow-sm group"
+          style={{ borderColor: `${accent}40`, backgroundColor: accentSoft }}
         >
-          <div className="h-10 w-10 rounded-xl bg-white border border-grove-100 flex items-center justify-center shrink-0 shadow-sm">
-            <Zap size={18} className="text-primary" />
+          <div className="h-10 w-10 rounded-xl bg-white border flex items-center justify-center shrink-0 shadow-sm" style={{ borderColor: `${accent}20` }}>
+            <Zap size={18} style={{ color: accent }} />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-bold text-primary-dark">Review Delivery</p>
-            <p className="text-[11px] font-medium text-primary truncate mt-0.5">{deliveredReq.title}</p>
+            <p className="text-sm font-bold" style={{ color: accentDark }}>Review Delivery</p>
+            <p className="text-[11px] font-medium truncate mt-0.5" style={{ color: accent }}>{deliveredReq.title}</p>
           </div>
-          <ArrowUpRight size={16} className="text-primary shrink-0 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+          <ArrowUpRight size={16} className="shrink-0 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" style={{ color: accent }} />
         </button>
       )}
 
       <button
         onClick={onNew}
-        className="w-full flex items-center gap-3 rounded-2xl border border-border/60 bg-white px-4 py-4 hover:border-primary/50 hover:shadow-soft transition-all text-left group"
+        onMouseEnter={() => setHoveredNew(true)}
+        onMouseLeave={() => setHoveredNew(false)}
+        className="w-full flex items-center gap-3 rounded-2xl border border-border/60 bg-white px-4 py-4 transition-all text-left group"
+        style={hoveredNew ? { borderColor: `${accent}80`, boxShadow: '0 4px 20px -2px rgba(0,0,0,0.05)' } : {}}
       >
-        <div className="h-10 w-10 rounded-xl bg-surface flex items-center justify-center shrink-0 group-hover:bg-primary-light transition-colors">
-          <Plus size={18} className="text-text-dim group-hover:text-primary" />
+        <div 
+          className="h-10 w-10 rounded-xl flex items-center justify-center shrink-0 transition-colors"
+          style={{ backgroundColor: hoveredNew ? accentSoft : '#F7F8F7' }}
+        >
+          <Plus size={18} className="text-text-dim transition-colors" style={hoveredNew ? { color: accent } : {}} />
         </div>
         <div className="flex-1">
           <p className="text-sm font-semibold text-text-main">New Request</p>
           <p className="text-[11px] font-medium text-text-sub mt-0.5">Describe what you need</p>
         </div>
-        <ArrowUpRight size={16} className="text-text-dim group-hover:text-primary shrink-0 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+        <ArrowUpRight size={16} className="text-text-dim shrink-0 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" style={hoveredNew ? { color: accent } : {}} />
       </button>
     </div>
   )
@@ -380,6 +473,8 @@ function QuickActions({ onNew, needsReview, requests, navigate }) {
 
 // ─── Live update toast ────────────────────────────────────────
 function LiveToast({ message, onDismiss }) {
+  const { colors } = useTenantBranding()
+  const { accent, accentSoft, accentDark } = colors
   useEffect(() => {
     const t = setTimeout(onDismiss, 4000)
     return () => clearTimeout(t)
@@ -387,9 +482,9 @@ function LiveToast({ message, onDismiss }) {
 
   return (
     <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-50 lg:bottom-8 lg:left-auto lg:right-8 lg:translate-x-0 animate-slide-in">
-      <div className="flex items-center gap-3 rounded-2xl border border-grove-200 bg-white shadow-soft px-5 py-3.5">
-        <div className="h-2.5 w-2.5 rounded-full bg-primary animate-pulse shrink-0" />
-        <p className="text-sm font-semibold text-primary-dark">{message}</p>
+      <div className="flex items-center gap-3 rounded-2xl border bg-white shadow-soft px-5 py-3.5" style={{ borderColor: `${accent}33` }}>
+        <div className="h-2.5 w-2.5 rounded-full animate-pulse shrink-0" style={{ backgroundColor: accent }} />
+        <p className="text-sm font-semibold" style={{ color: accentDark }}>{message}</p>
       </div>
     </div>
   )
@@ -399,8 +494,12 @@ function LiveToast({ message, onDismiss }) {
 // ─── Page ─────────────────────────────────────────────────────
 export default function ClientDashboard() {
   const { user, tenant } = useAuth()
+  const { colors } = useTenantBranding()
+  const { accent, accentSoft, accentDark } = colors
   const navigate = useNavigate()
   const { registerPortalListener } = useBadges()
+  const [hoveredFAB, setHoveredFAB] = useState(false)
+  const [hoveredBannerBtn, setHoveredBannerBtn] = useState(false)
 
   const [filter, setFilter] = useState('all')
   const [currentPage, setCurrentPage] = useState(1) // Pagination state
@@ -583,16 +682,26 @@ export default function ClientDashboard() {
 
             {/* Action Banner */}
             {reviewCount > 0 && filter !== 'closed' && filter !== 'delivered' && (
-              <div className="mb-4 flex items-center gap-3 rounded-xl border border-grove-200 bg-primary-light px-5 py-3.5 shadow-sm">
-                <div className="h-2 w-2 rounded-full bg-primary animate-pulse shrink-0" />
-                <p className="text-sm font-semibold text-primary-dark flex-1">
+              <div 
+                className="mb-4 flex items-center gap-3 rounded-xl border px-5 py-3.5 shadow-sm"
+                style={{ borderColor: `${accent}40`, backgroundColor: accentSoft }}
+              >
+                <div className="h-2 w-2 rounded-full animate-pulse shrink-0" style={{ backgroundColor: accent }} />
+                <p className="text-sm font-semibold flex-1" style={{ color: accentDark }}>
                   {reviewCount === 1
                     ? 'You have 1 delivery waiting for your review.'
                     : `You have ${reviewCount} deliveries waiting for your review.`}
                 </p>
                 <button
                   onClick={() => setFilter('delivered')}
-                  className="text-xs font-bold text-primary bg-white border border-grove-100 px-3 py-1.5 rounded-lg hover:bg-surface transition-colors shrink-0 shadow-sm"
+                  onMouseEnter={() => setHoveredBannerBtn(true)}
+                  onMouseLeave={() => setHoveredBannerBtn(false)}
+                  className="text-xs font-bold bg-white border px-3 py-1.5 rounded-lg transition-colors shrink-0 shadow-sm"
+                  style={{ 
+                    color: accent, 
+                    borderColor: `${accent}20`,
+                    backgroundColor: hoveredBannerBtn ? '#FAFBFA' : '#FFFFFF'
+                  }}
                 >
                   View Deliveries
                 </button>
@@ -644,7 +753,10 @@ export default function ClientDashboard() {
       <div className="fixed bottom-[104px] right-4 z-30 lg:hidden">
         <button
           onClick={() => setShowNew(true)}
-          className="h-14 w-14 flex items-center justify-center rounded-full bg-primary text-white shadow-soft hover:bg-primary-dark active:scale-[0.95] transition-all"
+          onMouseEnter={() => setHoveredFAB(true)}
+          onMouseLeave={() => setHoveredFAB(false)}
+          className="h-14 w-14 flex items-center justify-center rounded-full text-white shadow-soft active:scale-[0.95] transition-all"
+          style={{ backgroundColor: hoveredFAB ? accentDark : accent }}
         >
           <Plus size={24} />
         </button>

@@ -9,6 +9,7 @@ import {
   Loader2,
 } from 'lucide-react'
 import requestsApi from '../../api/requests.api'
+import { useTenantBranding } from '../../context/TenantBrandingContext'
 
 // ─── CONFIGURATION CONSTANTS ──────────────────────────────────
 const MAX_FILE_SIZE = 50 * 1024 * 1024 // 50MB
@@ -28,11 +29,39 @@ const ALLOWED_TYPES = [
 
 // ─── BACKDROP ─────────────────────────────────────────────────
 function Backdrop({ children, onClose }) {
+  const { colors } = useTenantBranding()
+  const { accent, accentDark, accentSoft } = colors
   return (
     <div
       className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center sm:p-4 bg-sidebar/40 backdrop-blur-sm transition-opacity"
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
+      <style>{`
+        .new-request-modal-container ::selection {
+          background-color: ${accentSoft} !important;
+          color: ${accentDark} !important;
+        }
+        .drag-drop-zone:hover {
+          border-color: ${accent}80 !important;
+        }
+        .drag-drop-zone:hover .upload-icon-container {
+          background-color: ${accentSoft} !important;
+          color: ${accent} !important;
+        }
+        .file-item-remove:hover {
+          background-color: #FEE2E2 !important;
+          color: #EF4444 !important;
+        }
+        .gradient-btn:hover:not(:disabled) {
+          background: ${accentDark} !important;
+        }
+        .cancel-btn:hover {
+          background-color: #FAFBFA !important;
+        }
+        .input-field:hover:not(:focus) {
+          border-color: rgba(0, 0, 0, 0.15) !important;
+        }
+      `}</style>
       {children}
     </div>
   )
@@ -54,6 +83,8 @@ function Field({ label, optional, hint, children }) {
 
 // ─── MAIN MODAL ───────────────────────────────────────────────
 export default function NewRequestModal({ providerName, onClose, onSuccess }) {
+  const { colors } = useTenantBranding()
+  const { accent, accentDark, accentSoft, bg1 } = colors
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
   const [files, setFiles] = useState([])
@@ -222,7 +253,8 @@ export default function NewRequestModal({ providerName, onClose, onSuccess }) {
 
             <button
               onClick={onClose}
-              className="w-full rounded-xl bg-primary py-4 text-sm font-semibold text-white hover:bg-primary-dark active:scale-[0.98] transition-all shadow-sm"
+              className="gradient-btn w-full rounded-xl py-4 text-sm font-semibold text-white active:scale-[0.98] transition-all shadow-sm"
+              style={{ background: `linear-gradient(135deg, ${accent}, ${accentDark})` }}
             >
               Close
             </button>
@@ -246,8 +278,11 @@ export default function NewRequestModal({ providerName, onClose, onSuccess }) {
           </button>
 
           <div className="flex flex-col items-center text-center">
-            <div className="flex h-16 w-16 items-center justify-center rounded-full border-4 border-primary-light bg-primary/10 mb-6">
-              <CheckCircle2 size={32} className="text-primary" />
+            <div
+              className="flex h-16 w-16 items-center justify-center rounded-full mb-6"
+              style={{ background: accentSoft, border: `4px solid ${accent}40` }}
+            >
+              <CheckCircle2 size={32} style={{ color: accent }} />
             </div>
             <h2 className="text-2xl font-bold text-text-main tracking-tight">
               Request Sent!
@@ -259,11 +294,9 @@ export default function NewRequestModal({ providerName, onClose, onSuccess }) {
             <div className="my-8 h-px w-full bg-border/50" />
 
             <button
-              onClick={() => {
-                onSuccess?.(created)
-                onClose()
-              }}
-              className="w-full rounded-xl bg-primary py-4 text-sm font-semibold text-white hover:bg-primary-dark active:scale-[0.98] transition-all shadow-sm"
+              onClick={() => { onSuccess?.(created); onClose() }}
+              className="gradient-btn w-full rounded-xl py-4 text-sm font-semibold text-white active:scale-[0.98] transition-all shadow-sm"
+              style={{ background: `linear-gradient(135deg, ${accent}, ${accentDark})` }}
             >
               View My Request
             </button>
@@ -276,7 +309,7 @@ export default function NewRequestModal({ providerName, onClose, onSuccess }) {
   // ── FORM SCREEN ───────────────────────────────────────────
   return (
     <Backdrop onClose={onClose}>
-      <div className="flex flex-col sm:flex-row w-full h-[100dvh] sm:h-auto sm:max-h-[85vh] sm:max-w-4xl bg-white sm:rounded-3xl shadow-2xl overflow-hidden animate-in slide-in-from-bottom-full sm:slide-in-from-bottom-8 duration-300">        
+      <div className="new-request-modal-container flex flex-col sm:flex-row w-full h-[100dvh] sm:h-auto sm:max-h-[85vh] sm:max-w-4xl bg-white sm:rounded-3xl shadow-2xl overflow-hidden animate-in slide-in-from-bottom-full sm:slide-in-from-bottom-8 duration-300">        
         
         {/* MOBILE HEADER (Only visible on small screens) */}
         <div className="sm:hidden shrink-0 flex items-center justify-between px-5 py-4 border-b border-border/50 bg-white/95 backdrop-blur-md sticky top-0 z-20">
@@ -291,11 +324,17 @@ export default function NewRequestModal({ providerName, onClose, onSuccess }) {
 
         {/* LEFT PANEL (Desktop Only) */}
         <div className="hidden sm:flex w-[320px] shrink-0 flex-col relative overflow-hidden bg-surface p-8 border-r border-border/50">          
-          <div className="absolute -top-24 -left-24 w-64 h-64 bg-primary/10 rounded-full blur-3xl" />
+          <div
+            className="absolute -top-24 -left-24 w-64 h-64 rounded-full blur-3xl"
+            style={{ background: accentSoft }}
+          />
 
           <div className="relative z-10 flex h-full flex-col">
-            <div className="mb-4 inline-flex items-center gap-2 rounded-md border border-border/60 bg-white px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-primary shadow-sm">
-              <div className="h-1.5 w-1.5 rounded-full bg-primary" />
+            <div
+              className="mb-4 inline-flex items-center gap-2 rounded-md border border-border/60 bg-white px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider shadow-sm"
+              style={{ color: accent }}
+            >
+              <div className="h-1.5 w-1.5 rounded-full" style={{ background: accent }} />
               New Submission
             </div>
 
@@ -313,7 +352,7 @@ export default function NewRequestModal({ providerName, onClose, onSuccess }) {
                 <p className="text-[10px] uppercase font-bold tracking-wider text-text-dim">
                   Routing To
                 </p>
-                <p className="mt-1 break-all text-sm font-semibold text-primary">
+                <p className="mt-1 break-all text-sm font-semibold" style={{ color: accent }}>
                   {providerName} Workspace
                 </p>
               </div>
@@ -372,11 +411,23 @@ export default function NewRequestModal({ providerName, onClose, onSuccess }) {
                     }))
                   }}
                   placeholder="e.g. I need a new homepage banner"
-                  className={`h-12 w-full rounded-xl border bg-surface/30 px-4 text-sm outline-none transition-all shadow-sm ${
+                  className={`input-field h-12 w-full rounded-xl border bg-surface/30 px-4 text-sm outline-none transition-all shadow-sm ${
                     errors.title
-                      ? 'border-red-300 focus:border-red-400 focus:ring-4 focus:ring-red-100 bg-red-50/30'
-                      : 'border-border/60 focus:border-primary focus:bg-white focus:ring-4 focus:ring-primary/10'
+                      ? 'border-red-300 bg-red-50/30'
+                      : 'border-border/60'
                   }`}
+                  onFocus={e => {
+                    if (!errors.title) {
+                      e.target.style.borderColor = accent
+                      e.target.style.boxShadow = `0 0 0 4px ${accentSoft}`
+                      e.target.style.background = '#fff'
+                    }
+                  }}
+                  onBlur={e => {
+                    e.target.style.borderColor = ''
+                    e.target.style.boxShadow = ''
+                    e.target.style.background = ''
+                  }}
                 />
                 {errors.title && (
                   <div className="flex items-center gap-1.5 mt-2 text-xs font-medium text-red-500">
@@ -399,11 +450,23 @@ export default function NewRequestModal({ providerName, onClose, onSuccess }) {
                   }}
                   rows={6}
                   placeholder="Add parameters, criteria, references, links, or goals..."
-                  className={`w-full resize-none rounded-xl border bg-surface/30 px-4 py-3 text-sm outline-none transition-all shadow-sm placeholder:text-text-dim ${
+                  className={`input-field w-full resize-none rounded-xl border bg-surface/30 px-4 py-3 text-sm outline-none transition-all shadow-sm placeholder:text-text-dim ${
                     errors.description
-                      ? 'border-red-300 focus:border-red-400 focus:ring-4 focus:ring-red-100 bg-red-50/30'
-                      : 'border-border/60 focus:border-primary focus:bg-white focus:ring-4 focus:ring-primary/10'
+                      ? 'border-red-300 bg-red-50/30'
+                      : 'border-border/60'
                   }`}
+                  onFocus={e => {
+                    if (!errors.description) {
+                      e.target.style.borderColor = accent
+                      e.target.style.boxShadow = `0 0 0 4px ${accentSoft}`
+                      e.target.style.background = '#fff'
+                    }
+                  }}
+                  onBlur={e => {
+                    e.target.style.borderColor = ''
+                    e.target.style.boxShadow = ''
+                    e.target.style.background = ''
+                  }}
                 />
                 {errors.description && (
                   <div className="flex items-center gap-1.5 mt-2 text-xs font-medium text-red-500">
@@ -427,18 +490,18 @@ export default function NewRequestModal({ providerName, onClose, onSuccess }) {
                     handleFiles(e.dataTransfer.files)
                   }}
                   onClick={() => fileInput.current?.click()}
-                  className={`rounded-2xl border-2 border-dashed p-8 text-center cursor-pointer transition-all duration-200 ${
-                    dragOver
-                      ? 'border-primary bg-primary-light/50 scale-[0.99]'
-                      : 'border-border/60 bg-surface/50 hover:bg-surface hover:border-border'
-                  }`}
+                  className="drag-drop-zone rounded-2xl border-2 border-dashed p-8 text-center cursor-pointer transition-all duration-200"
+                  style={dragOver ? { borderColor: accent, background: accentSoft, transform: 'scale(0.99)' } : { borderColor: 'rgba(0,0,0,0.1)', background: 'rgba(0,0,0,0.02)' }}
                 >
                   <div className="flex flex-col items-center gap-3">
-                    <div className={`h-12 w-12 rounded-full flex items-center justify-center transition-colors ${dragOver ? 'bg-primary text-white' : 'bg-white border border-border/60 text-text-dim shadow-sm'}`}>
+                    <div
+                      className="upload-icon-container h-12 w-12 rounded-full flex items-center justify-center transition-colors"
+                      style={dragOver ? { background: accent, color: '#fff' } : { background: 'rgba(0,0,0,0.05)' }}
+                    >
                       <Upload size={20} />
                     </div>
                     <p className="text-sm font-semibold text-text-main">
-                      Drag files here or <span className="text-primary hover:underline">browse</span>
+                      Drag files here or <span className="hover:underline" style={{ color: accent }}>browse</span>
                     </p>
                   </div>
                   <input
@@ -483,7 +546,7 @@ export default function NewRequestModal({ providerName, onClose, onSuccess }) {
                             e.stopPropagation()
                             removeFile(index)
                           }}
-                          className="h-8 w-8 rounded-full flex items-center justify-center text-text-dim hover:bg-surface hover:text-red-500 transition-colors"
+                          className="file-item-remove h-8 w-8 rounded-full flex items-center justify-center text-text-dim transition-colors"
                         >
                           <X size={16} />
                         </button>
@@ -508,7 +571,7 @@ export default function NewRequestModal({ providerName, onClose, onSuccess }) {
             <button
               type="button"
               onClick={onClose}
-              className="h-12 rounded-xl px-6 text-sm font-semibold text-text-sub hover:bg-surface transition-colors"
+              className="cancel-btn h-12 rounded-xl px-6 text-sm font-semibold text-text-sub transition-colors"
             >
               Cancel
             </button>
@@ -516,7 +579,8 @@ export default function NewRequestModal({ providerName, onClose, onSuccess }) {
             <button
               onClick={handleSubmit}
               disabled={submitting || !title.trim() || !description.trim() || !!errors.title || !!errors.description || !!errors.files}
-              className="flex h-12 w-full sm:w-auto items-center justify-center gap-2 rounded-xl bg-primary px-8 text-sm font-bold text-white transition-all hover:bg-primary-dark active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 shadow-sm"
+              className="gradient-btn flex h-12 w-full sm:w-auto items-center justify-center gap-2 rounded-xl px-8 text-sm font-bold text-white transition-all active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 shadow-sm"
+              style={{ background: `linear-gradient(135deg, ${accent}, ${accentDark})` }}
             >
               {submitting ? (
                 <Loader2 size={18} className="animate-spin" />

@@ -10,13 +10,14 @@ import {
 } from 'lucide-react'
 
 import { deleteAccount } from '../../api/settings.api'
+import { useTenantBranding } from '../../context/TenantBrandingContext'
 
 // Nav 
 
 const NAV = [
-  { id: 'profile',       label: 'Profile',       icon: User  },
-  { id: 'notifications', label: 'Notifications', icon: Bell  },
-  { id: 'danger-zone',   label: 'Danger zone',   icon: Trash2, danger: true },
+  { id: 'profile', label: 'Profile', icon: User },
+  { id: 'notifications', label: 'Notifications', icon: Bell },
+  { id: 'danger-zone', label: 'Danger zone', icon: Trash2, danger: true },
 ]
 
 // Primitives 
@@ -26,6 +27,8 @@ function Spinner({ size = 14 }) {
 }
 
 function Toggle({ checked, onChange, disabled }) {
+  const { colors } = useTenantBranding()
+  const { accent, accentSoft } = colors
   return (
     <button
       type="button"
@@ -33,9 +36,18 @@ function Toggle({ checked, onChange, disabled }) {
       aria-checked={checked}
       disabled={disabled}
       onClick={() => !disabled && onChange(!checked)}
-      className={`relative inline-flex h-[22px] w-10 flex-shrink-0 items-center rounded-full transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${
-        checked ? 'bg-primary' : 'bg-[#D1D5D1]'
-      } ${disabled ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'}`}
+      className={`relative inline-flex h-[22px] w-10 flex-shrink-0 items-center rounded-full transition-all duration-200 focus:outline-none ${
+        disabled ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'
+      }`}
+      style={{
+        backgroundColor: checked ? accent : '#D1D5D1',
+      }}
+      onFocus={e => {
+        e.target.style.boxShadow = `0 0 0 2px ${accentSoft}`
+      }}
+      onBlur={e => {
+        e.target.style.boxShadow = ''
+      }}
     >
       <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform duration-200 ${checked ? 'translate-x-5' : 'translate-x-0.5'}`} />
     </button>
@@ -43,6 +55,8 @@ function Toggle({ checked, onChange, disabled }) {
 }
 
 function Input({ value, onChange, placeholder, maxLength, readOnly, className = '' }) {
+  const { colors } = useTenantBranding()
+  const { accent, accentSoft } = colors
   return (
     <input
       type="text"
@@ -51,17 +65,30 @@ function Input({ value, onChange, placeholder, maxLength, readOnly, className = 
       placeholder={placeholder}
       maxLength={maxLength}
       readOnly={readOnly}
-      className={`w-full h-9 px-3 rounded-lg border text-[13px] transition-all focus:outline-none ${
-        readOnly
+      className={`w-full h-9 px-3 rounded-lg border text-[13px] transition-all focus:outline-none ${readOnly
           ? 'border-[#E8EAE8] bg-[#F7F8F7] text-[#9EA89E] cursor-not-allowed'
-          : 'border-border bg-white text-text-main placeholder:text-text-dim focus:border-primary focus:ring-2 focus:ring-primary/10'
-      } ${className}`}
+          : 'border-[#E0E4E0] bg-white text-[#141A14] placeholder:text-[#C5CAC5]'
+        } ${className}`}
+      onFocus={e => {
+        if (!readOnly) {
+          e.target.style.borderColor = accent
+          e.target.style.boxShadow = `0 0 0 2px ${accentSoft}`
+        }
+      }}
+      onBlur={e => {
+        if (!readOnly) {
+          e.target.style.borderColor = ''
+          e.target.style.boxShadow = ''
+        }
+      }}
     />
   )
 }
 
 function PasswordInput({ label, value, onChange, placeholder }) {
   const [show, setShow] = useState(false)
+  const { colors } = useTenantBranding()
+  const { accent, accentSoft } = colors
   return (
     <div>
       <label className="block text-[11px] font-medium text-[#6B756B] uppercase tracking-wide mb-1.5">{label}</label>
@@ -71,9 +98,17 @@ function PasswordInput({ label, value, onChange, placeholder }) {
           value={value}
           onChange={(e) => onChange(e.target.value)}
           placeholder={placeholder}
-          className="w-full h-9 px-3 pr-9 rounded-lg border border-border bg-white text-[13px] text-text-main placeholder:text-text-dim focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 transition-all"
+          className="w-full h-9 px-3 pr-9 rounded-lg border border-[#E0E4E0] bg-white text-[13px] text-[#141A14] placeholder:text-[#C5CAC5] focus:outline-none transition-all"
+          onFocus={e => {
+            e.target.style.borderColor = accent
+            e.target.style.boxShadow = `0 0 0 2px ${accentSoft}`
+          }}
+          onBlur={e => {
+            e.target.style.borderColor = ''
+            e.target.style.boxShadow = ''
+          }}
         />
-        <button type="button" onClick={() => setShow(!show)} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-text-dim hover:text-text-sub transition-colors">
+        <button type="button" onClick={() => setShow(!show)} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#9EA89E] hover:text-[#4A544A] transition-colors">
           {show ? <EyeOff size={14} /> : <Eye size={14} />}
         </button>
       </div>
@@ -96,11 +131,18 @@ function FormRow({ label, hint, children }) {
 }
 
 function Toast({ type, message }) {
+  const { colors } = useTenantBranding()
+  const { accent, accentSoft, accentDark } = colors
   if (!message) return null
   return (
-    <div className={`inline-flex items-center gap-1.5 text-[12px] px-2.5 py-1.5 rounded-lg border ${
-      type === 'success' ? 'bg-primary-light border-primary/30 text-primary-dark' : 'bg-red-50 border-red-200 text-red-700'
-    }`}>
+    <div
+      className="inline-flex items-center gap-1.5 text-[12px] px-2.5 py-1.5 rounded-lg border"
+      style={
+        type === 'success'
+          ? { backgroundColor: accentSoft, borderColor: `${accent}40`, color: accentDark }
+          : { backgroundColor: '#fef2f2', borderColor: '#fecaca', color: '#b91c1c' }
+      }
+    >
       {type === 'success' ? <Check size={12} /> : <X size={12} />}
       {message}
     </div>
@@ -108,18 +150,38 @@ function Toast({ type, message }) {
 }
 
 function Btn({ children, onClick, loading, variant = 'primary', size = 'md', disabled, className = '' }) {
+  const { colors } = useTenantBranding()
+  const { accent, accentDark } = colors
   const sizes = { sm: 'px-3 py-1.5 text-[12px]', md: 'px-3.5 py-2 text-[13px]' }
-  const variants = {
-    primary: 'bg-primary text-white hover:bg-primary-dark shadow-sm',
-    ghost: 'bg-transparent text-text-sub hover:bg-surface border border-border',
-    'danger-ghost': 'bg-transparent text-red-600 border border-red-200 hover:bg-red-50',
-  }
+
+  const isDanger = className.includes('bg-red') || className.includes('text-red')
+  const style = variant === 'primary' && !disabled && !loading && !isDanger
+    ? { backgroundColor: accent }
+    : {}
+
   return (
     <button
       type="button"
       onClick={onClick}
       disabled={loading || disabled}
-      className={`inline-flex items-center justify-center gap-1.5 rounded-lg font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed ${sizes[size]} ${variants[variant]} ${className}`}
+      className={`inline-flex items-center justify-center gap-1.5 rounded-lg font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed ${sizes[size]} ${
+        variant === 'primary'
+          ? 'text-white shadow-sm'
+          : variant === 'ghost'
+            ? 'bg-transparent text-[#4A544A] hover:bg-[#F2F4F2] border border-[#E0E4E0]'
+            : 'bg-transparent text-red-600 border border-red-200 hover:bg-red-50'
+      } ${className}`}
+      style={style}
+      onMouseEnter={e => {
+        if (variant === 'primary' && !disabled && !loading && !isDanger) {
+          e.target.style.backgroundColor = accentDark
+        }
+      }}
+      onMouseLeave={e => {
+        if (variant === 'primary' && !disabled && !loading && !isDanger) {
+          e.target.style.backgroundColor = accent
+        }
+      }}
     >
       {loading ? <Spinner size={13} /> : children}
     </button>
@@ -180,14 +242,16 @@ function passwordStrength(pw) {
   if (/[A-Z]/.test(pw)) s++
   if (/[0-9]/.test(pw)) s++
   if (/[^a-zA-Z0-9]/.test(pw)) s++
-  if (s <= 1) return { score: s, label: 'Weak', color: 'bg-red-400' }
-  if (s <= 3) return { score: s, label: 'Fair', color: 'bg-amber-400' }
-  return { score: s, label: 'Strong', color: 'bg-primary' }
+  if (s <= 1) return { score: s, label: 'Weak', color: '#f87171' }
+  if (s <= 3) return { score: s, label: 'Fair', color: '#fbbf24' }
+  return { score: s, label: 'Strong', color: 'BRAND_ACCENT' }
 }
 
 //  Sections 
 
 function ProfileSection({ user, tenant }) {
+  const { colors } = useTenantBranding()
+  const { accent, accentSoft, accentDark } = colors
   const [displayName, setDisplayName] = useState('')
   const [avatarPreview, setAvatarPreview] = useState(null)
   const [profileLoading, setProfileLoading] = useState(false)
@@ -197,6 +261,7 @@ function ProfileSection({ user, tenant }) {
   const [confirmPw, setConfirmPw] = useState('')
   const [pwLoading, setPwLoading] = useState(false)
   const [pwStatus, setPwStatus] = useState(null)
+  const [hoveredAvatar, setHoveredAvatar] = useState(false)
   const avatarRef = useRef()
 
   useEffect(() => {
@@ -246,11 +311,16 @@ function ProfileSection({ user, tenant }) {
           <button
             type="button"
             onClick={() => avatarRef.current?.click()}
-            className="w-14 h-14 rounded-full border-2 border-dashed border-primary/30 overflow-hidden flex items-center justify-center bg-surface group-hover:border-primary transition-colors"
+            className="w-14 h-14 rounded-full border-2 border-dashed overflow-hidden flex items-center justify-center bg-[#F2F4F2] transition-colors"
+            style={{
+              borderColor: hoveredAvatar ? accent : `${accent}40`,
+            }}
+            onMouseEnter={() => setHoveredAvatar(true)}
+            onMouseLeave={() => setHoveredAvatar(false)}
           >
             {avatarPreview
               ? <img src={avatarPreview} alt="avatar" className="w-full h-full object-cover" />
-              : <span className="text-base font-semibold text-primary">{initials}</span>
+              : <span className="text-base font-semibold" style={{ color: accent }}>{initials}</span>
             }
             <div className="absolute inset-0 rounded-full bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
               <Camera size={16} className="text-white" />
@@ -274,7 +344,7 @@ function ProfileSection({ user, tenant }) {
         <FormRow label="Email address">
           <Input value={user?.email || ''} readOnly />
           {/* <p className="text-[11px] text-[#9EA89E] mt-1.5">
-            Contact <span className="text-primary font-medium">{tenant?.name || 'your provider'}</span> to change your email.
+            Contact <span className="font-medium" style={{ color: accent }}>{tenant?.name || 'your provider'}</span> to change your email.
           </p> */}
         </FormRow>
       </div>
@@ -291,7 +361,7 @@ function ProfileSection({ user, tenant }) {
             <p className="text-[13px] font-semibold text-[#141A14]">Change password</p>
             <p className="text-[11px] text-[#9EA89E] mt-0.5">Use a strong, unique password.</p>
           </div>
-          <a href="/forgot-password" className="text-[12px] text-primary hover:underline">Forgot password?</a>
+          <a href="/forgot-password" className="text-[12px] hover:underline" style={{ color: accent }}>Forgot password?</a>
         </div>
 
         <div className="space-y-3.5">
@@ -302,16 +372,22 @@ function ProfileSection({ user, tenant }) {
               {newPw && (
                 <div className="mt-2">
                   <div className="h-1 rounded-full bg-[#EEF0EE] overflow-hidden">
-                    <div className={`h-full rounded-full transition-all ${strength.color}`} style={{ width: `${(strength.score / 5) * 100}%` }} />
+                    <div
+                      className="h-full rounded-full transition-all"
+                      style={{
+                        width: `${(strength.score / 5) * 100}%`,
+                        backgroundColor: strength.color === 'BRAND_ACCENT' ? accent : strength.color
+                      }}
+                    />
                   </div>
-                  <p className={`text-[11px] mt-1 font-medium ${strength.score >= 4 ? 'text-primary' : 'text-text-dim'}`}>{strength.label}</p>
+                  <p className="text-[11px] mt-1 font-medium" style={{ color: strength.score >= 4 ? accent : '#9EA89E' }}>{strength.label}</p>
                 </div>
               )}
             </div>
             <div>
               <PasswordInput label="Confirm new password" value={confirmPw} onChange={setConfirmPw} placeholder="••••••••" />
               {confirmPw && (
-                <p className={`text-[11px] mt-1.5 font-medium ${passwordsMatch ? 'text-primary' : 'text-red-500'}`}>
+                <p className="text-[11px] mt-1.5 font-medium" style={{ color: passwordsMatch ? accent : '#ef4444' }}>
                   {passwordsMatch ? '✓ Match' : '✗ No match'}
                 </p>
               )}
@@ -350,7 +426,7 @@ function NotificationsSection({ tenant }) {
 
   const notifItems = [
     { key: 'status_change', label: 'Request status changes', desc: `Get notified when ${providerName} updates your request stage.` },
-    { key: 'new_message',   label: `New message from ${providerName}`, desc: `Get notified when ${providerName} sends a message on your request.` },
+    { key: 'new_message', label: `New message from ${providerName}`, desc: `Get notified when ${providerName} sends a message on your request.` },
     { key: 'files_delivered', label: 'Files delivered', desc: `Get notified when ${providerName} delivers files or a link.` },
   ]
 
@@ -477,6 +553,8 @@ function DangerZoneSection({ tenant }) {
 
 function ClientSettingsModalInner({ onClose }) {
   const { user, tenant } = useAuth()
+  const { colors } = useTenantBranding()
+  const { accent, accentSoft } = colors
   const [activeSection, setActiveSection] = useState('profile')
   const contentRef = useRef(null)
 
@@ -490,9 +568,9 @@ function ClientSettingsModalInner({ onClose }) {
   }, [])
 
   const SECTIONS = {
-    'profile':       <ProfileSection user={user} tenant={tenant} />,
+    'profile': <ProfileSection user={user} tenant={tenant} />,
     'notifications': <NotificationsSection tenant={tenant} />,
-    'danger-zone':   <DangerZoneSection tenant={tenant} />,
+    'danger-zone': <DangerZoneSection tenant={tenant} />,
   }
 
   return (
@@ -523,11 +601,16 @@ function ClientSettingsModalInner({ onClose }) {
                   activeSection === id
                     ? id === 'danger-zone'
                       ? 'bg-red-50 text-red-600 font-medium'
-                      : 'bg-primary-light text-primary font-medium'
+                      : 'font-medium'
                     : id === 'danger-zone'
                       ? 'text-red-500 hover:bg-red-50/60'
                       : 'text-[#4A544A] hover:bg-[#F2F4F2] hover:text-[#141A14]'
                 }`}
+                style={
+                  activeSection === id && id !== 'danger-zone'
+                    ? { backgroundColor: accentSoft, color: accent }
+                    : {}
+                }
               >
                 <Icon size={14} className="flex-shrink-0" />
                 {label}
@@ -562,11 +645,16 @@ function ClientSettingsModalInner({ onClose }) {
                   activeSection === id
                     ? id === 'danger-zone'
                       ? 'bg-red-50 text-red-600 font-semibold'
-                      : 'bg-primary-light text-primary font-semibold'
+                      : 'font-semibold'
                     : id === 'danger-zone'
                       ? 'text-red-500 hover:bg-red-50/60'
                       : 'text-[#4A544A] hover:bg-[#F2F4F2] hover:text-[#141A14]'
                 }`}
+                style={
+                  activeSection === id && id !== 'danger-zone'
+                    ? { backgroundColor: accentSoft, color: accent }
+                    : {}
+                }
               >
                 <Icon size={13} className="flex-shrink-0" />
                 <span>{label}</span>

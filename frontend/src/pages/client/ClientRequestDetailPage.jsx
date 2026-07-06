@@ -27,6 +27,7 @@ import {
 import ClientLayout from '../../components/layout/ClientLayout'
 import requestsApi from '../../api/requests.api'
 import { timeAgo, formatDate } from '../../utils/clientHelpers'
+import { useTenantBranding } from '../../context/TenantBrandingContext'
 
 import { useWebRTC } from '../../hooks/useWebRTC'
 import VideoCall from '../../components/chat/VideoCall'
@@ -69,8 +70,13 @@ function getDueDateText(date) {
 // ─── Delivery Review Modal ────────────────────────────────────────────────────
 
 function DeliveryReviewModal({ delivery, onClose, onSubmit, loading }) {
+  const { colors } = useTenantBranding()
+  const { accent, accentSoft, accentDark } = colors
   const [step, setStep] = useState('choice') 
   const [reworkMessage, setReworkMessage] = useState('')
+  const [hoveredApprove, setHoveredApprove] = useState(false)
+  const [hoveredSubmit, setHoveredSubmit] = useState(false)
+  const [focusedTextarea, setFocusedTextarea] = useState(false)
 
   return (
     <div className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center px-0 sm:px-4">
@@ -123,20 +129,29 @@ function DeliveryReviewModal({ delivery, onClose, onSubmit, loading }) {
               <button
                 onClick={() => onSubmit(delivery.id, 'approve', '')}
                 disabled={loading}
-                className="w-full flex items-center gap-4 rounded-xl border border-grove-200 bg-primary-light/50 p-4 text-left hover:bg-primary-light transition-colors disabled:opacity-50 group shadow-sm"
+                onMouseEnter={() => setHoveredApprove(true)}
+                onMouseLeave={() => setHoveredApprove(false)}
+                className="w-full flex items-center gap-4 rounded-xl border p-4 text-left transition-colors disabled:opacity-50 group shadow-sm"
+                style={{
+                  borderColor: `${accent}40`,
+                  backgroundColor: hoveredApprove ? `${accent}20` : `${accent}12`
+                }}
               >
-                <div className="h-10 w-10 rounded-xl bg-white flex items-center justify-center shrink-0 border border-grove-100 shadow-sm">
+                <div 
+                  className="h-10 w-10 rounded-xl bg-white flex items-center justify-center shrink-0 border shadow-sm"
+                  style={{ borderColor: `${accent}20` }}
+                >
                   {loading ? (
-                    <Loader2 size={18} className="animate-spin text-primary" />
+                    <Loader2 size={18} className="animate-spin" style={{ color: accent }} />
                   ) : (
-                    <CheckCircle2 size={18} className="text-primary" />
+                    <CheckCircle2 size={18} style={{ color: accent }} />
                   )}
                 </div>
                 <div>
-                  <p className="text-sm font-semibold text-primary-dark">
+                  <p className="text-sm font-semibold" style={{ color: accentDark }}>
                     Approve & Close
                   </p>
-                  <p className="text-xs text-primary mt-0.5 font-medium">
+                  <p className="text-xs mt-0.5 font-medium" style={{ color: accent }}>
                     Marks this request as completed
                   </p>
                 </div>
@@ -175,7 +190,14 @@ function DeliveryReviewModal({ delivery, onClose, onSubmit, loading }) {
                 placeholder="e.g. The logo needs to be centered and the font size increased on mobile..."
                 rows={4}
                 autoFocus
-                className="w-full rounded-xl border border-border/60 bg-surface/50 px-4 py-3 text-sm text-text-main placeholder:text-text-dim resize-none focus:outline-none focus:border-primary focus:bg-white focus:ring-1 focus:ring-primary/20 transition-all shadow-sm"
+                className="w-full rounded-xl border bg-surface/50 px-4 py-3 text-sm text-text-main placeholder:text-text-dim resize-none transition-all shadow-sm"
+                style={{
+                  borderColor: focusedTextarea ? accent : 'rgba(0,0,0,0.06)',
+                  boxShadow: focusedTextarea ? `0 0 0 2px ${accentSoft}` : '',
+                  backgroundColor: focusedTextarea ? '#ffffff' : ''
+                }}
+                onFocus={() => setFocusedTextarea(true)}
+                onBlur={() => setFocusedTextarea(false)}
               />
 
               <div className="flex gap-3 pt-2">
@@ -191,7 +213,10 @@ function DeliveryReviewModal({ delivery, onClose, onSubmit, loading }) {
                 <button
                   onClick={() => onSubmit(delivery.id, 'rework', reworkMessage)}
                   disabled={loading}
-                  className="flex-1 h-10 rounded-xl bg-primary text-white text-sm font-semibold flex items-center justify-center gap-2 disabled:opacity-50 hover:bg-primary-dark transition-all shadow-sm active:scale-[0.98]"
+                  onMouseEnter={() => setHoveredSubmit(true)}
+                  onMouseLeave={() => setHoveredSubmit(false)}
+                  className="flex-1 h-10 rounded-xl text-white text-sm font-semibold flex items-center justify-center gap-2 disabled:opacity-50 transition-all shadow-sm active:scale-[0.98]"
+                  style={{ backgroundColor: hoveredSubmit ? accentDark : accent }}
                 >
                   {loading
                     ? <Loader2 size={16} className="animate-spin" />
@@ -215,6 +240,8 @@ function DeliveryReviewModal({ delivery, onClose, onSubmit, loading }) {
 // ─── Main page ────────────────────────────────────────────────────────────────
 
 export default function ClientRequestDetailPage() {
+  const { colors } = useTenantBranding()
+  const { accent, accentSoft, accentDark } = colors
   const { requestId } = useParams()
   const navigate = useNavigate()
 
@@ -237,6 +264,17 @@ export default function ClientRequestDetailPage() {
   const [editDesc, setEditDesc]     = useState('')
   const [editLoading, setEditLoading] = useState(false)
   const [editError, setEditError]   = useState(null)
+
+  const [hoveredBackToReqs, setHoveredBackToReqs] = useState(false)
+  const [hoveredEditBtn, setHoveredEditBtn] = useState(false)
+  const [hoveredCancelBtn, setHoveredCancelBtn] = useState(false)
+  const [hoveredSaveBtn, setHoveredSaveBtn] = useState(false)
+  const [focusedEditTitle, setFocusedEditTitle] = useState(false)
+  const [focusedEditDesc, setFocusedEditDesc] = useState(false)
+  const [hoveredReviewBtn, setHoveredReviewBtn] = useState(false)
+  const [hoveredChatFAB, setHoveredChatFAB] = useState(false)
+  const [hoveredVideoBtn, setHoveredVideoBtn] = useState(false)
+  const [hoveredMobileVideoBtn, setHoveredMobileVideoBtn] = useState(false)
 
   const { width: sidebarWidth, onMouseDown: startSidebarResize } = usePanelResize({
     storageKey: 'client-request-sidebar-width',
@@ -350,7 +388,7 @@ export default function ClientRequestDetailPage() {
     return (
       <ClientLayout fullBleed>
         <div className="h-[calc(100vh-64px)] flex items-center justify-center">
-          <Loader2 size={24} className="animate-spin text-primary" />
+          <Loader2 size={24} className="animate-spin" style={{ color: accent }} />
         </div>
       </ClientLayout>
     )
@@ -369,7 +407,10 @@ export default function ClientRequestDetailPage() {
           </p>
           <button
             onClick={() => navigate('/my-requests')}
-            className="mt-6 h-10 px-5 rounded-xl border border-border/60 bg-white text-sm font-semibold text-text-main shadow-sm hover:bg-surface transition-colors"
+            onMouseEnter={() => setHoveredBackToReqs(true)}
+            onMouseLeave={() => setHoveredBackToReqs(false)}
+            className="mt-6 h-10 px-5 rounded-xl border border-border/60 bg-white text-sm font-semibold text-text-main shadow-sm transition-colors"
+            style={{ backgroundColor: hoveredBackToReqs ? '#FAFBFA' : '#FFFFFF' }}
           >
             Back to Requests
           </button>
@@ -392,6 +433,47 @@ export default function ClientRequestDetailPage() {
       <style>{`
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        
+        .attachment-card:hover {
+          border-color: ${accent}80 !important;
+        }
+        .attachment-card:hover .attachment-icon-bg {
+          background-color: ${accentSoft} !important;
+        }
+        .attachment-card:hover .attachment-icon {
+          color: ${accent} !important;
+        }
+        .attachment-card:hover .attachment-title {
+          color: ${accent} !important;
+        }
+        .attachment-download:hover {
+          background-color: ${accentSoft} !important;
+          color: ${accent} !important;
+        }
+        
+        .resize-handle:hover {
+          background-color: ${accent}0d !important;
+        }
+        .resize-handle:hover .resize-line {
+          background-color: ${accent}33 !important;
+        }
+        .resize-handle:hover .resize-dot {
+          background-color: ${accent}66 !important;
+        }
+        
+        .review-btn {
+          border-color: ${accent} !important;
+          color: ${accent} !important;
+        }
+        .review-btn:hover {
+          background-color: ${accent} !important;
+          color: #ffffff !important;
+        }
+        
+        .chat-btn-icon:hover {
+          color: ${accent} !important;
+          background-color: ${accentSoft} !important;
+        }
       `}</style>
 
       {/* Spacer to prevent overlap from mobile top-bar in the layout */}
@@ -442,9 +524,14 @@ export default function ClientRequestDetailPage() {
             >
               Deliveries
               {deliveries.length > 0 && (
-                <span className={`px-1.5 py-0.5 rounded-md text-[9px] ${
-                  mobileView === 'deliveries' ? 'bg-primary-light text-primary-dark' : 'bg-surface border border-border/60 text-text-sub'
-                }`}>
+                <span 
+                  className="px-1.5 py-0.5 rounded-md text-[9px] border"
+                  style={
+                    mobileView === 'deliveries'
+                      ? { backgroundColor: accentSoft, color: accentDark, borderColor: `${accent}20` }
+                      : { backgroundColor: '#F7F8F7', color: '#9EA89E', borderColor: 'rgba(0,0,0,0.06)' }
+                  }
+                >
                   {deliveries.length}
                 </span>
               )}
@@ -466,7 +553,7 @@ export default function ClientRequestDetailPage() {
               <div>
                 <div className="flex items-center justify-between mb-4">
                   <h2 className="text-sm font-semibold text-text-main">Progress</h2>
-                  <span className="text-xs font-semibold text-primary">{cfg.label}</span>
+                  <span className="text-xs font-semibold" style={{ color: accent }}>{cfg.label}</span>
                 </div>
 
                 <div className="space-y-0">
@@ -476,19 +563,29 @@ export default function ClientRequestDetailPage() {
                     return (
                       <div key={step} className="flex gap-4">
                         <div className="flex flex-col items-center">
-                          <div className={`h-5 w-5 rounded-full border-2 flex items-center justify-center transition-colors
-                            ${isCurrent || isDone ? 'bg-primary border-primary' : 'bg-surface border-border/60'}`}
+                          <div 
+                            className="h-5 w-5 rounded-full border flex items-center justify-center transition-colors"
+                            style={{
+                              backgroundColor: isCurrent || isDone ? accent : '#F7F8F7',
+                              borderColor: isCurrent || isDone ? accent : 'rgba(0,0,0,0.06)'
+                            }}
                           >
                             {isDone    && <CheckCircle2 size={12} className="text-white" />}
                             {isCurrent && <div className="h-2 w-2 rounded-full bg-white shadow-sm" />}
                           </div>
                           {index < STATUS_STEPS.length - 1 && (
-                            <div className={`w-0.5 h-8 my-1 rounded-full ${isDone ? 'bg-primary/30' : 'bg-border/50'}`} />
+                            <div 
+                              className="w-0.5 h-8 my-1 rounded-full" 
+                              style={{ backgroundColor: isDone ? `${accent}4d` : 'rgba(0,0,0,0.06)' }}
+                            />
                           )}
                         </div>
                         <div className="pb-4 pt-0.5">
-                          <p className={`text-sm font-semibold
-                            ${isCurrent ? 'text-primary' : isDone ? 'text-text-main' : 'text-text-dim'}`}
+                          <p 
+                            className="text-sm font-semibold transition-colors"
+                            style={{
+                              color: isCurrent ? accent : isDone ? '#1C201C' : '#9EA89E'
+                            }}
                           >
                             {STATUS_CONFIG[step].label}
                           </p>
@@ -523,7 +620,7 @@ export default function ClientRequestDetailPage() {
                       <p className="text-[10px] font-bold uppercase tracking-wider">Due Date</p>
                     </div>
                     <p className="text-sm font-semibold text-text-main">{formatDate(req.due_date)}</p>
-                    <p className="text-[11px] text-primary font-bold">{getDueDateText(req.due_date)}</p>
+                    <p className="text-[11px] font-bold" style={{ color: accent }}>{getDueDateText(req.due_date)}</p>
                   </div>
                 )}
               </div>
@@ -542,7 +639,10 @@ export default function ClientRequestDetailPage() {
                         setIsEditing(true)
                         setEditError(null)
                       }}
-                      className="h-7 px-3 rounded-md border border-border/60 flex items-center gap-1.5 text-xs font-semibold text-text-sub hover:text-text-main hover:bg-surface transition-colors shadow-sm"
+                      className="h-7 px-3 rounded-md border border-border/60 flex items-center gap-1.5 text-xs font-semibold text-text-sub transition-colors shadow-sm"
+                      onMouseEnter={() => setHoveredEditBtn(true)}
+                      onMouseLeave={() => setHoveredEditBtn(false)}
+                      style={{ backgroundColor: hoveredEditBtn ? '#FAFBFA' : '#FFFFFF' }}
                     >
                       <Pencil size={12} />
                       Edit
@@ -557,7 +657,14 @@ export default function ClientRequestDetailPage() {
                       <input
                         value={editTitle}
                         onChange={e => setEditTitle(e.target.value)}
-                        className="w-full rounded-xl border border-border/60 bg-surface/30 px-4 py-2.5 text-sm text-text-main focus:outline-none focus:border-primary focus:bg-white focus:ring-1 focus:ring-primary/20 transition-all shadow-sm"
+                        className="w-full rounded-xl border bg-surface/30 px-4 py-2.5 text-sm text-text-main focus:outline-none transition-all shadow-sm"
+                        style={{
+                          borderColor: focusedEditTitle ? accent : 'rgba(0,0,0,0.06)',
+                          boxShadow: focusedEditTitle ? `0 0 0 2px ${accentSoft}` : '',
+                          backgroundColor: focusedEditTitle ? '#ffffff' : ''
+                        }}
+                        onFocus={() => setFocusedEditTitle(true)}
+                        onBlur={() => setFocusedEditTitle(false)}
                       />
                     </div>
                     <div>
@@ -566,7 +673,14 @@ export default function ClientRequestDetailPage() {
                         value={editDesc}
                         onChange={e => setEditDesc(e.target.value)}
                         rows={5}
-                        className="w-full rounded-xl border border-border/60 bg-surface/30 px-4 py-3 text-sm text-text-main resize-none focus:outline-none focus:border-primary focus:bg-white focus:ring-1 focus:ring-primary/20 transition-all shadow-sm"
+                        className="w-full rounded-xl border bg-surface/30 px-4 py-3 text-sm text-text-main resize-none focus:outline-none transition-all shadow-sm"
+                        style={{
+                          borderColor: focusedEditDesc ? accent : 'rgba(0,0,0,0.06)',
+                          boxShadow: focusedEditDesc ? `0 0 0 2px ${accentSoft}` : '',
+                          backgroundColor: focusedEditDesc ? '#ffffff' : ''
+                        }}
+                        onFocus={() => setFocusedEditDesc(true)}
+                        onBlur={() => setFocusedEditDesc(false)}
                       />
                     </div>
 
@@ -581,14 +695,20 @@ export default function ClientRequestDetailPage() {
                       <button
                         onClick={() => { setIsEditing(false); setEditError(null) }}
                         disabled={editLoading}
-                        className="flex-1 h-10 rounded-xl border border-border/60 text-sm font-semibold text-text-sub hover:text-text-main hover:bg-surface transition-colors disabled:opacity-50"
+                        onMouseEnter={() => setHoveredCancelBtn(true)}
+                        onMouseLeave={() => setHoveredCancelBtn(false)}
+                        className="flex-1 h-10 rounded-xl border border-border/60 text-sm font-semibold text-text-sub transition-colors disabled:opacity-50"
+                        style={{ backgroundColor: hoveredCancelBtn ? '#FAFBFA' : '#FFFFFF' }}
                       >
                         Cancel
                       </button>
                       <button
                         onClick={handleEditSave}
                         disabled={editLoading || !editTitle.trim() || !editDesc.trim()}
-                        className="flex-1 h-10 rounded-xl bg-primary text-white text-sm font-semibold flex items-center justify-center gap-2 disabled:opacity-50 hover:bg-primary-dark transition-all shadow-sm active:scale-[0.98]"
+                        onMouseEnter={() => setHoveredSaveBtn(true)}
+                        onMouseLeave={() => setHoveredSaveBtn(false)}
+                        className="flex-1 h-10 rounded-xl text-white text-sm font-semibold flex items-center justify-center gap-2 disabled:opacity-50 transition-all shadow-sm active:scale-[0.98]"
+                        style={{ backgroundColor: hoveredSaveBtn ? accentDark : accent }}
                       >
                         {editLoading ? <Loader2 size={16} className="animate-spin" /> : <CheckCircle2 size={16} />}
                         Save Changes
@@ -626,13 +746,13 @@ export default function ClientRequestDetailPage() {
                       href={file.download_url}
                       target="_blank"
                       rel="noreferrer"
-                      className="group flex items-center gap-3 rounded-xl border border-border/60 px-3 py-3 hover:border-primary/50 hover:shadow-soft hover:-translate-y-[1px] bg-white transition-all duration-200"
+                      className="attachment-card group flex items-center gap-3 rounded-xl border border-border/60 px-3 py-3 hover:shadow-soft hover:-translate-y-[1px] bg-white transition-all duration-200"
                     >
-                      <div className="h-10 w-10 rounded-lg bg-surface flex items-center justify-center shrink-0 group-hover:bg-primary-light transition-colors">
-                        <FileText size={18} className="text-text-dim group-hover:text-primary" />
+                      <div className="attachment-icon-bg h-10 w-10 rounded-lg bg-surface flex items-center justify-center shrink-0 transition-colors">
+                        <FileText size={18} className="attachment-icon text-text-dim" />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-semibold text-text-main truncate group-hover:text-primary transition-colors">{file.file_name}</p>
+                        <p className="attachment-title text-sm font-semibold text-text-main truncate transition-colors">{file.file_name}</p>
                         <div className="flex items-center gap-2 mt-0.5">
                           <span className="text-[11px] font-medium text-text-dim">{formatFileSize(file.file_size_bytes)}</span>
                           <span className="text-border">•</span>
@@ -656,7 +776,7 @@ export default function ClientRequestDetailPage() {
                             window.open(file.download_url, '_blank')
                           }
                         }}
-                        className="shrink-0 h-8 w-8 rounded-full flex items-center justify-center text-text-dim hover:text-primary hover:bg-primary-light transition-colors"
+                        className="attachment-download shrink-0 h-8 w-8 rounded-full flex items-center justify-center text-text-dim transition-colors"
                       >
                         <Download size={14} />
                       </button>
@@ -672,12 +792,12 @@ export default function ClientRequestDetailPage() {
           {/* Sidebar resize handle (Desktop Only) */}
           <div
             onMouseDown={startSidebarResize}
-            className="hidden lg:flex w-2 shrink-0 relative cursor-col-resize group items-center justify-center bg-transparent z-10 hover:bg-primary/5 transition-colors"
+            className="resize-handle hidden lg:flex w-2 shrink-0 relative cursor-col-resize group items-center justify-center bg-transparent z-10 transition-colors"
           >
-            <div className="absolute inset-y-0 left-1/2 -translate-x-1/2 w-px bg-transparent group-hover:bg-primary/20 transition-colors" />
+            <div className="resize-line absolute inset-y-0 left-1/2 -translate-x-1/2 w-px bg-transparent transition-colors" />
             <div className="relative z-10 flex flex-col gap-[3px] opacity-0 group-hover:opacity-100 transition-opacity">
               {[...Array(4)].map((_, i) => (
-                <div key={i} className="w-1 h-1 rounded-full bg-primary/40" />
+                <div key={i} className="resize-dot w-1 h-1 rounded-full transition-colors" />
               ))}
             </div>
           </div>
@@ -696,14 +816,20 @@ export default function ClientRequestDetailPage() {
 
               {/* ── Pending review banner ──────────────────────────────────── */}
               {req.status === 'delivered' && deliveries.length > 0 && (
-                <div className="mb-6 rounded-2xl border border-grove-200 bg-primary-light p-4 lg:p-5 flex flex-col lg:flex-row lg:items-center justify-between gap-4 shadow-sm animate-in fade-in slide-in-from-top-2 duration-300">
+                <div 
+                  className="mb-6 rounded-2xl border p-4 lg:p-5 flex flex-col lg:flex-row lg:items-center justify-between gap-4 shadow-sm animate-in fade-in slide-in-from-top-2 duration-300"
+                  style={{ borderColor: `${accent}40`, backgroundColor: accentSoft }}
+                >
                   <div className="flex items-center gap-3 lg:gap-4">
-                    <div className="h-10 w-10 lg:h-12 lg:w-12 rounded-xl bg-white border border-grove-100 shadow-sm flex items-center justify-center shrink-0">
-                      <CheckCircle2 size={20} className="text-primary" />
+                    <div 
+                      className="h-10 w-10 lg:h-12 lg:w-12 rounded-xl bg-white border shadow-sm flex items-center justify-center shrink-0"
+                      style={{ borderColor: `${accent}20` }}
+                    >
+                      <CheckCircle2 size={20} style={{ color: accent }} />
                     </div>
                     <div>
-                      <p className="text-sm font-bold text-primary-dark">Your delivery is ready for review</p>
-                      <p className="text-xs font-medium text-primary mt-0.5 lg:mt-1">Approve to close, or request changes.</p>
+                      <p className="text-sm font-bold" style={{ color: accentDark }}>Your delivery is ready for review</p>
+                      <p className="text-xs font-medium mt-0.5 lg:mt-1" style={{ color: accent }}>Approve to close, or request changes.</p>
                     </div>
                   </div>
                   <button
@@ -711,7 +837,10 @@ export default function ClientRequestDetailPage() {
                       const latest = deliveries.find(d => d.delivery_number === latestDeliveryNumber)
                       setReviewModal(latest)
                     }}
-                    className="w-full lg:w-auto shrink-0 h-10 px-6 rounded-xl bg-primary text-white text-sm font-semibold hover:bg-primary-dark shadow-sm hover:shadow-soft active:scale-[0.98] transition-all"
+                    onMouseEnter={() => setHoveredReviewBtn(true)}
+                    onMouseLeave={() => setHoveredReviewBtn(false)}
+                    className="w-full lg:w-auto shrink-0 h-10 px-6 rounded-xl text-white text-sm font-semibold shadow-sm hover:shadow-soft active:scale-[0.98] transition-all"
+                    style={{ backgroundColor: hoveredReviewBtn ? accentDark : accent }}
                   >
                     Review Delivery
                   </button>
@@ -739,9 +868,12 @@ export default function ClientRequestDetailPage() {
                     return (
                       <div
                         key={delivery.id}
-                        className={`rounded-2xl bg-white shadow-sm overflow-hidden border transition-all duration-300 animate-in slide-in-from-bottom-4
-                          ${isPendingReview ? 'border-primary/40 ring-1 ring-primary/10' : 'border-border/60 hover:shadow-soft hover:border-border'}`}
-                        style={{ animationDelay: `${idx * 100}ms` }}
+                        className="rounded-2xl bg-white shadow-sm overflow-hidden border transition-all duration-300 animate-in slide-in-from-bottom-4"
+                        style={{
+                          animationDelay: `${idx * 100}ms`,
+                          borderColor: isPendingReview ? `${accent}66` : 'rgba(0,0,0,0.06)',
+                          boxShadow: isPendingReview ? `0 0 0 1px ${accent}1a, var(--tw-shadow)` : ''
+                        }}
                       >
                         {/* Card header */}
                         <div className="px-5 lg:px-6 py-4 border-b border-border/50 bg-surface/30">
@@ -769,7 +901,7 @@ export default function ClientRequestDetailPage() {
                             {isPendingReview && (
                               <button
                                 onClick={() => setReviewModal(delivery)}
-                                className="hidden lg:flex h-9 px-4 rounded-lg border border-primary text-primary text-xs font-bold hover:bg-primary hover:text-white transition-all shadow-sm items-center gap-2"
+                                className="review-btn hidden lg:flex h-9 px-4 rounded-lg border text-xs font-bold transition-all shadow-sm items-center gap-2"
                               >
                                 <CheckCircle2 size={14} />
                                 Review
@@ -796,13 +928,13 @@ export default function ClientRequestDetailPage() {
                                   href={link.url}
                                   target="_blank"
                                   rel="noreferrer"
-                                  className="group flex items-center gap-4 rounded-xl border border-border/60 bg-white px-4 py-3 hover:border-primary/40 hover:shadow-soft transition-all"
+                                  className="attachment-card group flex items-center gap-4 rounded-xl border border-border/60 bg-white px-4 py-3 hover:shadow-soft transition-all"
                                 >
-                                  <div className="h-10 w-10 rounded-lg bg-surface flex items-center justify-center shrink-0 group-hover:bg-primary-light transition-colors">
-                                    <ExternalLink size={18} className="text-text-dim group-hover:text-primary transition-colors" />
+                                  <div className="attachment-icon-bg h-10 w-10 rounded-lg bg-surface flex items-center justify-center shrink-0 transition-colors">
+                                    <ExternalLink size={18} className="attachment-icon text-text-dim transition-colors" />
                                   </div>
                                   <div className="flex-1 min-w-0">
-                                    <p className="text-sm font-semibold text-text-main truncate group-hover:text-primary transition-colors">
+                                    <p className="attachment-title text-sm font-semibold text-text-main truncate transition-colors">
                                       {link.label || link.url}
                                     </p>
                                     {link.label && (
@@ -823,13 +955,13 @@ export default function ClientRequestDetailPage() {
                                 href={file.download_url}
                                 target="_blank"
                                 rel="noreferrer"
-                                className="group flex items-center gap-4 rounded-xl border border-border/60 bg-white px-4 py-3 hover:border-primary/40 hover:shadow-soft transition-all"
+                                className="attachment-card group flex items-center gap-4 rounded-xl border border-border/60 bg-white px-4 py-3 hover:shadow-soft transition-all"
                               >
-                                <div className="h-10 w-10 rounded-lg bg-surface flex items-center justify-center shrink-0 group-hover:bg-primary-light transition-colors">
-                                  <FileText size={18} className="text-text-dim group-hover:text-primary" />
+                                <div className="attachment-icon-bg h-10 w-10 rounded-lg bg-surface flex items-center justify-center shrink-0 transition-colors">
+                                  <FileText size={18} className="attachment-icon text-text-dim transition-colors" />
                                 </div>
                                 <div className="flex-1 min-w-0">
-                                  <p className="text-sm font-semibold text-text-main truncate group-hover:text-primary transition-colors">{file.file_name}</p>
+                                  <p className="attachment-title text-sm font-semibold text-text-main truncate transition-colors">{file.file_name}</p>
                                   <div className="flex items-center gap-2 mt-0.5">
                                     <span className="text-[11px] font-medium text-text-dim">{formatFileSize(file.file_size_bytes)}</span>
                                     <span className="text-border">•</span>
@@ -853,7 +985,7 @@ export default function ClientRequestDetailPage() {
                                       window.open(file.download_url, '_blank')
                                     }
                                   }}
-                                  className="shrink-0 h-9 w-9 rounded-full flex items-center justify-center text-text-dim hover:text-primary hover:bg-primary-light transition-colors"
+                                  className="attachment-download shrink-0 h-9 w-9 rounded-full flex items-center justify-center text-text-dim transition-colors"
                                 >
                                   <Download size={16} />
                                 </button>
@@ -875,12 +1007,12 @@ export default function ClientRequestDetailPage() {
           {/* Chat resize handle (Desktop Only) */}
           <div
             onMouseDown={startChatResize}
-            className="hidden lg:flex w-2 shrink-0 relative cursor-col-resize group items-center justify-center bg-transparent z-10 hover:bg-primary/5 transition-colors"
+            className="resize-handle hidden lg:flex w-2 shrink-0 relative cursor-col-resize group items-center justify-center bg-transparent z-10 transition-colors"
           >
-            <div className="absolute inset-y-0 left-1/2 -translate-x-1/2 w-px bg-transparent group-hover:bg-primary/20 transition-colors" />
+            <div className="resize-line absolute inset-y-0 left-1/2 -translate-x-1/2 w-px bg-transparent transition-colors" />
             <div className="relative z-10 flex flex-col gap-[3px] opacity-0 group-hover:opacity-100 transition-opacity">
               {[...Array(4)].map((_, i) => (
-                <div key={i} className="w-1 h-1 rounded-full bg-primary/40" />
+                <div key={i} className="resize-dot w-1 h-1 rounded-full transition-colors" />
               ))}
             </div>
           </div>
@@ -899,7 +1031,7 @@ export default function ClientRequestDetailPage() {
                 {req?.status !== 'closed' && (
                   <button
                     onClick={startCall}
-                    className="h-8 w-8 flex items-center justify-center rounded-xl text-text-dim hover:text-primary hover:bg-primary-light transition-all"
+                    className="chat-btn-icon h-8 w-8 flex items-center justify-center rounded-xl text-text-dim transition-all"
                     title="Start video call"
                   >
                     <Video size={16} />
@@ -928,7 +1060,10 @@ export default function ClientRequestDetailPage() {
         <div className="lg:hidden fixed bottom-[90px] right-4 z-40">
           <button
             onClick={() => setShowChat(true)}
-            className="h-14 w-14 rounded-full bg-primary text-white shadow-soft flex items-center justify-center hover:bg-primary-dark active:scale-95 transition-all"
+            onMouseEnter={() => setHoveredChatFAB(true)}
+            onMouseLeave={() => setHoveredChatFAB(false)}
+            className="h-14 w-14 rounded-full text-white shadow-soft flex items-center justify-center active:scale-95 transition-all"
+            style={{ backgroundColor: hoveredChatFAB ? accentDark : accent }}
           >
             <MessageSquare size={24} />
           </button>
@@ -948,7 +1083,7 @@ export default function ClientRequestDetailPage() {
               {req?.status !== 'closed' && (
                 <button
                   onClick={startCall}
-                  className="h-8 w-8 flex items-center justify-center rounded-xl text-text-dim hover:text-primary hover:bg-primary-light transition-all"
+                  className="chat-btn-icon h-8 w-8 flex items-center justify-center rounded-xl text-text-dim transition-all"
                   title="Start video call"
                 >
                   <Video size={16} />

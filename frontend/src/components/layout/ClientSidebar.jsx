@@ -84,7 +84,7 @@ export default function ClientSidebar({ badges = {} }) {
   }, [isCollapsed])
 
   // ───────────────── User Popup ─────────────────
-  const UserPopup = ({ className = '' }) => (
+  const UserPopup = ({ isMobile = false, className = '' }) => (
     <div
       className={`
         z-50 w-[240px] rounded-xl border border-border/50
@@ -104,7 +104,7 @@ export default function ClientSidebar({ badges = {} }) {
 
       {/* Portal switcher */}
       <div className="p-2 border-b border-border/50">
-        <ClientPortalSwitcher />
+        <ClientPortalSwitcher isMobile={isMobile} />
       </div>
 
       {/* Actions */}
@@ -381,7 +381,7 @@ export default function ClientSidebar({ badges = {} }) {
             {/* Mobile popup */}
             {isPopupOpen && (
               <div className="absolute bottom-[60px] right-2" onClick={e => e.stopPropagation()}>
-                <UserPopup className="shadow-2xl border-border/50 animate-in slide-in-from-bottom-4 duration-200" />
+                <UserPopup isMobile={true} className="shadow-2xl border-border/50 animate-in slide-in-from-bottom-4 duration-200" />
               </div>
             )}
           </div>
