@@ -290,7 +290,10 @@ function PipelineCard({ req, onClick }) {
 
 // ── PIPELINE COLUMN ───────────────────────────────────────────
 function PipelineColumn({ status, requests, statusConfig, onCardClick, isMobile = false }) {
-  const cfg = statusConfig[status]
+  const cfg = statusConfig[status] || {
+    label: status === 'all' ? 'All' : status === 'flagged' ? 'Flagged' : status === 'overdue' ? 'Overdue' : status,
+    dot: status === 'overdue' ? 'bg-red-500' : status === 'flagged' ? 'bg-amber-400' : 'bg-gray-400'
+  }
   const isClosed = status === 'closed'
   const [collapsed, setCollapsed] = useState(isClosed && !isMobile)
 
@@ -421,7 +424,6 @@ export default function RequestsPage() {
     typeof window !== 'undefined' ? window.innerWidth < 768 : false
   )
   const [showMobileFilters, setShowMobileFilters] = useState(false)
-  const [mobilePipelineStatus, setMobilePipelineStatus] = useState('received')
 
   useEffect(() => {
     const handleResize = () => {
@@ -430,16 +432,6 @@ export default function RequestsPage() {
     window.addEventListener('resize', handleResize)
     return () => window.removeEventListener('resize', handleResize)
   }, [])
-
-  useEffect(() => {
-    if (requests.length > 0) {
-      const statuses = ['received', 'in_review', 'in_progress', 'delivered', 'closed']
-      const firstWithCards = statuses.find(s => requests.some(r => r.status === s))
-      if (firstWithCards) {
-        setMobilePipelineStatus(firstWithCards)
-      }
-    }
-  }, [requests])
 
   const activeFiltersCount = (clientFilter ? 1 : 0) + (dateFilter ? 1 : 0) + (categoryFilter ? 1 : 0) + (sortFilter !== 'newest' ? 1 : 0)
 
@@ -645,7 +637,7 @@ export default function RequestsPage() {
         </div>
 
         {/* ── Filter bar ── */}
-        <div className="mb-4 rounded-2xl border border-[#e8eae8] bg-white relative z-20">
+        <div className="mb-4 rounded-2xl border border-[#e8eae8] bg-white relative z-20 hidden md:block">
           
           {/* Status tabs row */}
           <div className="flex items-center gap-1 overflow-x-auto px-4 pt-4 pb-0 no-scrollbar">
@@ -727,34 +719,50 @@ export default function RequestsPage() {
           </div>
         )}
 
-        {/* Mobile Pipeline Column Tabs */}
-        {view === 'pipeline' && (
-          <div className="flex md:hidden items-center gap-1.5 overflow-x-auto pb-3 mb-4 no-scrollbar border-b border-[#f1f3f1]">
-            {['received', 'in_review', 'in_progress', 'delivered', 'closed'].map(s => {
+        {/* Mobile Switcher Tabs */}
+        <div className="flex md:hidden items-center gap-1.5 overflow-x-auto pb-3 mb-4 no-scrollbar border-b border-[#f1f3f1]">
+          {['all', 'received', 'in_review', 'in_progress', 'delivered', 'closed', 'flagged', 'overdue'].map(s => {
+            const active = activeTab === s
+            const count = counts[s]
+            
+            let label
+            let dotClass
+            
+            if (s === 'all') {
+              label = 'All'
+              dotClass = 'bg-gray-400'
+            } else if (s === 'flagged') {
+              label = 'Flagged'
+              dotClass = 'bg-amber-500'
+            } else if (s === 'overdue') {
+              label = 'Overdue'
+              dotClass = 'bg-red-500'
+            } else {
               const cfg = statusConfig[s]
-              const reqs = byStatus[s] || []
-              const active = mobilePipelineStatus === s
-              return (
-                <button
-                  key={s}
-                  onClick={() => setMobilePipelineStatus(s)}
-                  className={`shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[12px] font-semibold border transition-all
-                    ${active 
-                      ? 'bg-[#e6f5f0] border-[#0f6e56] text-[#0f6e56]' 
-                      : 'bg-white border-[#e8eae8] text-[#6b776c]'
-                    }
-                  `}
-                >
-                  <span className={`h-1.5 w-1.5 rounded-full ${cfg.dot}`} />
-                  <span>{cfg.label}</span>
-                  <span className={`rounded-full px-1.5 py-0.5 text-[9px] ${active ? 'bg-[#0f6e56] text-white' : 'bg-[#f0f2f0] text-[#9ea89e]'}`}>
-                    {reqs.length}
-                  </span>
-                </button>
-              )
-            })}
-          </div>
-        )}
+              label = cfg?.label || s
+              dotClass = cfg?.dot || 'bg-gray-400'
+            }
+
+            return (
+              <button
+                key={s}
+                onClick={() => setActiveTab(s)}
+                className={`shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[12px] font-semibold border transition-all
+                  ${active 
+                    ? 'bg-[#e6f5f0] border-[#0f6e56] text-[#0f6e56]' 
+                    : 'bg-white border-[#e8eae8] text-[#6b776c]'
+                  }
+                `}
+              >
+                <span className={`h-1.5 w-1.5 rounded-full ${dotClass}`} />
+                <span>{label}</span>
+                <span className={`rounded-full px-1.5 py-0.5 text-[9px] ${active ? 'bg-[#0f6e56] text-white' : 'bg-[#f0f2f0] text-[#9ea89e]'}`}>
+                  {count}
+                </span>
+              </button>
+            )
+          })}
+        </div>
 
         {/* ── Content ── */}
         {loading ? (
@@ -831,9 +839,9 @@ export default function RequestsPage() {
           isMobile ? (
             <div className="flex flex-col gap-4">
               <PipelineColumn
-                status={mobilePipelineStatus}
+                status={activeTab}
                 statusConfig={statusConfig}
-                requests={byStatus[mobilePipelineStatus] || []}
+                requests={filtered}
                 onCardClick={id => navigate(`/requests/${id}`)}
                 isMobile={true}
               />
