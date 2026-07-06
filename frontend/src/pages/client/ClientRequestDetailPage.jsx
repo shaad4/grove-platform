@@ -1048,6 +1048,10 @@ export default function ClientRequestDetailPage() {
               activities={[]}
               wsRef={chatWsRef}
               onSignal={handleSignal}
+              isClient={true}
+              accent={accent}
+              accentSoft={accentSoft}
+              accentDark={accentDark}
             />
           </div>
 
@@ -1105,6 +1109,10 @@ export default function ClientRequestDetailPage() {
               requestId={requestId}
               requestStatus={req?.status}
               activities={[]}
+              isClient={true}
+              accent={accent}
+              accentSoft={accentSoft}
+              accentDark={accentDark}
             />
           </div>
         </div>

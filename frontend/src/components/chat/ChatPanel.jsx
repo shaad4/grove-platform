@@ -29,7 +29,7 @@ function formatBytes(bytes) {
 }
 
 //  Attachment bubble (sent/received) 
-function AttachmentBubble({ attachment, isMe }) {
+function AttachmentBubble({ attachment, isMe, isClient, accent, accentSoft, accentDark }) {
   const { icon: Icon, color, bg } = getFileIcon(
     attachment.file_type,
     attachment.file_name
@@ -70,22 +70,31 @@ function AttachmentBubble({ attachment, isMe }) {
       className={`group flex items-center gap-3 mt-1.5 px-3 py-2.5 rounded-xl max-w-[240px] transition-all border shadow-sm
         ${
           isMe
-            ? 'bg-emerald-50/40 hover:bg-emerald-50 border-emerald-100/70'
+            ? (isClient
+                ? 'client-chat-attachment-me'
+                : 'bg-emerald-50/40 hover:bg-emerald-50 border-emerald-100/70'
+              )
             : 'bg-white hover:bg-slate-50 border-slate-100'
         }
       `}
     >
       <div
-        className={`h-9 w-9 rounded-lg flex items-center justify-center shrink-0 border border-slate-100 ${bg}`}
+        className={`h-9 w-9 rounded-lg flex items-center justify-center shrink-0 border border-slate-100 ${
+          isClient && attachment.file_type?.startsWith('image/') ? 'client-chat-attachment-icon-bg' : bg
+        }`}
       >
-        <Icon size={16} className={color} />
+        <Icon size={16} className={isClient && attachment.file_type?.startsWith('image/') ? 'client-chat-attachment-icon' : color} />
       </div>
 
       <div className="flex-1 min-w-0">
         <p
-          className={`text-[12px] font-medium truncate leading-tight ${
-            isMe ? 'text-emerald-950' : 'text-slate-800'
-          }`}
+          className={`text-[12px] font-medium truncate leading-tight
+            ${
+              isMe 
+                ? (isClient ? 'client-chat-attachment-text-me' : 'text-emerald-950')
+                : 'text-slate-800'
+            }
+          `}
         >
           {attachment.file_name}
         </p>
@@ -104,7 +113,7 @@ function AttachmentBubble({ attachment, isMe }) {
 }
 
 // ── Pending upload chip ────────────────────────────────────────
-function UploadChip({ attachment, onRemove }) {
+function UploadChip({ attachment, onRemove, isClient }) {
   const { icon: Icon, color } = getFileIcon(attachment.file?.type, attachment.file?.name)
 
   return (
@@ -112,14 +121,14 @@ function UploadChip({ attachment, onRemove }) {
       ${attachment.status === 'error'
         ? 'border-rose-200 bg-rose-50 text-rose-700'
         : attachment.status === 'done'
-          ? 'border-emerald-200 bg-emerald-50 text-emerald-800'
+          ? (isClient ? 'client-chat-upload-done border-emerald-200 text-emerald-800' : 'border-emerald-200 bg-emerald-50 text-emerald-800')
           : 'border-slate-200 bg-slate-50 text-slate-600'
       }
     `}>
       {attachment.status === 'uploading'
-        ? <Loader2 size={12} className="animate-spin text-emerald-600" />
+        ? <Loader2 size={12} className={`animate-spin ${isClient ? 'client-chat-upload-loader' : 'text-emerald-600'}`} />
         : attachment.status === 'done'
-          ? <CheckCircle2 size={12} className="text-emerald-600" />
+          ? <CheckCircle2 size={12} className={isClient ? 'client-chat-upload-check' : 'text-emerald-600'} />
           : attachment.status === 'error'
             ? <AlertCircle size={12} />
             : <Icon size={12} className={color} />
@@ -144,6 +153,10 @@ export default function ChatPanel({
   wsRef,
   onSignal,
   isPro,
+  isClient = false,
+  accent = '',
+  accentSoft = '',
+  accentDark = '',
 }) {
   const [messages,    setMessages]    = useState([])
   const [input,       setInput]       = useState('')
@@ -402,12 +415,75 @@ export default function ChatPanel({
   // ── Render ───────────────────────────────────────────────────
   return (
     <div className="flex flex-col flex-1 min-h-0 h-full bg-slate-50/60">
+      {isClient && (
+        <style>{`
+          .client-chat-bubble-me {
+            background: linear-gradient(135deg, ${accent} 0%, ${accentDark || accent} 100%) !important;
+            border-color: ${accent} !important;
+            color: #ffffff !important;
+          }
+          .client-chat-send-btn {
+            background: linear-gradient(135deg, ${accent} 0%, ${accentDark || accent} 100%) !important;
+            color: #ffffff !important;
+          }
+          .client-chat-send-btn:hover {
+            box-shadow: 0 4px 12px ${accent}33 !important;
+          }
+          .client-chat-input:focus-within {
+            border-color: ${accent}cc !important;
+            box-shadow: 0 0 0 4px ${accent}1a !important;
+          }
+          .client-chat-attachment-me {
+            background-color: ${accentSoft}66 !important;
+            border-color: ${accent}33 !important;
+          }
+          .client-chat-attachment-me:hover {
+            background-color: ${accentSoft} !important;
+            border-color: ${accent}66 !important;
+          }
+          .client-chat-attachment-text-me {
+            color: ${accentDark || accent} !important;
+          }
+          .client-chat-attachment-icon-bg {
+            background-color: ${accentSoft} !important;
+          }
+          .client-chat-attachment-icon {
+            color: ${accent} !important;
+          }
+          .client-chat-read-receipt {
+            color: ${accent} !important;
+          }
+          .client-chat-upload-loader {
+            color: ${accent} !important;
+          }
+          .client-chat-upload-check {
+            color: ${accent} !important;
+          }
+          .client-chat-upload-done {
+            background-color: ${accentSoft} !important;
+            border-color: ${accent}33 !important;
+            color: ${accentDark || accent} !important;
+          }
+          .client-chat-empty-icon {
+            background-color: ${accentSoft} !important;
+            border-color: ${accent}33 !important;
+            color: ${accent} !important;
+          }
+          .client-chat-clip-btn:hover {
+            color: ${accent} !important;
+            background-color: ${accentSoft} !important;
+          }
+        `}</style>
+      )}
+
       {/* Messages area */}
       <div className="flex-1 overflow-y-auto overflow-x-hidden px-5 py-4 space-y-1 min-h-0 custom-scrollbar">
         {timeline.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-center space-y-4 py-12">
-            <div className="h-16 w-16 rounded-2xl flex items-center justify-center bg-emerald-50 border border-emerald-100 shadow-sm">
-              <Send size={22} className="text-emerald-600" />
+            <div className={`h-16 w-16 rounded-2xl flex items-center justify-center shadow-sm border
+              ${isClient ? 'client-chat-empty-icon' : 'bg-emerald-50 border-emerald-100'}
+            `}>
+              <Send size={22} className={isClient ? '' : 'text-emerald-600'} />
             </div>
             <div className="space-y-1">
               <p className="text-[15px] font-semibold text-slate-700">No messages yet</p>
@@ -454,7 +530,7 @@ export default function ChatPanel({
 
                   const isLastInGroup = !nextItem
                     || nextItem._type === 'activity'
-                    || (nextItem.sender?.id ?? nextItem.sender) !== (item.sender?.id ?? item.sender)
+                    || (nextItem.sender?.id ?? nextItem.sender) !== (nextItem.sender?.id ?? nextItem.sender)
 
                   const msgAttachments = item.attachments || []
                   const hasContent = item.content && item.content.trim().length > 0
@@ -492,7 +568,10 @@ export default function ChatPanel({
                         {hasContent && (
                           <div className={`px-4 py-2.5 text-[13.5px] leading-relaxed break-words shadow-sm border
                             ${isMe
-                              ? `text-white rounded-2xl rounded-br-none border-emerald-600 bg-gradient-to-br from-emerald-600 to-emerald-700`
+                              ? (isClient
+                                ? `client-chat-bubble-me rounded-2xl rounded-br-none`
+                                : `text-white rounded-2xl rounded-br-none border-emerald-600 bg-gradient-to-br from-emerald-600 to-emerald-700`
+                                )
                               : `text-slate-700 bg-white rounded-2xl rounded-bl-none border-slate-100`
                             }
                             ${item.optimistic ? 'opacity-60' : ''}
@@ -509,6 +588,10 @@ export default function ChatPanel({
                                 key={att.id || i}
                                 attachment={att.file || att}
                                 isMe={isMe}
+                                isClient={isClient}
+                                accent={accent}
+                                accentSoft={accentSoft}
+                                accentDark={accentDark}
                               />
                             ))}
                           </div>
@@ -522,7 +605,12 @@ export default function ChatPanel({
                               {item.optimistic && ' · Sending…'}
                             </span>
                             {isMe && !item.optimistic && (
-                              <span className={`text-[11px] font-bold ${item.is_read ? 'text-emerald-500' : 'text-slate-300'}`}>
+                              <span className={`text-[11px] font-bold
+                                ${item.is_read 
+                                  ? (isClient ? 'client-chat-read-receipt' : 'text-emerald-500')
+                                  : 'text-slate-300'
+                                }
+                              `}>
                                 {item.is_read ? '✓✓' : '✓'}
                               </span>
                             )}
@@ -604,6 +692,7 @@ export default function ChatPanel({
                 <UploadChip
                   key={i}
                   attachment={a}
+                  isClient={isClient}
                   onRemove={() => setAttachments(prev => prev.filter((_, j) => j !== i))}
                 />
               ))}
@@ -611,7 +700,12 @@ export default function ChatPanel({
           )}
 
           {/* Input area */}
-          <div className="rounded-2xl transition-all duration-200 bg-slate-50 border border-slate-200 focus-within:border-emerald-500/80 focus-within:bg-white focus-within:ring-4 focus-within:ring-emerald-500/10">
+          <div className={`rounded-2xl transition-all duration-200 bg-slate-50 border border-slate-200 focus-within:bg-white
+            ${isClient 
+              ? 'client-chat-input' 
+              : 'focus-within:border-emerald-500/80 focus-within:ring-4 focus-within:ring-emerald-500/10'
+            }
+          `}>
             <textarea
               ref={textareaRef}
               value={input}
@@ -628,7 +722,9 @@ export default function ChatPanel({
             <div className="flex items-center justify-between px-3 pb-3 pt-1">
               <button
                 onClick={() => fileInputRef.current?.click()}
-                className="h-8 w-8 flex items-center justify-center rounded-xl text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 transition-all"
+                className={`h-8 w-8 flex items-center justify-center rounded-xl text-slate-400 transition-all
+                  ${isClient ? 'client-chat-clip-btn' : 'hover:text-emerald-600 hover:bg-emerald-50'}
+                `}
                 title="Attach file"
               >
                 <Paperclip size={16} />
@@ -649,7 +745,7 @@ export default function ChatPanel({
                   disabled={!canSend || sending}
                   className={`h-8 w-8 flex items-center justify-center rounded-xl transition-all shadow-sm
                     ${canSend && !sending
-                      ? 'bg-gradient-to-br from-emerald-600 to-emerald-700 text-white hover:shadow-md hover:scale-[1.02] active:scale-[0.98]'
+                      ? `${isClient ? 'client-chat-send-btn' : 'bg-gradient-to-br from-emerald-600 to-emerald-700'} text-white hover:shadow-md hover:scale-[1.02] active:scale-[0.98]`
                       : 'bg-slate-100 text-slate-300 cursor-not-allowed shadow-none border border-slate-200/50'
                     }
                   `}
