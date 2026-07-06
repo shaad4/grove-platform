@@ -1,4 +1,19 @@
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&display=swap');
+
+:root {
+  --primary: #0F6E56;
+  --primary-dark: #085041;
+  --primary-light: #E6F5F0;
+  --sidebar: #0A2E24;
+  --grove-50: #E6F5F0;
+  --grove-100: #83E001;
+  --grove-200: #5DBFA0;
+  --grove-300: #1D9E75;
+  --grove-500: #0F6E56;
+  --grove-700: #085041;
+  --grove-900: #0A2E24;
+  --grove-950: #061A15;
+}
 @tailwind base;
 @tailwind components;
 @tailwind utilities;

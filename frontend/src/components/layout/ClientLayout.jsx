@@ -1,8 +1,31 @@
+import { useAuth } from '../../context/AuthContext'
+import { getBrandColors } from '../../utils/branding'
 import ClientSidebar from './ClientSidebar'
 
 export default function ClientLayout({ children, fullBleed = false, badges = {} }) {
+  const { tenant } = useAuth()
+  const colors = getBrandColors(tenant?.accent_color)
+
+  const themeStyles = {
+    '--primary': colors.accent,
+    '--primary-dark': colors.accentDark,
+    '--primary-light': colors.accentSoft,
+    '--sidebar': colors.bg1,
+    '--grove-50': colors.accentSoft,
+    '--grove-100': colors.accent,
+    '--grove-200': colors.accent,
+    '--grove-300': colors.accent,
+    '--grove-500': colors.accent,
+    '--grove-700': colors.accentDark,
+    '--grove-900': colors.bg1,
+    '--grove-950': colors.bg3,
+  }
+
   return (
-    <div className="flex min-h-screen bg-layout-page text-text-main font-sans selection:bg-primary-light selection:text-primary-dark">
+    <div 
+      className="flex min-h-screen bg-layout-page text-text-main font-sans selection:bg-primary-light selection:text-primary-dark"
+      style={themeStyles}
+    >
       <ClientSidebar badges={badges} />
       
       <div className="flex flex-1 flex-col min-w-0 transition-all duration-300 ease-in-out">

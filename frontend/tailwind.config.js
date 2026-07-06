@@ -4,10 +4,10 @@ export default {
     extend: {
       colors: {
         // Original keys preserved for existing components
-        primary:  '#0F6E56',
-        'primary-dark': '#085041',
-        'primary-light': '#E6F5F0',
-        sidebar:  '#0A2E24',
+        primary:  'var(--primary, #0F6E56)',
+        'primary-dark': 'var(--primary-dark, #085041)',
+        'primary-light': 'var(--primary-light, #E6F5F0)',
+        sidebar:  'var(--sidebar, #0A2E24)',
         surface:  '#F7F8F7',
         border:   '#E8EAE8',
         'text-main': '#141A14',
@@ -16,14 +16,14 @@ export default {
         
         // Full Grove Design System Ramp
         grove: {
-          50: '#E6F5F0',
-          100: '#83E001',
-          200: '#5DBFA0',
-          300: '#1D9E75',
-          500: '#0F6E56',
-          700: '#085041',
-          900: '#0A2E24',
-          950: '#061A15',
+          50: 'var(--grove-50, #E6F5F0)',
+          100: 'var(--grove-100, #83E001)',
+          200: 'var(--grove-200, #5DBFA0)',
+          300: 'var(--grove-300, #1D9E75)',
+          500: 'var(--grove-500, #0F6E56)',
+          700: 'var(--grove-700, #085041)',
+          900: 'var(--grove-900, #0A2E24)',
+          950: 'var(--grove-950, #061A15)',
         },
         
         // Semantic Surfaces & Status Colors
