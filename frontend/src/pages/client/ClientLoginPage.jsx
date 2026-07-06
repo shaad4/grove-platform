@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { Eye, EyeOff, AlertCircle, ArrowRight, Loader2, ChevronLeft, CheckCircle2 } from 'lucide-react'
+import { Eye, EyeOff, AlertCircle, ArrowRight, Loader2 } from 'lucide-react'
 
 import groveLogoGreen from "../../assets/Grove_transparent_logo(Green).png"
 import groveLogoWhite from "../../assets/Grove_transparent_logo(White).png"
@@ -35,7 +35,7 @@ function getInitials(name = '') {
 // ─────────────────────────────────────────────────────────────
 
 function LeftPanelBg({ bg1, bg2, bg3 }) {
-  
+
   return (
     <div
       className="absolute inset-0 z-0 overflow-hidden"
@@ -171,8 +171,13 @@ export default function ClientLoginPage() {
         .font-serif-italic { font-family: 'Instrument Serif', serif; font-style: italic; }
       `}</style>
 
-      <div className="min-h-[100dvh] flex flex-col md:flex-row bg-[#fcfdfc] md:bg-white font-sans selection:bg-primary-light selection:text-primary-dark">
-        
+      <div 
+        className="min-h-[100dvh] flex flex-col md:flex-row font-sans selection:bg-primary-light selection:text-primary-dark"
+        style={{
+          background: `radial-gradient(circle at top, ${accentSoft} 0%, #f9faf9 100%)`
+        }}
+      >
+
         {/* ─── LEFT PANEL (DESKTOP) ─── */}
         <div className="hidden md:flex flex-col justify-between relative w-[45%] max-w-[540px] shrink-0 p-10 lg:p-14 overflow-hidden">
           <LeftPanelBg
@@ -180,48 +185,34 @@ export default function ClientLoginPage() {
             bg2={bg2}
             bg3={bg3}
           />
-          
-          {/* Top: Back to home link */}
-          <a href={rootUrl('/')} className="relative z-10 flex items-center gap-1.5 text-xs text-white/60 hover:text-white transition-colors w-fit">
-            <ChevronLeft size={14} /> Back to home
+
+          {/* Top: Grove Branding */}
+          <a href={rootUrl('/')} className="relative z-10 block w-fit hover:opacity-80 transition-opacity">
+            <img src={groveLogoWhite} alt="Grove" className="h-8 w-auto object-contain" />
           </a>
 
-          {/* Center: Tenant Branding Glass Card */}
-          <div className="relative z-10 animate-in fade-in slide-in-from-bottom-8 duration-700 my-auto">
-            <div className="bg-white/[0.04] backdrop-blur-xl rounded-[28px] border border-white/[0.08] p-8 shadow-2xl">
-              <div className="flex items-center gap-4 mb-6">
-                <TenantAvatar 
-                  name={workspaceName} 
-                  logoUrl={tenant?.logo_url} 
-                  size={64} 
-                  className="bg-white/10 border border-white/20 text-white" 
-                />
-                <div>
-                  <span className="text-[10px] font-bold text-white/50 uppercase tracking-widest">Client Portal</span>
-                  <h1 className="text-[26px] font-bold text-white leading-tight tracking-tight mt-0.5">
-                    {workspaceName}
-                  </h1>
-                </div>
-              </div>
-              <p className="text-white/70 text-[14px] leading-relaxed mb-6">
-                {tenant?.tagline || 'Collaborate seamlessly, submit requests, and stay updated with our team.'}
-              </p>
-              
-              <div className="space-y-3 pt-6 border-t border-white/[0.06] text-[13px] text-white/60">
-                <div className="flex items-center gap-2.5">
-                  <CheckCircle2 size={14} className="text-[#34d399] shrink-0" />
-                  <span>Submit & track service requests</span>
-                </div>
-                <div className="flex items-center gap-2.5">
-                  <CheckCircle2 size={14} className="text-[#34d399] shrink-0" />
-                  <span>Real-time collaboration & feedback</span>
-                </div>
-                <div className="flex items-center gap-2.5">
-                  <CheckCircle2 size={14} className="text-[#34d399] shrink-0" />
-                  <span>Access deliverables and reports</span>
-                </div>
-              </div>
+          {/* Center: Tenant Branding */}
+          <div className="relative z-10 animate-in fade-in slide-in-from-bottom-8 duration-700">
+            <div className="mb-8">
+              <TenantAvatar
+                name={workspaceName}
+                logoUrl={tenant?.logo_url}
+                size={80}
+                className="bg-white/10 border border-white/20 text-white backdrop-blur-md"
+              />
             </div>
+            <h1 className="text-[40px] lg:text-[46px] leading-[1.05] font-bold text-white tracking-tight mb-4">
+              {workspaceName}
+              <br />
+              <span className="text-white/70 font-serif-italic font-normal">client portal</span>
+            </h1>
+            <p className="text-white/60 text-sm leading-relaxed max-w-[320px]">
+
+              {tenant?.tagline ||
+
+                'Sign in to manage requests, collaborate with your provider, and stay synced with your workflow.'}
+
+            </p>
           </div>
 
           {/* Bottom: Footer Links */}
@@ -235,26 +226,31 @@ export default function ClientLoginPage() {
         </div>
 
         {/* ─── RIGHT PANEL (FORM) ─── */}
-        <div className="flex-1 flex flex-col justify-center relative">
-          
+        <div className="flex-1 flex flex-col justify-center relative md:bg-white">
+
           {/* Mobile Header (Hidden on Desktop) */}
-          <div className="md:hidden pt-12 pb-6 px-6 sm:px-10">
-            <div className="flex flex-col gap-4 animate-in fade-in slide-in-from-top-4 duration-500">
-              <TenantAvatar 
-                name={workspaceName} 
-                logoUrl={tenant?.logo_url} 
-                size={56} 
-                className="bg-surface border border-border/60 text-text-sub" 
+          <div className="md:hidden pt-12 pb-6 px-6 sm:px-10 flex flex-col items-center text-center">
+            <div className="flex flex-col items-center gap-3 animate-in fade-in slide-in-from-top-4 duration-500">
+              <TenantAvatar
+                name={workspaceName}
+                logoUrl={tenant?.logo_url}
+                size={64}
+                className="bg-white border border-border/40 shadow-sm"
               />
-              <h1 className="text-2xl font-bold text-text-main tracking-tight">
-                {workspaceName}
-              </h1>
+              <div>
+                <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: accent }}>
+                  Client Portal
+                </span>
+                <h1 className="text-2xl font-bold text-text-main tracking-tight mt-0.5">
+                  {workspaceName}
+                </h1>
+              </div>
             </div>
           </div>
 
           {/* Form Container */}
           <div className="w-full max-w-[440px] mx-auto px-6 sm:px-10 pb-12 animate-in fade-in slide-in-from-bottom-4 duration-500">
-            
+
             {tenantErr ? (
               <div className="text-center bg-white p-8 rounded-3xl border border-border/60 shadow-soft mt-8 md:mt-0">
                 <div className="mx-auto w-16 h-16 bg-surface flex items-center justify-center rounded-2xl mb-6">
@@ -266,21 +262,21 @@ export default function ClientLoginPage() {
                 </p>
               </div>
             ) : (
-              <div className="bg-white md:bg-transparent p-8 md:p-0 rounded-[28px] shadow-sm md:shadow-none border border-border/40 md:border-none">
-                
+              <div className="bg-white/85 backdrop-blur-md md:bg-transparent p-8 md:p-0 rounded-[32px] md:rounded-none shadow-[0_16px_40px_rgba(0,0,0,0.04)] md:shadow-none border border-white/60 md:border-none">
+
                 {/* Headings */}
                 <div className="mb-8 md:mb-10">
-                  <h2 className="text-[26px] md:text-3xl font-bold text-text-main tracking-tight mb-2">
+                  <h2 className="text-[24px] md:text-3xl font-bold text-text-main tracking-tight mb-2">
                     Welcome back
                   </h2>
-                  <p className="text-sm text-text-sub font-medium">
-                    Sign in to access your workspace.
+                  <p className="text-xs md:text-sm text-text-sub font-medium leading-relaxed">
+                    {tenant?.tagline || 'Sign in to access your workspace.'}
                   </p>
                 </div>
 
                 {/* Form */}
                 <form onSubmit={handleSubmit} noValidate className="space-y-5">
-                  
+
                   {/* Email Field */}
                   <div>
                     <label className="block text-xs font-bold text-text-sub uppercase tracking-wider mb-2">
@@ -294,7 +290,7 @@ export default function ClientLoginPage() {
                       autoComplete="email"
                       autoFocus
                       required
-                      className="w-full h-12 rounded-xl border border-border/60 bg-surface/30 px-4 text-sm text-text-main placeholder:text-text-dim focus:outline-none focus:bg-white transition-all shadow-sm"
+                      className="w-full h-12 rounded-xl border border-[#e8eae8] bg-white/50 focus:bg-white px-4 text-sm text-text-main placeholder:text-text-dim focus:outline-none transition-all shadow-sm"
                       style={{ '--tw-ring-color': accentSoft }}
                       onFocus={(e) => e.target.style.borderColor = accent}
                       onBlur={(e) => e.target.style.borderColor = ''}
@@ -319,7 +315,7 @@ export default function ClientLoginPage() {
                         placeholder="Enter your password"
                         autoComplete="current-password"
                         required
-                        className="w-full h-12 rounded-xl border border-border/60 bg-surface/30 px-4 pr-12 text-sm text-text-main placeholder:text-text-dim focus:outline-none focus:bg-white transition-all shadow-sm"
+                        className="w-full h-12 rounded-xl border border-[#e8eae8] bg-white/50 focus:bg-white px-4 pr-12 text-sm text-text-main placeholder:text-text-dim focus:outline-none transition-all shadow-sm"
                         style={{ '--tw-ring-color': accentSoft }}
                         onFocus={(e) => e.target.style.borderColor = accent}
                         onBlur={(e) => e.target.style.borderColor = ''}
@@ -364,9 +360,9 @@ export default function ClientLoginPage() {
                 </form>
 
                 {/* Mobile Footer Area (Hidden on Desktop) */}
-                <div className="md:hidden mt-10 space-y-6 animate-in fade-in duration-700 delay-200">
-                  <div className="h-px bg-border/50 w-full" />
-                  
+                <div className="md:hidden mt-8 space-y-6 animate-in fade-in duration-700 delay-200">
+                  <div className="h-px bg-[#border]/50 w-full" style={{ backgroundColor: 'rgba(0,0,0,0.08)' }} />
+
                   <div className="flex justify-center text-sm font-medium text-text-dim">
                     Are you a provider?&nbsp;
                     <a href={rootUrl('/login')} style={{ color: accent }} className="font-bold hover:opacity-80 transition-opacity">
