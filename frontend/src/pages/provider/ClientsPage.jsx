@@ -490,17 +490,27 @@ export default function ClientsPage() {
         }
       >
         <div className="p-6">
+          {/* Scrollbar hiding styles for horizontal tabs navigation */}
+          <style>{`
+            .no-scrollbar::-webkit-scrollbar {
+              display: none;
+            }
+            .no-scrollbar {
+              -ms-overflow-style: none;
+              scrollbar-width: none;
+            }
+          `}</style>
 
-          {/* ── Filter + Search bar ── */}
-          <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          {/* ── Sticky Filter + Search bar ── */}
+          <div className="sticky top-0 z-20 -mx-6 -mt-6 px-6 py-4 mb-6 bg-[#f7f8f7]/90 backdrop-blur-md border-b border-[#e8eae8] flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between transition-all duration-200">
 
             {/* Filter tabs */}
-            <div className="flex items-center gap-1 rounded-xl bg-[#f0f2f0] p-1">
+            <div className="flex items-center gap-1 rounded-xl bg-[#f0f2f0] p-1 overflow-x-auto no-scrollbar py-1 shrink-0">
               {FILTERS.map(({ key, label }) => (
                 <button
                   key={key}
                   onClick={() => setFilter(key)}
-                  className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[12px] font-medium transition-all ${
+                  className={`shrink-0 flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[12px] font-medium transition-all ${
                     filter === key
                       ? 'bg-white text-[#141a14] shadow-sm'
                       : 'text-[#4a544a] hover:text-[#141a14]'
@@ -519,20 +529,20 @@ export default function ClientsPage() {
             </div>
 
             {/* Right controls */}
-            <div className="flex items-center gap-2">
+            <div className="flex items-center justify-between sm:justify-start gap-2 w-full sm:w-auto">
               {/* Search */}
-              <div className="relative">
+              <div className="relative flex-1 sm:flex-initial">
                 <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#9ea89e]" />
                 <input
                   value={search}
                   onChange={e => setSearch(e.target.value)}
                   placeholder="Search clients..."
-                  className="h-9 w-56 rounded-xl border border-[#e8eae8] bg-white pl-8 pr-4 text-[13px] outline-none transition-all placeholder:text-[#9ea89e] focus:border-[#0f6e56] focus:ring-4 focus:ring-[#0f6e56]/10"
+                  className="h-9 w-full sm:w-56 rounded-xl border border-[#e8eae8] bg-white pl-9 pr-4 text-[13px] outline-none transition-all placeholder:text-[#9ea89e] focus:border-[#0f6e56] focus:ring-4 focus:ring-[#0f6e56]/10"
                 />
               </div>
 
               {/* View toggle */}
-              <div className="flex items-center rounded-xl border border-[#e8eae8] bg-white overflow-hidden">
+              <div className="flex items-center rounded-xl border border-[#e8eae8] bg-white overflow-hidden shrink-0">
                 <button
                   onClick={() => setViewMode('grid')}
                   className={`flex h-9 w-9 items-center justify-center transition-colors ${
@@ -550,15 +560,6 @@ export default function ClientsPage() {
                   <List size={15} />
                 </button>
               </div>
-
-              {/* Add client */}
-              {/* <button
-                onClick={() => setShowAdd(true)}
-                className="hidden sm:flex h-9 items-center gap-2 rounded-xl bg-[#0f6e56] px-4 text-[13px] font-medium text-white hover:bg-[#085041] transition-colors"
-              >
-                <Plus size={15} />
-                Add client
-              </button> */}
             </div>
           </div>
 
