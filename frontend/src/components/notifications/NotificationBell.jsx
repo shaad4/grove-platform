@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { createPortal } from 'react-dom'
 import {
   Bell,
   RefreshCw,
@@ -182,7 +183,11 @@ function NotificationItem({ notification, onRead }) {
 export default function NotificationBell() {
   const [open, setOpen] = useState(false)
   const dropdownRef     = useRef(null)
- 
+  const bellRef         = useRef(null)
+  const [isMobile, setIsMobile] = useState(
+    typeof window !== 'undefined' ? window.innerWidth < 768 : false
+  )
+
   const {
     unreadCount,
     notifications,
@@ -191,30 +196,151 @@ export default function NotificationBell() {
     markAllRead,
     loadNotifications,
   } = useBadges()
- 
+
+  // Track window resizing for mobile takeover
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768)
+    }
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [])
+
   // close on outside click
   useEffect(() => {
     function handler(e) {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+      if (
+        dropdownRef.current && !dropdownRef.current.contains(e.target) &&
+        bellRef.current && !bellRef.current.contains(e.target)
+      ) {
         setOpen(false)
       }
     }
     document.addEventListener('mousedown', handler)
     return () => document.removeEventListener('mousedown', handler)
   }, [])
- 
+
   // refresh when dropdown opens
   useEffect(() => {
     if (open) loadNotifications()
   }, [open, loadNotifications])
- 
+
   const grouped = groupByDay(notifications)
   const groupKeys = Object.keys(grouped)
- 
+
+  const renderContents = () => {
+    return (
+      <>
+        {/* header */}
+        <div className="flex items-center justify-between px-4 py-4 md:py-3.5 border-b border-[#eef0ee] shrink-0 bg-white">
+          <div className="flex items-center gap-2">
+            <span className="text-[16px] md:text-[15px] font-semibold text-[#141a14]">Notifications</span>
+            {unreadCount > 0 && (
+              <span className="flex h-5 min-w-[20px] items-center justify-center rounded-full bg-[#0f6e56] px-1.5 text-[10px] font-bold text-white">
+                {unreadCount}
+              </span>
+            )}
+          </div>
+          <div className="flex items-center gap-3">
+            {unreadCount > 0 && (
+              <button
+                type="button"
+                onClick={markAllRead}
+                className="text-[12px] font-semibold text-[#0f6e56] hover:underline"
+              >
+                Mark all read
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={() => setOpen(false)}
+              className="flex h-8 w-8 md:h-7 md:w-7 items-center justify-center rounded-xl bg-[#f7f8f7] md:bg-transparent hover:bg-[#eef0ee] md:hover:bg-[#f1f3f1] transition-colors"
+            >
+              <X size={16} className="text-[#7c867d]" />
+            </button>
+          </div>
+        </div>
+
+        {/* body */}
+        <div className="overflow-y-auto flex-1 bg-white">
+          {!notifLoaded ? (
+            <div className="px-4 py-6 space-y-3">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="flex gap-3 animate-pulse">
+                  <div className="h-9 w-9 rounded-full bg-[#f1f3f1] shrink-0" />
+                  <div className="flex-1 space-y-2">
+                    <div className="h-3 bg-[#f1f3f1] rounded w-3/4" />
+                    <div className="h-2.5 bg-[#f1f3f1] rounded w-1/3" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : notifications.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-14 px-6 text-center h-full min-h-[250px]">
+              <div className="h-12 w-12 rounded-full bg-[#e6f5f0] flex items-center justify-center mb-3">
+                <Bell size={20} className="text-[#0f6e56]" />
+              </div>
+              <p className="text-[13px] font-semibold text-[#141a14]">You're all caught up</p>
+              <p className="text-[12px] text-[#9ea89e] mt-1">No notifications yet.</p>
+            </div>
+          ) : (
+            groupKeys.map((label) => (
+              <div key={label}>
+                <div className="px-4 py-2 bg-[#f7f8f7] border-b border-[#f1f3f1] sticky top-0 z-10">
+                  <span className="text-[10px] font-semibold tracking-wider text-[#9ea89e]">
+                    {label}
+                  </span>
+                </div>
+                <div className="divide-y divide-[#f1f3f1]">
+                  {grouped[label].map((n) => (
+                    <NotificationItem
+                      key={n.id}
+                      notification={n}
+                      onRead={(id) => {
+                        markRead(id)
+                        setOpen(false)
+                      }}
+                    />
+                  ))}
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+
+        {/* footer */}
+        {notifications.length > 0 && (
+          <div className="shrink-0 border-t border-[#eef0ee] px-4 py-3 bg-[#fafcfa] pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+            {unreadCount > 0 ? (
+              <div className="flex items-center justify-center gap-2">
+                <div className="h-5 w-5 rounded-full bg-[#0f6e56] flex items-center justify-center">
+                  <CheckCheck size={11} className="text-white" />
+                </div>
+                <p className="text-[12px] text-[#4a544a]">
+                  You have{' '}
+                  <span className="font-semibold text-[#0f6e56]">{unreadCount}</span>{' '}
+                  unread notification{unreadCount !== 1 ? 's' : ''}
+                </p>
+              </div>
+            ) : (
+              <div className="flex items-center justify-center gap-2">
+                <div className="h-5 w-5 rounded-full bg-[#0f6e56] flex items-center justify-center">
+                  <CheckCheck size={11} className="text-white" />
+                </div>
+                <p className="text-[12px] text-[#4a544a]">All caught up</p>
+              </div>
+            )}
+          </div>
+        )}
+      </>
+    )
+  }
+
   return (
     <div className="relative" ref={dropdownRef}>
       {/* ── Bell button ── */}
       <button
+        ref={bellRef}
         onClick={() => setOpen((o) => !o)}
         className={`relative flex h-10 w-10 items-center justify-center rounded-lg border transition-colors ${
           open
@@ -223,115 +349,31 @@ export default function NotificationBell() {
         }`}
       >
         <Bell size={17} className={open ? 'text-[#0f6e56]' : 'text-[#4a544a]'} />
- 
+
         {unreadCount > 0 && (
           <span className="absolute -right-1.5 -top-1.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-[#0f6e56] px-1 text-[10px] font-semibold text-white border-2 border-white shadow-sm">
             {unreadCount > 99 ? '99+' : unreadCount}
           </span>
         )}
       </button>
- 
-      {/* ── Dropdown ── */}
-      {open && (
+
+      {/* ── Desktop Dropdown ── */}
+      {open && !isMobile && (
         <div
-          className="absolute right-0 top-[calc(100%+8px)] z-[200] w-[380px] rounded-2xl border border-[#e8eae8] bg-white shadow-xl shadow-black/[0.08] overflow-hidden"
-          style={{ maxHeight: '520px', display: 'flex', flexDirection: 'column' }}
+          className="absolute right-0 top-[calc(100%+8px)] z-[200] w-[380px] rounded-2xl border border-[#e8eae8] bg-white shadow-xl shadow-black/[0.08] overflow-hidden flex flex-col"
+          style={{ maxHeight: '520px' }}
         >
-          {/* header */}
-          <div className="flex items-center justify-between px-4 py-3.5 border-b border-[#e8eae8] shrink-0">
-            <span className="text-[15px] font-semibold text-[#141a14]">Notifications</span>
-            <div className="flex items-center gap-3">
-              {unreadCount > 0 && (
-                <button
-                  onClick={markAllRead}
-                  className="text-[12px] font-medium text-[#0f6e56] hover:underline"
-                >
-                  Mark all read
-                </button>
-              )}
-              <button
-                onClick={() => setOpen(false)}
-                className="flex h-7 w-7 items-center justify-center rounded-lg hover:bg-[#f1f3f1] transition-colors"
-              >
-                <X size={14} className="text-[#9ea89e]" />
-              </button>
-            </div>
-          </div>
- 
-          {/* body */}
-          <div className="overflow-y-auto flex-1">
-            {!notifLoaded ? (
-              <div className="px-4 py-6 space-y-3">
-                {[1, 2, 3].map((i) => (
-                  <div key={i} className="flex gap-3 animate-pulse">
-                    <div className="h-9 w-9 rounded-full bg-[#f1f3f1] shrink-0" />
-                    <div className="flex-1 space-y-2">
-                      <div className="h-3 bg-[#f1f3f1] rounded w-3/4" />
-                      <div className="h-2.5 bg-[#f1f3f1] rounded w-1/3" />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : notifications.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-14 px-6 text-center">
-                <div className="h-12 w-12 rounded-full bg-[#e6f5f0] flex items-center justify-center mb-3">
-                  <Bell size={20} className="text-[#0f6e56]" />
-                </div>
-                <p className="text-[13px] font-medium text-[#141a14]">You're all caught up</p>
-                <p className="text-[12px] text-[#9ea89e] mt-1">No notifications yet.</p>
-              </div>
-            ) : (
-              groupKeys.map((label) => (
-                <div key={label}>
-                  <div className="px-4 py-2 bg-[#f7f8f7] border-b border-[#f1f3f1]">
-                    <span className="text-[10px] font-semibold tracking-wider text-[#9ea89e]">
-                      {label}
-                    </span>
-                  </div>
-                  <div className="divide-y divide-[#f1f3f1]">
-                    {grouped[label].map((n) => (
-                      <NotificationItem
-                        key={n.id}
-                        notification={n}
-                        onRead={(id) => {
-                          markRead(id)
-                          setOpen(false)
-                        }}
-                      />
-                    ))}
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
- 
-          {/* footer */}
-          {notifications.length > 0 && (
-            <div className="shrink-0 border-t border-[#e8eae8] px-4 py-3 bg-[#fafcfa]">
-              {unreadCount > 0 ? (
-                <div className="flex items-center justify-center gap-2">
-                  <div className="h-5 w-5 rounded-full bg-[#0f6e56] flex items-center justify-center">
-                    <CheckCheck size={11} className="text-white" />
-                  </div>
-                  <p className="text-[12px] text-[#4a544a]">
-                    You have{' '}
-                    <span className="font-semibold text-[#0f6e56]">{unreadCount}</span>{' '}
-                    unread notification{unreadCount !== 1 ? 's' : ''}
-                  </p>
-                </div>
-              ) : (
-                <div className="flex items-center justify-center gap-2">
-                  <div className="h-5 w-5 rounded-full bg-[#0f6e56] flex items-center justify-center">
-                    <CheckCheck size={11} className="text-white" />
-                  </div>
-                  <p className="text-[12px] text-[#4a544a]">All caught up</p>
-                </div>
-              )}
-            </div>
-          )}
+          {renderContents()}
         </div>
+      )}
+
+      {/* ── Mobile Page Takeover ── */}
+      {open && isMobile && typeof document !== 'undefined' && createPortal(
+        <div className="fixed inset-0 z-[300] bg-white flex flex-col animate-in slide-in-from-bottom-8 duration-300 pt-[max(0px,env(safe-area-inset-top))]">
+          {renderContents()}
+        </div>,
+        document.body
       )}
     </div>
   )
 }
- 
