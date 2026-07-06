@@ -10,12 +10,12 @@ import { getInitials, getAvatarColor, joinedLabel } from '../../utils/adminDispl
 function StatCard({ label, value, delta }) {
   const positive = delta != null && delta >= 0
   return (
-    <div className="rounded-xl border border-[#E5E8E5] bg-white p-5">
-      <span className="text-[13px] text-[#7C867D]">{label}</span>
-      <p className="mt-2 text-[28px] font-semibold text-[#10241C]">{value}</p>
+    <div className="rounded-xl border border-[#E5E8E5] bg-white p-3 sm:p-5">
+      <span className="text-[11px] sm:text-[13px] text-[#7C867D]">{label}</span>
+      <p className="mt-1 sm:mt-2 text-xl sm:text-[28px] font-semibold text-[#10241C]">{value}</p>
       {delta != null && (
-        <div className={`mt-1.5 flex items-center gap-1 text-[12px] font-medium ${positive ? 'text-[#1D9E75]' : 'text-[#C73A30]'}`}>
-          {positive ? <TrendingUp size={13} /> : <TrendingDown size={13} />}
+        <div className={`mt-1 flex items-center gap-1 text-[10px] sm:text-[12px] font-medium ${positive ? 'text-[#1D9E75]' : 'text-[#C73A30]'}`}>
+          {positive ? <TrendingUp size={11} /> : <TrendingDown size={11} />}
           {positive ? '+' : ''}{delta} vs last week
         </div>
       )}
@@ -83,7 +83,7 @@ export default function AdminDashboardPage() {
 
       <div className="px-4 sm:px-8 pb-10">
         {/* Stat cards */}
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-2 lg:grid-cols-4 sm:gap-4">
           <StatCard
             label="Total tenants"
             value={stats?.total_tenants ?? 0}
@@ -91,13 +91,13 @@ export default function AdminDashboardPage() {
           />
           <StatCard label="Total users" value={stats?.total_users ?? 0} />
           <StatCard label="Total requests" value={stats?.total_requests ?? 0} />
-          <div className="rounded-xl border border-[#E5E8E5] bg-white p-5">
-            <span className="text-[13px] text-[#7C867D]">Free vs pro</span>
-            <div className="mt-2 flex items-baseline gap-3">
-              <span className="text-[16px] font-semibold text-[#10241C]">Free: {freeCount}</span>
-              <span className="text-[16px] font-semibold text-[#0F6E56]">Pro: {proCount}</span>
+          <div className="rounded-xl border border-[#E5E8E5] bg-white p-3 sm:p-5">
+            <span className="text-[11px] sm:text-[13px] text-[#7C867D]">Free vs pro</span>
+            <div className="mt-1 sm:mt-2 flex items-baseline gap-2 sm:gap-3">
+              <span className="text-sm sm:text-[16px] font-semibold text-[#10241C]">Free: {freeCount}</span>
+              <span className="text-sm sm:text-[16px] font-semibold text-[#0F6E56]">Pro: {proCount}</span>
             </div>
-            <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-[#EEF1EE]">
+            <div className="mt-2 sm:mt-3 h-1.5 w-full overflow-hidden rounded-full bg-[#EEF1EE]">
               <div className="h-full rounded-full bg-[#1D9E75]" style={{ width: `${proPct}%` }} />
             </div>
           </div>

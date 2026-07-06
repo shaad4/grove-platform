@@ -127,30 +127,29 @@ export default function AdminPlansPage() {
 
       <div className="px-4 sm:px-8 pb-10">
         {/* Summary */}
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-4"> 
-          <div className="rounded-xl border border-[#E5E8E5] bg-white p-5">
-            <span className="text-[13px] text-[#7C867D]">Free plan</span>
-            <p className="mt-2 text-[28px] font-semibold text-[#10241C]">{data?.free_count ?? 0}</p>
-            <p className="mt-1 text-[12px] text-[#9BA39B]">tenants on free</p>
+        <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-2 lg:grid-cols-4 sm:gap-4"> 
+          <div className="rounded-xl border border-[#E5E8E5] bg-white p-3 sm:p-5">
+            <span className="text-[11px] sm:text-[13px] text-[#7C867D]">Free plan</span>
+            <p className="mt-1 sm:mt-2 text-xl sm:text-[28px] font-semibold text-[#10241C]">{data?.free_count ?? 0}</p>
+            <p className="mt-0.5 sm:mt-1 text-[10px] sm:text-[12px] text-[#9BA39B] truncate">tenants on free</p>
           </div>
-          <div className="rounded-xl border border-[#E5E8E5] bg-white p-5">
-            <span className="text-[13px] text-[#7C867D]">Pro plan</span>
-            <p className="mt-2 text-[28px] font-semibold text-[#0F6E56]">{data?.pro_count ?? 0}</p>
-            <p className="mt-1 text-[12px] text-[#9BA39B]">tenants on pro</p>
+          <div className="rounded-xl border border-[#E5E8E5] bg-white p-3 sm:p-5">
+            <span className="text-[11px] sm:text-[13px] text-[#7C867D]">Pro plan</span>
+            <p className="mt-1 sm:mt-2 text-xl sm:text-[28px] font-semibold text-[#0F6E56]">{data?.pro_count ?? 0}</p>
+            <p className="mt-0.5 sm:mt-1 text-[10px] sm:text-[12px] text-[#9BA39B] truncate">tenants on pro</p>
           </div>
-          <div className="rounded-xl border border-[#E2483D]/40 bg-[#FDF1EF] p-5">
-            <span className="text-[13px] text-[#C73A30]">At plan limit</span>
-            <p className="mt-2 text-[28px] font-semibold text-[#C73A30]">{data?.at_limit_count ?? 0}</p>
-            <p className="mt-1 text-[12px] font-medium text-[#C73A30]">Need attention</p>
+          <div className="rounded-xl border border-[#E2483D]/40 bg-[#FDF1EF] p-3 sm:p-5">
+            <span className="text-[11px] sm:text-[13px] text-[#C73A30]">At plan limit</span>
+            <p className="mt-1 sm:mt-2 text-xl sm:text-[28px] font-semibold text-[#C73A30]">{data?.at_limit_count ?? 0}</p>
+            <p className="mt-0.5 sm:mt-1 text-[10px] sm:text-[12px] font-medium text-[#C73A30] truncate">Need attention</p>
           </div>
-          <div className="rounded-xl border border-[#E5E8E5] bg-white p-5">
-            <span className="text-[13px] text-[#7C867D]">Total revenue</span>
-            <p className="mt-2 text-[28px] font-semibold text-[#10241C]">
+          <div className="rounded-xl border border-[#E5E8E5] bg-white p-3 sm:p-5">
+            <span className="text-[11px] sm:text-[13px] text-[#7C867D]">Total revenue</span>
+            <p className="mt-1 sm:mt-2 text-xl sm:text-[28px] font-semibold text-[#10241C] truncate">
               {Number(data?.total_revenue ?? 0).toLocaleString('en-US', { style: 'currency', currency: 'USD' })}
             </p>
-            <p className="mt-1 text-[12px] text-[#9BA39B]">lifetime, Stripe payments</p>
+            <p className="mt-0.5 sm:mt-1 text-[10px] sm:text-[12px] text-[#9BA39B] truncate">lifetime, Stripe payments</p>
           </div>
-          
         </div>
 
         {/* Filters */}
