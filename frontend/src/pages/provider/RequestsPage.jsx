@@ -1,9 +1,10 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { createPortal } from 'react-dom'
 import {
   Search, Flag, Calendar, ChevronDown, LayoutList,
   Columns, Plus, Clock, AlertCircle, Loader2,
-  CheckCircle2, Filter, Check, Sparkles
+  CheckCircle2, Filter, Check, Sparkles, X
 } from 'lucide-react'
 import ProviderLayout from '../../components/layout/ProviderLayout'
 import ProviderTopbar from '../../components/layout/ProviderTopbar'
@@ -163,8 +164,75 @@ function RequestRow({  req, statusConfig, onClick, selected, onSelect }) {
   )
 }
 
+// ── MOBILE REQUEST CARD ───────────────────────────────────────
+function MobileRequestCard({ req, statusConfig, onClick }) {
+  const clientName = req.client_name || 'Unknown'
+  const isClosed = req.status === 'closed'
+  
+  const diff = req.due_date ? Math.ceil((new Date(req.due_date) - new Date()) / 86400000) : null
+  const isOverdueOrToday = !isClosed && diff !== null && diff <= 0
+  const isUrgent = !isClosed && (req.is_urgent || isOverdueOrToday)
+
+  return (
+    <div
+      onClick={onClick}
+      className={`p-4 bg-white rounded-2xl border border-[#e8eae8] active:bg-[#f7f8f7] transition-all relative flex flex-col gap-3 cursor-pointer
+        ${isOverdueOrToday ? 'border-l-4 border-l-red-500 bg-red-50/20' : isUrgent ? 'border-l-2 border-l-red-400' : ''}
+      `}
+    >
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex-1 min-w-0">
+          <h3 className={`text-[14px] font-semibold text-[#141a14] leading-snug break-words ${isOverdueOrToday ? 'text-red-950 font-bold' : ''}`}>
+            {req.title}
+          </h3>
+          {req.description && (
+            <p className="text-[12px] text-[#6b776c] mt-1 line-clamp-2 leading-relaxed">
+              {req.description}
+            </p>
+          )}
+        </div>
+        
+        {/* Right slot icon */}
+        <div className="shrink-0 mt-0.5">
+          {isOverdueOrToday ? (
+            <AlertCircle size={14} className="text-red-500 stroke-[2.5]" />
+          ) : (
+            isUrgent && <Flag size={13} className="text-red-400 fill-red-400" />
+          )}
+        </div>
+      </div>
+
+      {/* Meta Row */}
+      <div className="flex items-center justify-between gap-2 border-t border-[#f1f3f1] pt-3 flex-wrap">
+        <div className="flex items-center gap-2">
+          <Avatar name={clientName} avatarUrl={req.client_avatar_url} size="sm" />
+          <span className="text-[12px] text-[#4a544a] font-medium truncate max-w-[120px]">
+            {clientName}
+          </span>
+        </div>
+        
+        <div className="flex items-center gap-1.5 flex-wrap">
+          <CategoryDot category={req.ai_category} />
+          <StatusPill status={req.status} statusConfig={statusConfig} small />
+        </div>
+      </div>
+
+      {/* Due date row */}
+      {req.due_date && (
+        <div className="flex items-center justify-between text-[11px] text-[#9ea89e] mt-0.5">
+          <div className="flex items-center gap-1">
+            <Calendar size={11} />
+            <DueDate date={req.due_date} />
+          </div>
+          <span>Updated {timeAgo(req.updated_at)}</span>
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ── PIPELINE CARD ─────────────────────────────────────────────
-function PipelineCard({ req, statusConfig, onClick }) {
+function PipelineCard({ req, onClick }) {
   const clientName = req.client_name || 'Unknown'
   const isClosed = req.status === 'closed'
   
@@ -221,16 +289,17 @@ function PipelineCard({ req, statusConfig, onClick }) {
 }
 
 // ── PIPELINE COLUMN ───────────────────────────────────────────
-function PipelineColumn({ status, requests, statusConfig, onCardClick }) {
+function PipelineColumn({ status, requests, statusConfig, onCardClick, isMobile = false }) {
   const cfg = statusConfig[status]
   const isClosed = status === 'closed'
-  const [collapsed, setCollapsed] = useState(isClosed) // closed starts collapsed
+  const [collapsed, setCollapsed] = useState(isClosed && !isMobile)
 
   return (
-    <div className={`flex flex-col transition-all duration-200 ${collapsed ? 'min-w-[48px] w-12' : 'min-w-[220px] flex-1'}`}>
+    <div className={`flex flex-col transition-all duration-200 ${collapsed ? 'min-w-[48px] w-12 md:block hidden' : 'w-full md:min-w-[220px] md:flex-1'}`}>
       
       {/* Header */}
-      <div className="flex items-center justify-between mb-3 px-1">
+      {!isMobile && (
+        <div className="flex items-center justify-between mb-3 px-1">
         {collapsed ? (
           // Vertical collapsed header
           <button
@@ -268,7 +337,8 @@ function PipelineColumn({ status, requests, statusConfig, onCardClick }) {
             </div>
           </>
         )}
-      </div>
+        </div>
+      )}
 
       {/* Cards — hidden when collapsed */}
       {!collapsed && (
@@ -346,6 +416,32 @@ export default function RequestsPage() {
   const [dateFilter, setDateFilter] = useState('')
   const [sortFilter, setSortFilter] = useState('newest')
   const [selected, setSelected] = useState(new Set())
+
+  const [isMobile, setIsMobile] = useState(
+    typeof window !== 'undefined' ? window.innerWidth < 768 : false
+  )
+  const [showMobileFilters, setShowMobileFilters] = useState(false)
+  const [mobilePipelineStatus, setMobilePipelineStatus] = useState('received')
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768)
+    }
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [])
+
+  useEffect(() => {
+    if (requests.length > 0) {
+      const statuses = ['received', 'in_review', 'in_progress', 'delivered', 'closed']
+      const firstWithCards = statuses.find(s => requests.some(r => r.status === s))
+      if (firstWithCards) {
+        setMobilePipelineStatus(firstWithCards)
+      }
+    }
+  }, [requests])
+
+  const activeFiltersCount = (clientFilter ? 1 : 0) + (dateFilter ? 1 : 0) + (categoryFilter ? 1 : 0) + (sortFilter !== 'newest' ? 1 : 0)
 
   const fetchRequests = useCallback(async () => {
     setLoading(true)
@@ -519,6 +615,35 @@ export default function RequestsPage() {
           .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         `}</style>
 
+        {/* Mobile Search and Filter Row */}
+        <div className="flex md:hidden items-center gap-2 mb-4">
+          <div className="relative flex-1">
+            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#9ea89e]" />
+            <input
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              placeholder="Search requests..."
+              className="h-9 w-full rounded-xl border border-[#e8eae8] bg-white pl-8 pr-4 text-[13px] outline-none placeholder:text-[#9ea89e] focus:border-[#0f6e56] transition-all"
+            />
+          </div>
+          <button
+            type="button"
+            onClick={() => setShowMobileFilters(true)}
+            className={`relative flex items-center justify-center h-9 w-9 rounded-xl border bg-white transition-all ${
+              activeFiltersCount > 0 
+                ? 'border-[#0f6e56] bg-[#f0faf6] text-[#0f6e56]' 
+                : 'border-[#e8eae8] text-[#4a544a] hover:bg-[#fafafa]'
+            }`}
+          >
+            <Filter size={15} />
+            {activeFiltersCount > 0 && (
+              <span className="absolute -top-1 -right-1 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-[#0f6e56] px-1 text-[9px] font-bold text-white border border-white">
+                {activeFiltersCount}
+              </span>
+            )}
+          </button>
+        </div>
+
         {/* ── Filter bar ── */}
         <div className="mb-4 rounded-2xl border border-[#e8eae8] bg-white relative z-20">
           
@@ -558,7 +683,7 @@ export default function RequestsPage() {
           </div>
 
           {/* Secondary filter row */}
-          <div className="flex items-center justify-between gap-3 px-4 py-3 border-t border-[#f1f3f1] relative z-30">
+          <div className="hidden md:flex items-center justify-between gap-3 px-4 py-3 border-t border-[#f1f3f1] relative z-30">
             <div className="flex items-center gap-2 flex-wrap">
               <FilterDropdown
                 label="All clients"
@@ -602,68 +727,266 @@ export default function RequestsPage() {
           </div>
         )}
 
+        {/* Mobile Pipeline Column Tabs */}
+        {view === 'pipeline' && (
+          <div className="flex md:hidden items-center gap-1.5 overflow-x-auto pb-3 mb-4 no-scrollbar border-b border-[#f1f3f1]">
+            {['received', 'in_review', 'in_progress', 'delivered', 'closed'].map(s => {
+              const cfg = statusConfig[s]
+              const reqs = byStatus[s] || []
+              const active = mobilePipelineStatus === s
+              return (
+                <button
+                  key={s}
+                  onClick={() => setMobilePipelineStatus(s)}
+                  className={`shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[12px] font-semibold border transition-all
+                    ${active 
+                      ? 'bg-[#e6f5f0] border-[#0f6e56] text-[#0f6e56]' 
+                      : 'bg-white border-[#e8eae8] text-[#6b776c]'
+                    }
+                  `}
+                >
+                  <span className={`h-1.5 w-1.5 rounded-full ${cfg.dot}`} />
+                  <span>{cfg.label}</span>
+                  <span className={`rounded-full px-1.5 py-0.5 text-[9px] ${active ? 'bg-[#0f6e56] text-white' : 'bg-[#f0f2f0] text-[#9ea89e]'}`}>
+                    {reqs.length}
+                  </span>
+                </button>
+              )
+            })}
+          </div>
+        )}
+
         {/* ── Content ── */}
         {loading ? (
           <div className="flex items-center justify-center py-20">
             <Loader2 size={22} className="animate-spin text-[#0f6e56]" />
           </div>
         ) : view === 'list' ? (
-          <div className="rounded-2xl border border-[#e8eae8] bg-white overflow-hidden relative z-10">
-            {/* List header */}
-            <div className="hidden xl:grid items-center gap-4 border-b border-[#f1f3f1] px-4 py-3"
-              style={{ gridTemplateColumns: '24px 12px 1fr 176px 112px 112px 96px 24px' }}>
-              <input type="checkbox" className="h-4 w-4 rounded border-[#e8eae8] accent-[#0f6e56]"
-                onChange={e => setSelected(e.target.checked ? new Set(filtered.map(r => r.id)) : new Set())}
-              />
-              <div />
-              <p className="text-[11px] font-semibold uppercase tracking-wide text-[#9ea89e]">Request</p>
-              <p className="text-[11px] font-semibold uppercase tracking-wide text-[#9ea89e]">Client</p>
-              <p className="text-[11px] font-semibold uppercase tracking-wide text-[#9ea89e]">Status</p>
-              <p className="text-[11px] font-semibold uppercase tracking-wide text-[#9ea89e]">Due Date</p>
-              <p className="text-[11px] font-semibold uppercase tracking-wide text-[#9ea89e] text-right">Last Updated</p>
-              <div />
+          isMobile ? (
+            <div className="flex flex-col gap-3">
+              {filtered.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-16 text-center bg-white rounded-2xl border border-[#e8eae8]">
+                  <AlertCircle size={24} className="text-[#9ea89e] mb-3" />
+                  <p className="text-[15px] font-medium text-[#141a14]">No requests found</p>
+                  <p className="text-[13px] text-[#9ea89e] mt-1">
+                    {activeTab !== 'all' ? `No ${TAB_LABELS[activeTab].toLowerCase()} requests` : 'Requests from clients will appear here'}
+                  </p>
+                </div>
+              ) : (
+                filtered.map(req => (
+                  <MobileRequestCard
+                    key={req.id}
+                    req={req}
+                    statusConfig={statusConfig}
+                    onClick={() => navigate(`/requests/${req.id}`)}
+                  />
+                ))
+              )}
             </div>
-
-            {filtered.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-16 text-center">
-                <AlertCircle size={24} className="text-[#9ea89e] mb-3" />
-                <p className="text-[15px] font-medium text-[#141a14]">No requests found</p>
-                <p className="text-[13px] text-[#9ea89e] mt-1">
-                  {activeTab !== 'all' ? `No ${TAB_LABELS[activeTab].toLowerCase()} requests` : 'Requests from clients will appear here'}
-                </p>
-              </div>
-            ) : (
-              filtered.map(req => (
-                <RequestRow
-                  key={req.id}
-                  req={req}
-                  statusConfig={statusConfig}
-                  onClick={() => navigate(`/requests/${req.id}`)}
-                  selected={selected.has(req.id)}
-                  onSelect={() => setSelected(s => {
-                    const n = new Set(s)
-                    n.has(req.id) ? n.delete(req.id) : n.add(req.id)
-                    return n
-                  })}
+          ) : (
+            <div className="rounded-2xl border border-[#e8eae8] bg-white overflow-hidden relative z-10">
+              {/* List header */}
+              <div className="hidden xl:grid items-center gap-4 border-b border-[#f1f3f1] px-4 py-3"
+                style={{ gridTemplateColumns: '24px 12px 1fr 176px 112px 112px 96px 24px' }}>
+                <input type="checkbox" className="h-4 w-4 rounded border-[#e8eae8] accent-[#0f6e56]"
+                  onChange={e => setSelected(e.target.checked ? new Set(filtered.map(r => r.id)) : new Set())}
                 />
-              ))
-            )}
-          </div>
+                <div />
+                <p className="text-[11px] font-semibold uppercase tracking-wide text-[#9ea89e]">Request</p>
+                <p className="text-[11px] font-semibold uppercase tracking-wide text-[#9ea89e]">Client</p>
+                <p className="text-[11px] font-semibold uppercase tracking-wide text-[#9ea89e]">Status</p>
+                <p className="text-[11px] font-semibold uppercase tracking-wide text-[#9ea89e]">Due Date</p>
+                <p className="text-[11px] font-semibold uppercase tracking-wide text-[#9ea89e] text-right">Last Updated</p>
+                <div />
+              </div>
+
+              {filtered.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-16 text-center">
+                  <AlertCircle size={24} className="text-[#9ea89e] mb-3" />
+                  <p className="text-[15px] font-medium text-[#141a14]">No requests found</p>
+                  <p className="text-[13px] text-[#9ea89e] mt-1">
+                    {activeTab !== 'all' ? `No ${TAB_LABELS[activeTab].toLowerCase()} requests` : 'Requests from clients will appear here'}
+                  </p>
+                </div>
+              ) : (
+                filtered.map(req => (
+                  <RequestRow
+                    key={req.id}
+                    req={req}
+                    statusConfig={statusConfig}
+                    onClick={() => navigate(`/requests/${req.id}`)}
+                    selected={selected.has(req.id)}
+                    onSelect={() => setSelected(s => {
+                      const n = new Set(s)
+                      n.has(req.id) ? n.delete(req.id) : n.add(req.id)
+                      return n
+                    })}
+                  />
+                ))
+              )}
+            </div>
+          )
         ) : (
           /* Pipeline view */
-          <div className="flex gap-4 overflow-x-auto pb-4 relative z-10">
-            {['received', 'in_review', 'in_progress', 'delivered', 'closed'].map(s => (
+          isMobile ? (
+            <div className="flex flex-col gap-4">
               <PipelineColumn
-                key={s}
-                status={s}
+                status={mobilePipelineStatus}
                 statusConfig={statusConfig}
-                requests={byStatus[s] || []}
+                requests={byStatus[mobilePipelineStatus] || []}
                 onCardClick={id => navigate(`/requests/${id}`)}
+                isMobile={true}
               />
-            ))}
-          </div>
+            </div>
+          ) : (
+            <div className="flex gap-4 overflow-x-auto pb-4 relative z-10">
+              {['received', 'in_review', 'in_progress', 'delivered', 'closed'].map(s => (
+                <PipelineColumn
+                  key={s}
+                  status={s}
+                  statusConfig={statusConfig}
+                  requests={byStatus[s] || []}
+                  onCardClick={id => navigate(`/requests/${id}`)}
+                />
+              ))}
+            </div>
+          )
         )}
       </div>
+
+      {/* Mobile Filters Drawer */}
+      {showMobileFilters && typeof document !== 'undefined' && createPortal(
+        <div className="fixed inset-0 z-[250] flex items-end justify-center bg-black/40 backdrop-blur-sm animate-in fade-in duration-200">
+          <div 
+            className="relative w-full max-h-[85vh] bg-white rounded-t-2xl flex flex-col overflow-hidden animate-in slide-in-from-bottom duration-300 pb-[env(safe-area-inset-bottom)]"
+            onClick={e => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between px-4 py-4 border-b border-[#eef0ee]">
+              <div className="flex items-center gap-2">
+                <Filter size={16} className="text-[#0f6e56]" />
+                <span className="text-[16px] font-bold text-[#141a14]">Filters & Sorting</span>
+              </div>
+              <button 
+                type="button"
+                onClick={() => setShowMobileFilters(false)}
+                className="h-8 w-8 rounded-full bg-[#f7f8f7] flex items-center justify-center text-[#6b756d]"
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            {/* Form contents */}
+            <div className="overflow-y-auto p-4 space-y-5 flex-1">
+              {/* Client Filter */}
+              <div className="space-y-1.5">
+                <label className="text-[11px] font-bold text-[#9ea89e] uppercase tracking-wider">Client</label>
+                <div className="grid grid-cols-1 gap-2">
+                  <select
+                    value={clientFilter}
+                    onChange={e => setClientFilter(e.target.value)}
+                    className="w-full h-11 px-3.5 rounded-xl border border-[#e8eae8] bg-white text-[14px] text-[#141a14] outline-none focus:border-[#0f6e56] appearance-none"
+                    style={{ backgroundImage: `url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%239ea89e' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'></polyline></svg>")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 12px center', backgroundSize: '16px' }}
+                  >
+                    {clientOptions.map(o => (
+                      <option key={o.value} value={o.value}>{o.label}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              {/* Date range */}
+              <div className="space-y-1.5">
+                <label className="text-[11px] font-bold text-[#9ea89e] uppercase tracking-wider">Date range</label>
+                <div className="flex flex-wrap gap-2">
+                  {dateOptions.map(o => {
+                    const isSelected = dateFilter === o.value
+                    return (
+                      <button
+                        key={o.value}
+                        type="button"
+                        onClick={() => setDateFilter(o.value)}
+                        className={`h-9 px-4 rounded-full text-[13px] font-medium border transition-colors ${
+                          isSelected 
+                            ? 'bg-[#e6f5f0] border-[#0f6e56] text-[#0f6e56]' 
+                            : 'bg-[#f7f8f7] border-[#e8eae8] text-[#4a544a]'
+                        }`}
+                      >
+                        {o.label === 'Date range' ? 'All time' : o.label}
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+
+              {/* Category */}
+              <div className="space-y-1.5">
+                <label className="text-[11px] font-bold text-[#9ea89e] uppercase tracking-wider">Category</label>
+                <div className="flex flex-wrap gap-2">
+                  {categoryOptions.map(o => {
+                    const isSelected = categoryFilter === o.value
+                    return (
+                      <button
+                        key={o.value}
+                        type="button"
+                        onClick={() => setCategoryFilter(o.value)}
+                        className={`h-9 px-4 rounded-full text-[13px] font-medium border transition-colors ${
+                          isSelected 
+                            ? 'bg-[#e6f5f0] border-[#0f6e56] text-[#0f6e56]' 
+                            : 'bg-[#f7f8f7] border-[#e8eae8] text-[#4a544a]'
+                        }`}
+                      >
+                        {o.label === 'All categories' ? 'All categories' : o.label}
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+
+              {/* Sort */}
+              <div className="space-y-1.5">
+                <label className="text-[11px] font-bold text-[#9ea89e] uppercase tracking-wider">Sort order</label>
+                <div className="grid grid-cols-1 gap-2">
+                  <select
+                    value={sortFilter}
+                    onChange={e => setSortFilter(e.target.value)}
+                    className="w-full h-11 px-3.5 rounded-xl border border-[#e8eae8] bg-white text-[14px] text-[#141a14] outline-none focus:border-[#0f6e56] appearance-none"
+                    style={{ backgroundImage: `url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%239ea89e' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'></polyline></svg>")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 12px center', backgroundSize: '16px' }}
+                  >
+                    {sortOptions.map(o => (
+                      <option key={o.value} value={o.value}>{o.label}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            {/* Footer Actions */}
+            <div className="p-4 border-t border-[#eef0ee] flex gap-3 bg-[#fafcfa]">
+              <button
+                type="button"
+                onClick={() => {
+                  setClientFilter('')
+                  setDateFilter('')
+                  setCategoryFilter('')
+                  setSortFilter('newest')
+                }}
+                className="flex-1 h-11 rounded-xl border border-[#e8eae8] text-[14px] font-semibold text-[#6b756d] bg-white active:bg-[#f7f8f7] transition-all"
+              >
+                Reset All
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowMobileFilters(false)}
+                className="flex-1 h-11 rounded-xl bg-[#0f6e56] text-[14px] font-semibold text-white hover:bg-[#0c5b47] active:scale-[0.98] transition-all"
+              >
+                Apply
+              </button>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
     </ProviderLayout>
   )
 }
