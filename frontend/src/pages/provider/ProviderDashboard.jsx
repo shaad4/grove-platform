@@ -101,7 +101,7 @@ function StatCard({ icon: Icon, title, value, sub, subVariant = 'neutral', loadi
   }[subVariant]
 
   return (
-    <div className={`rounded-2xl border p-4 flex flex-col justify-between h-[116px] transition-all duration-200 ${bgStyle} w-[240px] shrink-0 snap-center md:w-auto md:shrink`}>
+    <div className={`rounded-2xl border p-4 flex flex-col justify-between h-[116px] transition-all duration-200 ${bgStyle} w-full`}>
       <div className="flex items-center justify-between">
         <span className="text-[10px] sm:text-[11px] uppercase tracking-wider text-[#6b776c] font-semibold truncate max-w-[80%]">
           {title}
