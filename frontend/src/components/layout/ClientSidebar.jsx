@@ -11,8 +11,8 @@ import {
 } from 'lucide-react'
 
 import { useAuth } from '../../context/AuthContext'
+import { useTenantBranding } from '../../context/TenantBrandingContext'
 import ClientPortalSwitcher from './ClientPortalSwitcher'
-
 import ClientSettingsModal from '../modals/ClientSettingsModal'
 
 // ─── Client nav items ─────────────────────────────────────────
@@ -32,6 +32,8 @@ const NAV_ITEMS = [
 
 export default function ClientSidebar({ badges = {} }) {
   const { user, tenant, logout } = useAuth()
+  const { colors } = useTenantBranding()
+  const { accent, accentDark, accentSoft, bg1 } = colors
 
   const [isCollapsed, setIsCollapsed] = useState(() => {
     const saved = localStorage.getItem('provider-sidebar-collapsed')
@@ -154,11 +156,8 @@ export default function ClientSidebar({ badges = {} }) {
     <>
       {/* ═══════════════ DESKTOP SIDEBAR ═══════════════════════ */}
       <aside
-        className={`
-          hidden lg:flex flex-col h-screen sticky top-0 shrink-0 select-none
-          transition-all duration-300 ease-in-out border-r border-sidebar bg-sidebar
-          ${isCollapsed ? 'w-[72px]' : 'w-[260px]'}
-        `}
+        className={`hidden lg:flex flex-col h-screen sticky top-0 shrink-0 select-none transition-all duration-300 ease-in-out border-r ${isCollapsed ? 'w-[72px]' : 'w-[260px]'}`}
+        style={{ background: bg1, borderColor: `${accent}22` }}
       >
         {/* ───────────────── Header ───────────────── */}
         <div
@@ -216,13 +215,14 @@ export default function ClientSidebar({ badges = {} }) {
               to={to}
               end={to === '/portal'}
               title={isCollapsed ? label : undefined}
-              className={({ isActive }) => `
-                relative flex items-center rounded-lg text-sm transition-all duration-200
-                ${isCollapsed ? 'justify-center py-3 px-0 mx-auto w-10' : 'gap-3 px-3 py-2.5'}
-                ${isActive 
-                  ? 'bg-primary text-white font-medium shadow-sm' 
-                  : 'text-white/70 hover:text-white hover:bg-white/5'}
-              `}
+              className={({ isActive }) =>
+                `relative flex items-center rounded-lg text-sm transition-all duration-200 ${isCollapsed ? 'justify-center py-3 px-0 mx-auto w-10' : 'gap-3 px-3 py-2.5'}`
+              }
+              style={({ isActive }) =>
+                isActive
+                  ? { background: accent, color: '#fff', fontWeight: 500 }
+                  : { color: 'rgba(255,255,255,0.7)' }
+              }
             >
               <Icon size={18} className="shrink-0" />
 
@@ -314,10 +314,10 @@ export default function ClientSidebar({ badges = {} }) {
               key={to}
               to={to}
               end={to === '/portal'}
-              className={({ isActive }) => `
-                relative flex flex-col items-center justify-center gap-1 min-w-[72px] rounded-xl px-2 py-2 transition-all duration-200
-                ${isActive ? 'text-primary' : 'text-text-dim hover:text-text-sub'}
-              `}
+              className="relative flex flex-col items-center justify-center gap-1 min-w-[72px] rounded-xl px-2 py-2 transition-all duration-200"
+              style={({ isActive }) =>
+                isActive ? { color: accent } : { color: '#9EA89E' }
+              }
             >
               {({ isActive }) => (
                 <>
@@ -325,7 +325,10 @@ export default function ClientSidebar({ badges = {} }) {
                     <Icon size={22} strokeWidth={isActive ? 2.5 : 2} />
 
                     {badgeKey && badges[badgeKey] > 0 && (
-                      <span className="absolute -top-1.5 -right-2 h-4 min-w-[16px] px-1 flex items-center justify-center rounded-full bg-primary shadow-sm text-white text-[9px] font-bold">
+                      <span
+                        className="absolute -top-1.5 -right-2 h-4 min-w-[16px] px-1 flex items-center justify-center rounded-full shadow-sm text-white text-[9px] font-bold"
+                        style={{ background: accent }}
+                      >
                         {badges[badgeKey] > 9 ? '9+' : badges[badgeKey]}
                       </span>
                     )}
@@ -340,31 +343,17 @@ export default function ClientSidebar({ badges = {} }) {
           <ClientNotificationBell isMobileNav={true} />
 
           {/* Profile Nav Item */}
-          <div 
-            className={`
-              relative flex flex-col items-center justify-center gap-1 min-w-[72px] rounded-xl px-2 py-2 transition-all duration-200 cursor-pointer
-              ${isPopupOpen ? 'text-primary' : 'text-text-dim hover:text-text-sub'}
-            `}
+          <div
+            className="relative flex flex-col items-center justify-center gap-1 min-w-[72px] rounded-xl px-2 py-2 transition-all duration-200 cursor-pointer"
+            style={{ color: isPopupOpen ? accent : '#9EA89E' }}
             onClick={(e) => {
               e.stopPropagation()
               setIsPopupOpen(!isPopupOpen)
             }}
           >
             <div
-              className={`
-                h-[22px]
-                w-[22px]
-                rounded-full
-                overflow-hidden
-                bg-primary
-                shadow-sm
-                transition-transform duration-200
-                ${
-                  isPopupOpen
-                    ? 'scale-110 ring-2 ring-primary/20'
-                    : ''
-                }
-              `}
+              className={`h-[22px] w-[22px] rounded-full overflow-hidden shadow-sm transition-transform duration-200 ${isPopupOpen ? 'scale-110' : ''}`}
+              style={{ background: accent, boxShadow: isPopupOpen ? `0 0 0 2px ${accentSoft}` : undefined }}
             >
               {user?.avatar_url ? (
                 <img
