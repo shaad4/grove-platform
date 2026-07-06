@@ -193,6 +193,7 @@ export default function ClientDetailPage() {
   const [showDelete, setShowDelete] = useState(false)
   const [showDeactivateConfirm, setShowDeactivateConfirm] = useState(false)
   const [actionLoading, setActionLoading] = useState(false)
+  const [mobileTab, setMobileTab] = useState('overview')
 
   const showToast = (msg, type = 'success') => {
     setToast({ message: msg, type })
@@ -298,18 +299,50 @@ export default function ClientDetailPage() {
               className="flex items-center gap-1.5 text-[13px] text-[#9ea89e] hover:text-[#141a14] transition-colors"
             >
               <ArrowLeft size={14} />
-              Clients
+              <span className="hidden sm:inline">Clients</span>
             </button>
-            <ChevronRight size={13} className="text-[#d1d5d1]" />
+            <ChevronRight size={13} className="text-[#d1d5d1] hidden sm:block" />
             <div className="flex items-center gap-2">
               <div className={`h-5 w-5 rounded-md overflow-hidden flex items-center justify-center text-[9px] font-bold ${avatar.bg} ${avatar.text}`}>
                 {client.avatar_url ? (
                   <img src={client.avatar_url} alt={displayName} className="w-full h-full object-cover" />
                 ) : getInitials(displayName)}
               </div>
-              <span className="text-[13px] font-medium text-[#141a14]">{displayName}</span>
+              <span className="text-[13px] font-medium text-[#141a14] truncate max-w-[120px] sm:max-w-none">{displayName}</span>
             </div>
             <StatusBadge client={client} />
+
+            {/* Quick edit action in the sticky topbar */}
+            <button
+              onClick={() => setShowEdit(true)}
+              className="ml-auto text-[12px] font-medium text-[#0f6e56] hover:underline"
+            >
+              Edit profile
+            </button>
+          </div>
+
+          {/* Mobile navigation tabs (overview vs requests) */}
+          <div className="md:hidden flex border-b border-[#e8eae8] bg-white px-4 shrink-0 z-20">
+            <button
+              onClick={() => setMobileTab('overview')}
+              className={`flex-1 py-3 text-center text-[13px] font-semibold border-b-2 transition-all ${
+                mobileTab === 'overview'
+                  ? 'border-[#0f6e56] text-[#0f6e56]'
+                  : 'border-transparent text-[#9ea89e]'
+              }`}
+            >
+              Overview
+            </button>
+            <button
+              onClick={() => setMobileTab('requests')}
+              className={`flex-1 py-3 text-center text-[13px] font-semibold border-b-2 transition-all ${
+                mobileTab === 'requests'
+                  ? 'border-[#0f6e56] text-[#0f6e56]'
+                  : 'border-transparent text-[#9ea89e]'
+              }`}
+            >
+              Requests ({allRequests.length})
+            </button>
           </div>
 
           {/* Scrollable Container Block */}
@@ -320,7 +353,7 @@ export default function ClientDetailPage() {
               <div className="min-w-0 space-y-5">
 
                 {/* Client hero card */}
-                <div className="rounded-2xl border border-[#e8eae8] bg-white overflow-hidden">
+                <div className={`rounded-2xl border border-[#e8eae8] bg-white overflow-hidden ${mobileTab === 'overview' ? 'block' : 'hidden md:block'}`}>
                   <div className="h-1.5 w-full bg-gradient-to-r from-[#0f6e56] via-[#1d9e75] to-[#5dbfa0]" />
                   <div className="p-6">
                     <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
@@ -419,7 +452,7 @@ export default function ClientDetailPage() {
                 </div>
 
                 {/* ── Request history ── */}
-                <div className="rounded-2xl border border-[#e8eae8] bg-white overflow-hidden">
+                <div className={`rounded-2xl border border-[#e8eae8] bg-white overflow-hidden ${mobileTab === 'requests' ? 'block' : 'hidden md:block'}`}>
                   <div className="flex items-center justify-between px-5 py-4 border-b border-[#e8eae8]">
                     <h2 className="text-[14px] font-semibold text-[#141a14]">Request history</h2>
                     {allRequests.length > 0 && (
@@ -536,7 +569,7 @@ export default function ClientDetailPage() {
               </div>
 
               {/* ── RIGHT SIDEBAR ── */}
-              <div className="space-y-4">
+              <div className={`space-y-4 ${mobileTab === 'overview' ? 'block' : 'hidden md:block'}`}>
 
                 {/* Client info */}
                 <div className="rounded-2xl border border-[#e8eae8] bg-white p-5">
