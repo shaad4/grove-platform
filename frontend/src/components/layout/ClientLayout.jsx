@@ -1,33 +1,38 @@
-import { useAuth } from '../../context/AuthContext'
+import { useState, useEffect } from 'react'
+import { authApi } from '../../api/auth.api'
 import { getBrandColors } from '../../utils/branding'
 import ClientSidebar from './ClientSidebar'
 
 export default function ClientLayout({ children, fullBleed = false, badges = {} }) {
-  const { tenant } = useAuth()
-  const colors = getBrandColors(tenant?.accent_color)
-  console.log('[ClientLayout] Tenant:', tenant)
-  console.log('[ClientLayout] Computed Colors:', colors)
+  const [tenantInfo, setTenantInfo] = useState(null)
 
-  const themeStyles = {
-    '--primary': colors.accent,
-    '--primary-dark': colors.accentDark,
-    '--primary-light': colors.accentSoft,
-    '--sidebar': colors.bg1,
-    '--grove-50': colors.accentSoft,
-    '--grove-100': colors.accent,
-    '--grove-200': colors.accent,
-    '--grove-300': colors.accent,
-    '--grove-500': colors.accent,
-    '--grove-700': colors.accentDark,
-    '--grove-900': colors.bg1,
-    '--grove-950': colors.bg3,
-  }
+  useEffect(() => {
+    authApi.getTenantInfo()
+      .then(res => setTenantInfo(res.data))
+      .catch(err => console.error('[ClientLayout] Failed to load tenant info:', err))
+  }, [])
+
+  const colors = getBrandColors(tenantInfo?.accent_color)
 
   return (
-    <div 
-      className="flex min-h-screen bg-layout-page text-text-main font-sans selection:bg-primary-light selection:text-primary-dark"
-      style={themeStyles}
-    >
+    <div className="flex min-h-screen bg-layout-page text-text-main font-sans selection:bg-primary-light selection:text-primary-dark">
+      <style>{`
+        :root {
+          --primary: ${colors.accent} !important;
+          --primary-dark: ${colors.accentDark} !important;
+          --primary-light: ${colors.accentSoft} !important;
+          --sidebar: ${colors.bg1} !important;
+          --grove-50: ${colors.accentSoft} !important;
+          --grove-100: ${colors.accent} !important;
+          --grove-200: ${colors.accent} !important;
+          --grove-300: ${colors.accent} !important;
+          --grove-500: ${colors.accent} !important;
+          --grove-700: ${colors.accentDark} !important;
+          --grove-900: ${colors.bg1} !important;
+          --grove-950: ${colors.bg3} !important;
+        }
+      `}</style>
+
       <ClientSidebar badges={badges} />
       
       <div className="flex flex-1 flex-col min-w-0 transition-all duration-300 ease-in-out">
