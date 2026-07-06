@@ -107,25 +107,25 @@ export default function AdminPlansPage() {
 
   return (
     <AdminLayout>
-      <div className="flex items-start justify-between px-8 pt-8 pb-6">
+      <div className="flex items-start justify-between px-4 sm:px-8 pt-6 sm:pt-8 pb-4 sm:pb-6">
         <div>
-          <h1 className="text-[24px] font-semibold text-[#10241C]">Plans</h1>
-          <p className="mt-1 text-[14px] text-[#7C867D]">Manage plans and usage limits.</p>
+          <h1 className="text-[22px] sm:text-[24px] font-semibold text-[#10241C]">Plans</h1>
+          <p className="mt-1 text-[13px] sm:text-[14px] text-[#7C867D]">Manage plans and usage limits.</p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3">
           <button
             onClick={() => setDetailsOpen(true)}
-            className="flex items-center gap-2 rounded-lg border border-[#D8DCD8] bg-white px-3.5 py-2 text-[13px] font-medium text-[#5B655C] hover:bg-[#FAFBFA]"
+            className="flex items-center gap-1.5 rounded-lg border border-[#D8DCD8] bg-white px-2.5 py-1.5 sm:px-3.5 sm:py-2 text-[12px] sm:text-[13px] font-medium text-[#5B655C] hover:bg-[#FAFBFA]"
           >
-            <Settings size={14} /> Manage plans
+            <Settings size={13} /> <span className="hidden sm:inline">Manage plans</span>
           </button>
-          <span className="rounded-lg border border-[#D8DCD8] bg-white px-3.5 py-2 text-[13px] font-medium text-[#5B655C]">
+          <span className="rounded-lg border border-[#D8DCD8] bg-white px-2.5 py-1.5 sm:px-3.5 sm:py-2 text-[12px] sm:text-[13px] font-medium text-[#5B655C] whitespace-nowrap">
             {data?.rows?.length ?? 0} tenants
           </span>
         </div>
       </div>
 
-      <div className="px-8 pb-10">
+      <div className="px-4 sm:px-8 pb-10">
         {/* Summary */}
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-4"> 
           <div className="rounded-xl border border-[#E5E8E5] bg-white p-5">
@@ -158,7 +158,7 @@ export default function AdminPlansPage() {
           <select
             value={planFilter}
             onChange={(e) => setPlanFilter(e.target.value)}
-            className="h-10 rounded-lg border border-[#D8DCD8] bg-white px-3 text-[13px] text-[#5B655C] outline-none focus:border-[#1D9E75]"
+            className="h-10 rounded-lg border border-[#D8DCD8] bg-white px-3 text-[13px] text-[#5B655C] outline-none focus:border-[#1D9E75] flex-shrink-0"
           >
             <option value="">All plans</option>
             <option value="free">Free</option>
@@ -168,13 +168,13 @@ export default function AdminPlansPage() {
           <select
             value={usageFilter}
             onChange={(e) => setUsageFilter(e.target.value)}
-            className="h-10 rounded-lg border border-[#D8DCD8] bg-white px-3 text-[13px] text-[#5B655C] outline-none focus:border-[#1D9E75]"
+            className="h-10 rounded-lg border border-[#D8DCD8] bg-white px-3 text-[13px] text-[#5B655C] outline-none focus:border-[#1D9E75] flex-shrink-0"
           >
             <option value="">All usage</option>
             <option value="at_limit">At limit</option>
           </select>
 
-          <div className="relative min-w-[260px] flex-1">
+          <div className="relative min-w-[200px] sm:min-w-[260px] flex-1">
             <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#9BA39B]" />
             <input
               value={search}
@@ -190,10 +190,10 @@ export default function AdminPlansPage() {
           <table className="w-full text-left">
             <thead>
               <tr className="border-b border-[#EEF1EE] text-[11px] uppercase tracking-wide text-[#9BA39B]">
-                <th className="px-5 py-3 font-medium">Tenant</th>
-                <th className="px-5 py-3 font-medium">Plan</th>
-                <th className="px-5 py-3 font-medium">Clients</th>
-                <th className="px-5 py-3 font-medium">Requests</th>
+                <th className="px-4 sm:px-5 py-3 font-medium">Tenant</th>
+                <th className="px-4 sm:px-5 py-3 font-medium">Plan</th>
+                <th className="px-5 py-3 font-medium hidden sm:table-cell">Clients</th>
+                <th className="px-5 py-3 font-medium hidden sm:table-cell">Requests</th>
               </tr>
             </thead>
             <tbody>
@@ -208,17 +208,17 @@ export default function AdminPlansPage() {
                       isAtLimit(r) ? 'border-l-2 border-l-[#E2483D]' : ''
                     }`}
                   >
-                    <td className="px-5 py-3.5">
+                    <td className="px-4 sm:px-5 py-3.5">
                       <div className="flex items-center gap-3">
                         <PlanTenantLogo row={r} />
-                        <p className="text-[13px] font-medium text-[#10241C]">{r.tenant_name}</p>
+                        <p className="text-[13px] font-medium text-[#10241C] truncate max-w-[120px] sm:max-w-none">{r.tenant_name}</p>
                       </div>
                     </td>
-                    <td className="px-5 py-3.5"><PlanBadge plan={r.plan} /></td>
-                    <td className="px-5 py-3.5">
+                    <td className="px-4 sm:px-5 py-3.5"><PlanBadge plan={r.plan} /></td>
+                    <td className="px-5 py-3.5 hidden sm:table-cell">
                       <UsageCell used={r.client_count} limit={r.client_limit} />
                     </td>
-                    <td className="px-5 py-3.5">
+                    <td className="px-5 py-3.5 hidden sm:table-cell">
                       <UsageCell used={r.request_count} limit={r.request_limit} />
                     </td>
                   </tr>

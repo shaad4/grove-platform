@@ -156,19 +156,19 @@ export default function AdminUsersPage() {
 
   return (
     <AdminLayout>
-      <div className="flex items-start justify-between px-8 pt-8 pb-6">
+      <div className="flex items-start justify-between px-4 sm:px-8 pt-6 sm:pt-8 pb-4 sm:pb-6">
         <div>
-          <h1 className="text-[24px] font-semibold text-[#10241C]">Users</h1>
-          <p className="mt-1 text-[14px] text-[#7C867D]">All provider and client accounts.</p>
+          <h1 className="text-[22px] sm:text-[24px] font-semibold text-[#10241C]">Users</h1>
+          <p className="mt-1 text-[13px] sm:text-[14px] text-[#7C867D]">All provider and client accounts.</p>
         </div>
-        <span className="rounded-lg border border-[#D8DCD8] bg-white px-3.5 py-2 text-[13px] font-medium text-[#5B655C]">
+        <span className="rounded-lg border border-[#D8DCD8] bg-white px-3 py-1.5 sm:px-3.5 sm:py-2 text-[12px] sm:text-[13px] font-medium text-[#5B655C]">
           {total} users
         </span>
       </div>
 
-      <div className="px-8 pb-10">
+      <div className="px-4 sm:px-8 pb-10">
         <div className="mb-4 flex flex-wrap items-center gap-3">
-          <div className="relative min-w-[260px] flex-1">
+          <div className="relative min-w-[200px] sm:min-w-[260px] flex-1">
             <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#9BA39B]" />
             <input
               value={search}
@@ -181,7 +181,7 @@ export default function AdminUsersPage() {
           <select
             value={roleFilter}
             onChange={(e) => setRoleFilter(e.target.value)}
-            className="h-10 rounded-lg border border-[#D8DCD8] bg-white px-3 text-[13px] text-[#5B655C] outline-none focus:border-[#1D9E75]"
+            className="h-10 rounded-lg border border-[#D8DCD8] bg-white px-3 text-[13px] text-[#5B655C] outline-none focus:border-[#1D9E75] flex-shrink-0"
           >
             <option value="">All roles</option>
             <option value="provider">Provider</option>
@@ -191,7 +191,7 @@ export default function AdminUsersPage() {
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="h-10 rounded-lg border border-[#D8DCD8] bg-white px-3 text-[13px] text-[#5B655C] outline-none focus:border-[#1D9E75]"
+            className="h-10 rounded-lg border border-[#D8DCD8] bg-white px-3 text-[13px] text-[#5B655C] outline-none focus:border-[#1D9E75] flex-shrink-0"
           >
             <option value="">All statuses</option>
             <option value="active">Active</option>
@@ -212,13 +212,13 @@ export default function AdminUsersPage() {
           <table className="w-full text-left">
             <thead>
               <tr className="border-b border-[#EEF1EE] text-[11px] uppercase tracking-wide text-[#9BA39B]">
-                <th className="px-5 py-3 font-medium">User</th>
-                <th className="px-5 py-3 font-medium">Role</th>
-                <th className="px-5 py-3 font-medium">Workspace</th>
-                <th className="px-5 py-3 font-medium">Joined</th>
-                <th className="px-5 py-3 font-medium">Last login</th>
-                <th className="px-5 py-3 font-medium">Status</th>
-                <th className="px-5 py-3 font-medium w-12">Actions</th>
+                <th className="px-4 sm:px-5 py-3 font-medium">User</th>
+                <th className="px-4 sm:px-5 py-3 font-medium">Role</th>
+                <th className="px-5 py-3 font-medium hidden md:table-cell">Workspace</th>
+                <th className="px-5 py-3 font-medium hidden lg:table-cell">Joined</th>
+                <th className="px-5 py-3 font-medium hidden lg:table-cell">Last login</th>
+                <th className="px-4 sm:px-5 py-3 font-medium">Status</th>
+                <th className="px-5 py-3 font-medium w-12 hidden sm:table-cell">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -233,23 +233,23 @@ export default function AdminUsersPage() {
                     onClick={() => openDetail(u)}
                     className="cursor-pointer border-b border-[#F3F5F3] last:border-0 hover:bg-[#FAFBFA]"
                   >
-                    <td className="px-5 py-3.5">
+                    <td className="px-4 sm:px-5 py-3.5">
                       <div className="flex items-center gap-3">
                         <UserAvatar user={u} />
-                        <div>
-                          <p className="text-[13px] font-medium text-[#10241C]">{u.display_name}</p>
-                          <p className="text-[12px] text-[#9BA39B]">{u.email}</p>
+                        <div className="min-w-0">
+                          <p className="text-[13px] font-medium text-[#10241C] truncate max-w-[120px] sm:max-w-none">{u.display_name}</p>
+                          <p className="text-[12px] text-[#9BA39B] truncate max-w-[120px] sm:max-w-none">{u.email}</p>
                         </div>
                       </div>
                     </td>
-                    <td className="px-5 py-3.5"><RoleBadge role={u.role} /></td>
-                    <td className="px-5 py-3.5 text-[13px] text-[#0F6E56]">{u.tenant_slug}.grove.co</td>
-                    <td className="px-5 py-3.5 text-[13px] text-[#7C867D]">{joinedLabel(u.joined_at)}</td>
-                    <td className="px-5 py-3.5 text-[13px] text-[#7C867D]">{relativeTimeLabel(u.last_login) || 'Never'}</td>
-                    <td className="px-5 py-3.5">
+                    <td className="px-4 sm:px-5 py-3.5"><RoleBadge role={u.role} /></td>
+                    <td className="px-5 py-3.5 text-[13px] text-[#0F6E56] hidden md:table-cell">{u.tenant_slug}.grove.co</td>
+                    <td className="px-5 py-3.5 text-[13px] text-[#7C867D] hidden lg:table-cell">{joinedLabel(u.joined_at)}</td>
+                    <td className="px-5 py-3.5 text-[13px] text-[#7C867D] hidden lg:table-cell">{relativeTimeLabel(u.last_login) || 'Never'}</td>
+                    <td className="px-4 sm:px-5 py-3.5">
                       <StatusPill status={u.is_active ? 'Active' : 'Deactivated'} />
                     </td>
-                    <td className="px-5 py-3.5">
+                    <td className="px-5 py-3.5 hidden sm:table-cell">
                       <RowActionsMenu user={u} onSelect={openDetail} />
                     </td>
                   </tr>

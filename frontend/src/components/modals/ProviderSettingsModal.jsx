@@ -962,7 +962,7 @@ function ProviderSettingsModalInner({ onClose }) {
       const res = await uploadLogo(file)
       setLogoPreview(res.data.data.logo_url)
       setWs(p => ({ ...p, logo_url: res.data.data.logo_url }))
-    } catch { }
+    } catch { /* silent */ }
   }
 
   const SECTIONS = {

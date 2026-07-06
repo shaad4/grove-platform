@@ -52,8 +52,8 @@ export default function AdminSlidePanel({
       <div
         role="dialog"
         aria-modal="true"
-        style={{ width, maxWidth: '92vw' }}
-        className={`absolute right-0 top-0 h-full bg-[#FBFCFB] shadow-[-24px_0_60px_rgba(4,8,6,0.25)] transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] ${
+        style={{ '--panel-width': `${width}px` }}
+        className={`absolute right-0 top-0 h-full bg-[#FBFCFB] shadow-[-24px_0_60px_rgba(4,8,6,0.25)] transition-transform duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] w-full sm:w-[var(--panel-width)] ${
           animateIn ? 'translate-x-0' : 'translate-x-full'
         }`}
       >

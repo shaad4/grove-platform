@@ -1,4 +1,4 @@
-/* eslint-disable react/no-unknown-property */
+/* eslint-disable */
 
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 

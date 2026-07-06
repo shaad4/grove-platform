@@ -83,7 +83,7 @@ function PrivateNoteEditor({ client, onSaved }) {
       await clientsApi.update(client.id, { private_note: value })
       onSaved?.(value)
       setEditing(false)
-    } catch { } finally { setLoading(false) }
+    } catch { /* silent */ } finally { setLoading(false) }
   }
 
   if (!editing) return (

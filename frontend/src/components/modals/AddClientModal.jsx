@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import {
   X, Mail, ArrowRight, CheckCircle2,
-  AlertTriangle, Copy, Plus, ChevronDown,
+  AlertTriangle, Copy, Plus, ChevronDown, ArrowLeft,
 } from 'lucide-react'
 import api from '../../api/client'
 import { useAuth } from '../../context/AuthContext'
@@ -25,7 +25,7 @@ function getTagColor(name) {
 function Backdrop({ children, onClose }) {
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-white md:bg-black/70 md:p-4 md:backdrop-blur-sm"
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
       {children}
@@ -427,41 +427,44 @@ const validate = () => {
   // ── FORM ──────────────────────────────────────────────────
   if (step === 'form') return (
     <Backdrop onClose={onClose}>
-      <div className="w-full max-w-[980px] overflow-hidden border border-[#e8eae8] bg-white shadow-[0px_24px_60px_rgba(10,46,36,0.16)]
-        max-h-[95vh]
-        rounded-none sm:rounded-[24px] lg:rounded-[28px]">
+      <div className="w-full h-full md:h-auto md:max-h-[95vh] md:max-w-[980px] overflow-hidden border-none md:border md:border-[#e8eae8] bg-white shadow-none md:shadow-[0px_24px_60px_rgba(10,46,36,0.16)]
+        rounded-none md:rounded-[24px] lg:rounded-[28px] flex flex-col">
 
-        <div className="flex flex-col lg:grid lg:grid-cols-[360px_1fr]">
+        {/* MOBILE HEADER */}
+        <div className="flex h-14 items-center justify-between border-b border-[#eef0ee] bg-white px-4 md:hidden shrink-0">
+          <button
+            type="button"
+            onClick={onClose}
+            className="flex h-10 w-10 items-center justify-center rounded-xl hover:bg-[#f7f8f7] transition-colors"
+          >
+            <ArrowLeft size={20} className="text-[#4a544a]" />
+          </button>
+          <span className="text-[16px] font-semibold text-[#0a2e24]">Add Client</span>
+          <div className="w-10" />
+        </div>
+
+        <div className="flex flex-col lg:grid lg:grid-cols-[360px_1fr] flex-1 overflow-hidden">
 
           {/* LEFT PANEL */}
-          <div className="relative overflow-hidden border-b border-[#eef0ee] bg-[#f7f8f7] p-6 lg:border-b-0 lg:border-r lg:p-8">
+          <div className="hidden lg:flex relative overflow-hidden border-r bg-[#f7f8f7] p-8 flex-col justify-between overflow-y-auto h-full shrink-0">
 
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(15,110,86,0.08),transparent_45%)]" />
 
             <div className="relative z-10 flex h-full flex-col">
 
-              <div className="flex items-start justify-between">
-                <div>
-                  <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-[#dbe7e1] bg-white px-3 py-1 text-[11px] font-medium text-[#0f6e56]">
-                    <div className="h-2 w-2 rounded-full bg-[#0f6e56]" />
-                    CLIENT PORTAL
-                  </div>
-
-                  <h2 className="text-[28px] font-semibold leading-tight text-[#0a2e24]">
-                    Add a new client
-                  </h2>
-
-                  <p className="mt-3 max-w-[260px] text-[14px] leading-6 text-[#6b756d]">
-                    Create a private workspace and instantly send a secure invitation.
-                  </p>
+              <div>
+                <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-[#dbe7e1] bg-white px-3 py-1 text-[11px] font-medium text-[#0f6e56]">
+                  <div className="h-2 w-2 rounded-full bg-[#0f6e56]" />
+                  CLIENT PORTAL
                 </div>
 
-                <button
-                  onClick={onClose}
-                  className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/80 backdrop-blur hover:bg-white transition-colors"
-                >
-                  <X size={16} className="text-[#7c867d]" />
-                </button>
+                <h2 className="text-[28px] font-semibold leading-tight text-[#0a2e24]">
+                  Add a new client
+                </h2>
+
+                <p className="mt-3 max-w-[260px] text-[14px] leading-6 text-[#6b756d]">
+                  Create a private workspace and instantly send a secure invitation.
+                </p>
               </div>
 
               {/* Preview Card */}
@@ -516,7 +519,7 @@ const validate = () => {
                 )}
               </div>
 
-              <div className="mt-auto pt-8">
+              <div className="mt-8 pt-8 border-t border-[#eef0ee]">
                 <p className="text-[12px] leading-5 text-[#9ea89e]">
                   Clients can securely access projects, invoices, files, and updates from their dedicated portal.
                 </p>
@@ -525,9 +528,28 @@ const validate = () => {
           </div>
 
           {/* RIGHT PANEL */}
-          <div className="overflow-y-auto p-6 lg:max-h-none lg:overflow-visible lg:p-10 max-h-[calc(95vh-260px)]">
+          <div className="flex-1 overflow-y-auto p-6 lg:p-10 pb-24 md:pb-10 h-full">
 
             <div className="grid gap-6">
+
+              {/* Mobile Title & Subtitle */}
+              <div className="mb-2 md:hidden">
+                <h2 className="text-[24px] font-bold leading-tight text-[#0a2e24]">
+                  Add a new client
+                </h2>
+                <p className="mt-2 text-[14px] leading-6 text-[#6b756d]">
+                  Create a private workspace and instantly send a secure invitation.
+                </p>
+                {/* Compact Workspace URL */}
+                <div className="mt-4 rounded-xl bg-[#f7f8f7] border border-[#eef0ee] p-3 text-[12px]">
+                  <span className="font-medium text-[#9ea89e] uppercase tracking-wider text-[10px]">
+                    Workspace URL
+                  </span>
+                  <p className="mt-0.5 break-all font-medium text-[#0f6e56]">
+                    {tenant?.slug}.grove.co/portal
+                  </p>
+                </div>
+              </div>
 
               {/* ROW 1 */}
               <div className="grid gap-5 md:grid-cols-2">
@@ -632,10 +654,11 @@ const validate = () => {
                 )}
               </Field>
 
-              {/* ACTIONS */}
-              <div className="flex flex-col-reverse gap-3 border-t border-[#eef0ee] pt-6 sm:flex-row sm:items-center sm:justify-end">
+              {/* DESKTOP ACTIONS */}
+              <div className="hidden md:flex flex-col-reverse gap-3 border-t border-[#eef0ee] pt-6 sm:flex-row sm:items-center sm:justify-end">
 
                 <button
+                  type="button"
                   onClick={onClose}
                   className="h-12 rounded-2xl px-5 text-[14px] font-medium text-[#6b756d] hover:bg-[#f7f8f7] transition-colors"
                 >
@@ -643,6 +666,7 @@ const validate = () => {
                 </button>
 
                 <button
+                  type="button"
                   onClick={handleSubmit}
                   disabled={
                     loading ||
@@ -681,18 +705,50 @@ const validate = () => {
             </div>
           </div>
         </div>
+
+        {/* MOBILE STICKY BOTTOM ACTIONS */}
+        <div className="sticky bottom-0 bg-white border-t border-[#eef0ee] p-4 flex gap-3 z-10 shrink-0 md:hidden">
+          <button
+            type="button"
+            onClick={onClose}
+            className="flex-1 h-12 rounded-xl border border-[#e8eae8] text-[14px] font-medium text-[#6b756d] hover:bg-[#f7f8f7] transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={handleSubmit}
+            disabled={
+              loading ||
+              Object.keys(fieldErrors).length > 0
+            }
+            className="flex-1 flex h-12 items-center justify-center gap-2 rounded-xl bg-[#0f6e56] text-[14px] font-medium text-white transition-all hover:bg-[#085041] disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {loading ? (
+              <svg className="h-4 w-4 animate-spin text-white" viewBox="0 0 24 24" fill="none">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+              </svg>
+            ) : (
+              <>
+                Send invite
+                <ArrowRight size={16} />
+              </>
+            )}
+          </button>
+        </div>
       </div>
     </Backdrop>
   )
   // ── SUCCESS ───────────────────────────────────────────────
   if (step === 'success') return (
     <Backdrop onClose={onClose}>
-      <div className="relative w-full max-w-[460px] rounded-[24px] bg-white p-8 shadow-[0px_24px_32px_rgba(10,46,36,0.18)]">
+      <div className="relative w-full h-full md:h-auto md:max-w-[460px] rounded-none md:rounded-[24px] bg-white p-6 md:p-8 shadow-none md:shadow-[0px_24px_32px_rgba(10,46,36,0.18)] flex flex-col justify-center items-center">
         <button onClick={onClose} className="absolute right-5 top-5 flex h-9 w-9 items-center justify-center rounded-xl bg-[#f7f8f7]">
           <X size={16} className="text-[#9ea89e]" />
         </button>
 
-        <div className="flex flex-col items-center text-center">
+        <div className="flex flex-col items-center text-center my-auto md:my-0 w-full">
           <div className="flex h-14 w-14 items-center justify-center rounded-full border border-[#b3e0d1] bg-[#e6f5f0]">
             <CheckCircle2 size={28} className="text-[#0f6e56]" />
           </div>
@@ -733,11 +789,11 @@ const validate = () => {
   // Duplicate active client
   if (step === 'error' && errorState.type === 'duplicate_client') return (
     <Backdrop onClose={onClose}>
-      <div className="relative w-full max-w-[420px] rounded-[24px] bg-white p-8 shadow-[0px_24px_32px_rgba(10,46,36,0.18)]">
+      <div className="relative w-full h-full md:h-auto md:max-w-[420px] rounded-none md:rounded-[24px] bg-white p-6 md:p-8 shadow-none md:shadow-[0px_24px_32px_rgba(10,46,36,0.18)] flex flex-col justify-center items-center">
         <button onClick={onClose} className="absolute right-5 top-5 flex h-9 w-9 items-center justify-center rounded-xl bg-[#f7f8f7]">
           <X size={16} className="text-[#9ea89e]" />
         </button>
-        <div className="flex flex-col items-center text-center">
+        <div className="flex flex-col items-center text-center my-auto md:my-0 w-full">
           <div className="flex h-14 w-14 items-center justify-center rounded-full border border-[#e8eae8] bg-[#f7f8f7]">
             <span className="text-2xl">👤</span>
           </div>
@@ -763,11 +819,11 @@ const validate = () => {
   // Pending invite already exists
   if (step === 'error' && errorState.type === 'pending_invite') return (
     <Backdrop onClose={onClose}>
-      <div className="relative w-full max-w-[420px] rounded-[24px] bg-white p-8 shadow-[0px_24px_32px_rgba(10,46,36,0.18)]">
+      <div className="relative w-full h-full md:h-auto md:max-w-[420px] rounded-none md:rounded-[24px] bg-white p-6 md:p-8 shadow-none md:shadow-[0px_24px_32px_rgba(10,46,36,0.18)] flex flex-col justify-center items-center">
         <button onClick={onClose} className="absolute right-5 top-5 flex h-9 w-9 items-center justify-center rounded-xl bg-[#f7f8f7]">
           <X size={16} className="text-[#9ea89e]" />
         </button>
-        <div className="flex flex-col items-center text-center">
+        <div className="flex flex-col items-center text-center my-auto md:my-0 w-full">
           <div className="flex h-14 w-14 items-center justify-center rounded-full border border-[#FEF3E2] bg-[#FEF3E2]">
             <Mail size={24} className="text-[#92500A]" />
           </div>
@@ -800,11 +856,11 @@ const validate = () => {
   // Plan limit reached
   if (step === 'error' && errorState.type === 'limit_reached') return (
     <Backdrop onClose={onClose}>
-      <div className="relative w-full max-w-[420px] rounded-[24px] bg-white p-8 shadow-[0px_24px_32px_rgba(10,46,36,0.18)]">
+      <div className="relative w-full h-full md:h-auto md:max-w-[420px] rounded-none md:rounded-[24px] bg-white p-6 md:p-8 shadow-none md:shadow-[0px_24px_32px_rgba(10,46,36,0.18)] flex flex-col justify-center items-center">
         <button onClick={onClose} className="absolute right-5 top-5 flex h-9 w-9 items-center justify-center rounded-xl bg-[#f7f8f7]">
           <X size={16} className="text-[#9ea89e]" />
         </button>
-        <div className="flex flex-col items-center text-center">
+        <div className="flex flex-col items-center text-center my-auto md:my-0 w-full">
           <div className="flex h-14 w-14 items-center justify-center rounded-full border border-[#e8eae8] bg-[#f7f8f7]">
             <span className="text-2xl">🔒</span>
           </div>
@@ -830,11 +886,11 @@ const validate = () => {
   // Generic fallback
   return (
     <Backdrop onClose={onClose}>
-      <div className="relative w-full max-w-[420px] rounded-[24px] bg-white p-8 shadow-[0px_24px_32px_rgba(10,46,36,0.18)]">
+      <div className="relative w-full h-full md:h-auto md:max-w-[420px] rounded-none md:rounded-[24px] bg-white p-6 md:p-8 shadow-none md:shadow-[0px_24px_32px_rgba(10,46,36,0.18)] flex flex-col justify-center items-center">
         <button onClick={onClose} className="absolute right-5 top-5 flex h-9 w-9 items-center justify-center rounded-xl bg-[#f7f8f7]">
           <X size={16} className="text-[#9ea89e]" />
         </button>
-        <div className="flex flex-col items-center text-center">
+        <div className="flex flex-col items-center text-center my-auto md:my-0 w-full">
           <div className="flex h-14 w-14 items-center justify-center rounded-full border border-[#f5dfb0] bg-[#fef3e2]">
             <AlertTriangle size={24} className="text-[#92500a]" />
           </div>

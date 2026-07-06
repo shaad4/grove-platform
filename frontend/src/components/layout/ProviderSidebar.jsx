@@ -13,6 +13,9 @@ import {
 } from 'lucide-react'
 
 import { useAuth } from '../../context/AuthContext'
+import { useSelector } from 'react-redux'
+import { selectTenant } from '../../features/auth/authSlice'
+import { appUrl } from '../../utils/urls'
 import PortalSwitcher from './PortalSwitcher'
 import { getWorkspace } from '../../api/settings.api'
 
@@ -47,6 +50,7 @@ export default function ProviderSidebar({
   badges = {},
 }) {
   const { user, logout } = useAuth()
+  const tenant = useSelector(selectTenant)
 
   const [planName, setPlanName] = useState(null)
 
@@ -74,6 +78,8 @@ export default function ProviderSidebar({
     useState(false)
 
   const popupRef = useRef(null)
+  const mobileRef = useRef(null)
+  const mobilePopupRef = useRef(null)
 
   const initials = user?.display_name
     ? user.display_name
@@ -86,12 +92,10 @@ export default function ProviderSidebar({
 
   useEffect(() => {
     function handleClickOutside(event) {
-      if (
-        popupRef.current &&
-        !popupRef.current.contains(
-          event.target
-        )
-      ) {
+      const inDesktop = popupRef.current && popupRef.current.contains(event.target)
+      const inMobile = mobileRef.current && mobileRef.current.contains(event.target)
+      const inMobilePopup = mobilePopupRef.current && mobilePopupRef.current.contains(event.target)
+      if (!inDesktop && !inMobile && !inMobilePopup) {
         setIsPopupOpen(false)
       }
     }
@@ -524,78 +528,16 @@ export default function ProviderSidebar({
         </div>
       </aside>
 
-      {/* ───────────────── Mobile Top Bar ───────────────── */}
-      <div
-        className="
-          lg:hidden
-
-          fixed top-0 left-0 right-0
-
-          z-40
-
-          border-b border-white/[0.06]
-
-          bg-[#071A15]/95
-
-          backdrop-blur-xl
-        "
-      >
-        <div className="flex items-center justify-between px-4 py-3">
-          {/* Portal Switcher */}
-          <div className="min-w-0 flex-1">
-            <PortalSwitcher />
-          </div>
-
-          {/* Profile */}
-          <div
-            onClick={() =>
-              setIsPopupOpen(
-                !isPopupOpen
-              )
-            }
-            className="
-              ml-3
-              h-9 w-9
-              shrink-0
-              rounded-full
-              overflow-hidden
-              bg-[#0f6e56]
-              cursor-pointer
-            "
-          >
-            {user?.avatar_url ? (
-              <img
-                src={user.avatar_url}
-                alt={user.display_name}
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              <div
-                className="
-                  w-full h-full
-                  flex items-center justify-center
-                  text-[11px]
-                  font-semibold
-                  text-white
-                "
-              >
-                {initials}
-              </div>
-            )}
-
-          </div>
-        </div>
-      </div>
-
       {/* ───────────────── Mobile Profile Popup ───────────────── */}
       {isPopupOpen && (
         <div
+          ref={mobilePopupRef}
           className="
             lg:hidden
 
-            fixed top-[72px] right-4
+            fixed bottom-[76px] right-4
 
-            w-[220px]
+            w-[240px]
 
             z-50
 
@@ -612,18 +554,61 @@ export default function ProviderSidebar({
             overflow-hidden
           "
         >
+          {/* User info */}
           <div className="px-4 py-3 border-b border-white/[0.06]">
             <p className="truncate text-[13px] font-medium text-white">
-              {user?.display_name ||
-                'clientonly'}
+              {user?.display_name || 'Provider'}
             </p>
 
             <p className="truncate text-[11px] text-white/40 mt-0.5">
-              {user?.email ||
-                'clientonly@yopmail.com'}
+              {user?.email || ''}
             </p>
           </div>
 
+          {/* Portal Switcher (Redirect on Mobile) */}
+          <div className="p-2 border-b border-white/[0.06]">
+            <button
+              onClick={() => {
+                setIsPopupOpen(false)
+                window.location.replace(appUrl(null, '/portals'))
+              }}
+              className="
+                flex items-center justify-between
+                w-full text-left
+                p-2
+                rounded-xl
+                bg-white/[0.04]
+                hover:bg-white/[0.08]
+                transition-all duration-200
+                group
+              "
+            >
+              <div className="flex items-center gap-2 min-w-0">
+                {tenant?.logo_url ? (
+                  <img
+                    src={tenant.logo_url}
+                    alt={tenant.name}
+                    className="h-5 w-5 rounded-md object-cover shrink-0"
+                  />
+                ) : (
+                  <div className="h-5 w-5 rounded-md shrink-0 flex items-center justify-center bg-[#1A2A25] text-[9px] font-semibold text-white">
+                    {tenant?.name
+                      ?.split(' ')
+                      .map((w) => w[0])
+                      .join('')
+                      .slice(0, 2)
+                      .toUpperCase() ?? '??'}
+                  </div>
+                )}
+                <span className="truncate text-[12px] font-medium text-white/80 group-hover:text-white transition-colors">
+                  {tenant?.name || 'Switch Workspace'}
+                </span>
+              </div>
+              <ChevronDown size={14} className="text-white/40 group-hover:text-white/80 transition-colors shrink-0" />
+            </button>
+          </div>
+
+          {/* Actions */}
           <button
             onClick={() => {
               setIsPopupOpen(false)
@@ -687,6 +672,7 @@ export default function ProviderSidebar({
 
       {/* ───────────────── Mobile Bottom Nav ───────────────── */}
       <div
+        ref={mobileRef}
         className="
           fixed bottom-0 left-0 right-0
 
@@ -711,6 +697,7 @@ export default function ProviderSidebar({
               <NavLink
                 key={to}
                 to={to}
+                onClick={() => setIsPopupOpen(false)}
                 className={({
                   isActive,
                 }) =>
@@ -719,11 +706,11 @@ export default function ProviderSidebar({
 
                   gap-1
 
-                  min-w-[64px]
+                  min-w-[60px]
 
                   rounded-xl
 
-                  px-3 py-2
+                  px-2.5 py-1.5
 
                   transition-all duration-200
 
@@ -740,14 +727,82 @@ export default function ProviderSidebar({
                 `
                 }
               >
-                <Icon size={18} />
+                <Icon size={17} />
 
-                <span className="text-[10px]">
+                <span className="text-[9px]">
                   {label}
                 </span>
               </NavLink>
             )
           )}
+
+          {/* Profile Nav Item */}
+          <div
+            className={`
+              relative flex flex-col items-center justify-center
+              gap-1
+              min-w-[60px]
+              rounded-xl
+              px-2.5 py-1.5
+              transition-all duration-200
+              cursor-pointer
+              ${
+                isPopupOpen
+                  ? `
+                    text-white
+                    bg-white/[0.06]
+                  `
+                  : `
+                    text-white/45
+                  `
+              }
+            `}
+            onClick={(e) => {
+              e.stopPropagation()
+              setIsPopupOpen(!isPopupOpen)
+            }}
+          >
+            <div
+              className={`
+                h-[18px]
+                w-[18px]
+                rounded-full
+                overflow-hidden
+                bg-[#0f6e56]
+                shadow-sm
+                transition-transform duration-200
+                ${
+                  isPopupOpen
+                    ? 'scale-110 ring-2 ring-white/20'
+                    : ''
+                }
+              `}
+            >
+              {user?.avatar_url ? (
+                <img
+                  src={user.avatar_url}
+                  alt={user.display_name}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <div
+                  className="
+                    w-full h-full
+                    flex items-center justify-center
+                    text-[9px]
+                    font-bold
+                    text-white
+                  "
+                >
+                  {initials}
+                </div>
+              )}
+            </div>
+
+            <span className="text-[9px]">
+              Profile
+            </span>
+          </div>
         </div>
       </div>
       {showSettings && (

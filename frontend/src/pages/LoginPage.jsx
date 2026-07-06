@@ -40,7 +40,7 @@ async function redirectAfterLogin(data, dispatch, saveSession) {
   try {
     const res = await authApi.getMemberships(access)
     dispatch(setMemberships(res.data))
-  } catch (_) {}
+  } catch (_) { /* silent */ }
 
   window.location.replace(
     appUrl(null, '/portals')

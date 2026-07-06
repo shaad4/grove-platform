@@ -81,7 +81,7 @@ export default function AdminDashboardPage() {
         refreshing={refreshing}
       />
 
-      <div className="px-8 pb-10">
+      <div className="px-4 sm:px-8 pb-10">
         {/* Stat cards */}
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <StatCard
@@ -140,12 +140,6 @@ export default function AdminDashboardPage() {
                     <p className="text-[14px] font-medium text-[#10241C]">{t.name}</p>
                     <p className="text-[12px] text-[#9BA39B]">{t.slug}.grove.co</p>
                   </div>
-                  {/* <button
-                    onClick={() => navigate('/grove-admin/tenants/')}
-                    className="text-[13px] font-medium text-[#0F6E56] hover:underline"
-                  >
-                    View →
-                  </button> */}
                 </div>
               ))}
             </div>
@@ -168,9 +162,9 @@ export default function AdminDashboardPage() {
             <table className="w-full text-left">
               <thead>
                 <tr className="border-b border-[#EEF1EE] text-[11px] uppercase tracking-wide text-[#9BA39B]">
-                  <th className="px-5 py-3 font-medium">Tenant</th>
-                  <th className="px-5 py-3 font-medium">Plan</th>
-                  <th className="px-5 py-3 font-medium">Joined</th>
+                  <th className="px-4 sm:px-5 py-3 font-medium">Tenant</th>
+                  <th className="px-4 sm:px-5 py-3 font-medium">Plan</th>
+                  <th className="px-5 py-3 font-medium hidden sm:table-cell">Joined</th>
                 </tr>
               </thead>
               <tbody>
@@ -180,7 +174,7 @@ export default function AdminDashboardPage() {
                     className="cursor-pointer border-b border-[#F3F5F3] last:border-0 hover:bg-[#FAFBFA]"
                     onClick={() => navigate('/grove-admin/tenants')}
                   >
-                    <td className="px-5 py-3.5">
+                    <td className="px-4 sm:px-5 py-3.5">
                       <div className="flex items-center gap-3">
                         <div
                           className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold text-white"
@@ -194,8 +188,8 @@ export default function AdminDashboardPage() {
                         </div>
                       </div>
                     </td>
-                    <td className="px-5 py-3.5"><PlanBadge plan={t.plan} /></td>
-                    <td className="px-5 py-3.5 text-[13px] text-[#7C867D]">{joinedLabel(t.joined_at)}</td>
+                    <td className="px-4 sm:px-5 py-3.5"><PlanBadge plan={t.plan} /></td>
+                    <td className="px-5 py-3.5 text-[13px] text-[#7C867D] hidden sm:table-cell">{joinedLabel(t.joined_at)}</td>
                   </tr>
                 ))}
               </tbody>

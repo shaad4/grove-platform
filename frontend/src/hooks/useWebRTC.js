@@ -170,7 +170,7 @@ export function useWebRTC({ sendSignal, currentUserId }) {
     if (msg.type === 'ice_candidate' && pc.current) {
       try {
         await pc.current.addIceCandidate(new RTCIceCandidate(msg.candidate))
-      } catch {}
+      } catch { /* silent */ }
     }
 
     if (msg.type === 'call_end') {

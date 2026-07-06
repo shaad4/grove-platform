@@ -82,21 +82,54 @@ function Skeleton({ className }) {
 // Stat Card 
 
 function StatCard({ icon: Icon, title, value, sub, subVariant = 'neutral', loading }) {
-  const subColor = { neutral: 'text-[#9ea89e]', warning: 'text-[#92500a]', success: 'text-[#085041]' }[subVariant]
+  const subColor = {
+    neutral: 'text-[#6b776c]',
+    warning: 'text-[#a16207]',
+    success: 'text-[#15803d]'
+  }[subVariant]
+
+  const bgStyle = {
+    neutral: 'bg-white border-[#e8eae8] hover:border-[#c8cec8]/60',
+    warning: 'bg-[#fffbeb] border-[#fde68a]/50',
+    success: 'bg-[#f0fdf4] border-[#bbf7d0]/50'
+  }[subVariant]
+
+  const iconBg = {
+    neutral: 'bg-[#f3f4f3] text-[#6b776c]',
+    warning: 'bg-[#fef3c7] text-[#b45309]',
+    success: 'bg-[#dcfce7] text-[#16a34a]'
+  }[subVariant]
+
   return (
-    <div className="rounded-2xl border border-[#e8eae8] bg-white p-5 flex flex-col gap-3">
+    <div className={`rounded-2xl border p-4 flex flex-col justify-between h-[116px] transition-all duration-200 ${bgStyle} w-[240px] shrink-0 snap-center md:w-auto md:shrink`}>
       <div className="flex items-center justify-between">
-        <p className="text-[11px] uppercase tracking-wider text-[#9ea89e] font-medium">{title}</p>
-        {Icon && <Icon size={15} className="text-[#c8cec8]" />}
+        <span className="text-[10px] sm:text-[11px] uppercase tracking-wider text-[#6b776c] font-semibold truncate max-w-[80%]">
+          {title}
+        </span>
+        {Icon && (
+          <div className={`flex h-7 w-7 items-center justify-center rounded-lg ${iconBg}`}>
+            <Icon size={14} />
+          </div>
+        )}
       </div>
-      {loading
-        ? <Skeleton className="h-9 w-14" />
-        : <p className="text-[36px] font-semibold text-[#141a14] leading-none">{value ?? '—'}</p>
-      }
-      {loading
-        ? <Skeleton className="h-3 w-24" />
-        : <p className={`text-[12px] ${subColor}`}>{sub}</p>
-      }
+
+      <div className="mt-auto space-y-1">
+        {loading ? (
+          <Skeleton className="h-8 w-12" />
+        ) : (
+          <p className="text-[26px] sm:text-[30px] font-bold text-[#141a14] leading-none tracking-tight">
+            {value ?? '—'}
+          </p>
+        )}
+
+        {loading ? (
+          <Skeleton className="h-3.5 w-20" />
+        ) : (
+          <p className={`text-[11px] font-medium truncate ${subColor}`}>
+            {sub}
+          </p>
+        )}
+      </div>
     </div>
   )
 }
@@ -124,7 +157,7 @@ function InsightCenter({ clients, onView }) {
     setDismissed(prev => {
       const next = new Set(prev)
       next.add(key)
-      try { localStorage.setItem(DISMISSED_KEY, JSON.stringify([...next])) } catch {}
+      try { localStorage.setItem(DISMISSED_KEY, JSON.stringify([...next])) } catch { /* silent */ }
       return next
     })
   }
@@ -433,7 +466,7 @@ export default function ProviderDashboard() {
 
 
             {/* Stat strip */}
-            <div className="grid gap-4 grid-cols-4">
+            <div className="grid gap-3.5 grid-cols-2 md:grid-cols-4">
               <StatCard
                 icon={Users}
                 title="Total Clients"
