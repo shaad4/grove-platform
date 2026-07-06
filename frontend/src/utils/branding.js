@@ -61,56 +61,12 @@ export function getBrandColors(base = '#0F6E56') {
   s *= 100
 
   return {
-
-    accent:
-
-      `hsl(
-        ${h},
-        ${Math.max(s - 5, 45)}%,
-        48%
-      )`,
-
-    accentDark:
-
-      `hsl(
-        ${h},
-        ${Math.max(s - 10, 35)}%,
-        34%
-      )`,
-
-    accentSoft:
-
-      `hsla(
-        ${h},
-        ${s}%,
-        50%,
-        .12
-      )`,
-
-    bg1:
-
-      `hsl(
-        ${h},
-        ${Math.max(s - 15, 35)}%,
-        24%
-      )`,
-
-    bg2:
-
-      `hsl(
-        ${(h + 20) % 360},
-        ${Math.max(s - 20, 30)}%,
-        18%
-      )`,
-
-    bg3:
-
-      `hsl(
-        ${(h + 10) % 360},
-        ${Math.max(s - 25, 25)}%,
-        14%
-      )`,
-
+    accent: `hsl(${h}, ${Math.max(s - 5, 45)}%, 48%)`,
+    accentDark: `hsl(${h}, ${Math.max(s - 10, 35)}%, 34%)`,
+    accentSoft: `hsla(${h}, ${s}%, 50%, 0.12)`,
+    bg1: `hsl(${h}, ${Math.max(s - 15, 35)}%, 24%)`,
+    bg2: `hsl(${(h + 20) % 360}, ${Math.max(s - 20, 30)}%, 18%)`,
+    bg3: `hsl(${(h + 10) % 360}, ${Math.max(s - 25, 25)}%, 14%)`,
   }
 
 }

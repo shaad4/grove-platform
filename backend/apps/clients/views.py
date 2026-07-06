@@ -318,6 +318,9 @@ class AcceptInviteView(APIView):
                     "tenant": {
                         "slug": tenant.slug,
                         "name": tenant.name,
+                        "logo_url": tenant.logo_url,
+                        "accent_color": tenant.accent_color,
+                        "tagline": tenant.tagline,
                     },
                 },
             }
@@ -409,6 +412,9 @@ class ClientLoginView(APIView):
                 "tenant": {
                     "slug": tenant.slug,
                     "name": tenant.name,
+                    "logo_url": tenant.logo_url,
+                    "accent_color": tenant.accent_color,
+                    "tagline": tenant.tagline,
                 },
             }
         )

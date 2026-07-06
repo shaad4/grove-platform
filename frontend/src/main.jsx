@@ -12,6 +12,10 @@ import { injectAdminStore } from './api/admin/adminClient'
 injectStore(store)
 injectAdminStore(store)
 
+if (import.meta.env.DEV) {
+  window.__store__ = store
+}
+
 
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID
 

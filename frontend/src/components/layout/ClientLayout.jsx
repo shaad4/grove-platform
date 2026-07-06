@@ -5,6 +5,8 @@ import ClientSidebar from './ClientSidebar'
 export default function ClientLayout({ children, fullBleed = false, badges = {} }) {
   const { tenant } = useAuth()
   const colors = getBrandColors(tenant?.accent_color)
+  console.log('[ClientLayout] Tenant:', tenant)
+  console.log('[ClientLayout] Computed Colors:', colors)
 
   const themeStyles = {
     '--primary': colors.accent,

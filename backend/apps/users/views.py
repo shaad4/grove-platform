@@ -51,6 +51,8 @@ def _build_tenant_payload(tenant):
         "name": tenant.name,
         "slug": tenant.slug,
         "logo_url": tenant.logo_url,
+        "accent_color": tenant.accent_color,
+        "tagline": tenant.tagline,
         "plan": {
             "id": str(tenant.plan.id),
             "name": tenant.plan.name,
