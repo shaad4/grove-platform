@@ -367,7 +367,7 @@ export default function ActivityPage() {
               value={searchInput}
               onChange={e => setSearchInput(e.target.value)}
               placeholder="Search logs..."
-              className="w-full h-9 rounded-xl border border-[#e8eae8] pl-8.5 pr-3 text-[12px] outline-none placeholder:text-[#9ea89e] focus:border-[#0f6e56] transition-all bg-[#fafafa]"
+              className="w-full h-9 rounded-xl border border-[#e8eae8] pl-9 pr-3 text-[12px] outline-none placeholder:text-[#9ea89e] focus:border-[#0f6e56] transition-all bg-[#fafafa]"
             />
           </div>
           <select
