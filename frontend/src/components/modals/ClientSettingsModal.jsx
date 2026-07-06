@@ -540,17 +540,8 @@ function ClientSettingsModalInner({ onClose }) {
         <div className="flex flex-col flex-1 min-w-0">
           {/* Header bar */}
           <div className="flex items-center justify-between px-5 py-3.5 border-b border-[#F0F2F0] flex-shrink-0">
-            <div className="sm:hidden flex-1 mr-3">
-              <select
-                value={activeSection}
-                onChange={(e) => setActiveSection(e.target.value)}
-                className="w-full h-8 px-2.5 rounded-lg border border-[#E0E4E0] bg-white text-[13px] text-[#141A14] focus:outline-none focus:border-[#0F6E56]"
-              >
-                {NAV.map(({ id, label }) => <option key={id} value={id}>{label}</option>)}
-              </select>
-            </div>
-            <p className="hidden sm:block text-[13px] font-medium text-[#141A14]">
-              {NAV.find(n => n.id === activeSection)?.label}
+            <p className="text-[14px] font-semibold text-[#141A14]">
+              Account settings
             </p>
             <button
               onClick={onClose}
@@ -558,6 +549,29 @@ function ClientSettingsModalInner({ onClose }) {
             >
               <X size={15} />
             </button>
+          </div>
+
+          {/* Mobile sub-navigation tabs (scrollable) */}
+          <div className="sm:hidden flex items-center gap-1 overflow-x-auto no-scrollbar px-4 py-2 border-b border-[#F0F2F0] bg-[#FAFBFA] flex-shrink-0">
+            {NAV.map(({ id, label, icon: Icon }) => (
+              <button
+                key={id}
+                type="button"
+                onClick={() => setActiveSection(id)}
+                className={`shrink-0 flex items-center gap-1.5 text-[12px] px-3 py-1.5 rounded-lg transition-colors ${
+                  activeSection === id
+                    ? id === 'danger-zone'
+                      ? 'bg-red-50 text-red-600 font-semibold'
+                      : 'bg-[#EAF5EF] text-[#0F6E56] font-semibold'
+                    : id === 'danger-zone'
+                      ? 'text-red-500 hover:bg-red-50/60'
+                      : 'text-[#4A544A] hover:bg-[#F2F4F2] hover:text-[#141A14]'
+                }`}
+              >
+                <Icon size={13} className="flex-shrink-0" />
+                <span>{label}</span>
+              </button>
+            ))}
           </div>
 
           {/* Scrollable content */}
