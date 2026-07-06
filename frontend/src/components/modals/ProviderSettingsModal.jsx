@@ -984,14 +984,12 @@ function ProviderSettingsModalInner({ onClose }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       {/* Backdrop */}
-      <div className="absolute inset-0 bg-black/50 backdrop-blur-[2px]" onClick={onClose} />
+      <div className="absolute inset-0 bg-black/50 backdrop-blur-[2px] hidden sm:block" onClick={onClose} />
 
       {/* Modal shell */}
       <div
-        className="relative flex bg-white rounded-2xl shadow-2xl overflow-hidden"
+        className="relative flex bg-white w-full h-[100dvh] sm:w-[780px] sm:h-[620px] sm:rounded-2xl shadow-2xl overflow-hidden"
         style={{
-          width: 'min(780px, calc(100vw - 32px))',
-          height: 'min(620px, calc(100vh - 48px))',
           animation: 'modalIn 0.18s cubic-bezier(0.16,1,0.3,1)',
         }}
         onClick={(e) => e.stopPropagation()}
@@ -1056,7 +1054,7 @@ function ProviderSettingsModalInner({ onClose }) {
           </div>
 
           {/* Scrollable content */}
-          <div ref={contentRef} className="flex-1 overflow-y-auto px-6 py-5">
+          <div ref={contentRef} className="flex-1 overflow-y-auto px-6 py-5 pb-20 sm:pb-5">
             {SECTIONS[activeSection]}
           </div>
         </div>
