@@ -1157,6 +1157,18 @@ export default function RequestDetailPage() {
   const [statusLoading, setStatusLoading] = useState(false)
   const [urgentLoading, setUrgentLoading] = useState(false)
   const [showActivityLog, setShowActivityLog] = useState(false)
+  const [mobileTab, setMobileTab] = useState('details')
+  const [isMobile, setIsMobile] = useState(
+    typeof window !== 'undefined' ? window.innerWidth < 1024 : false
+  )
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 1024)
+    }
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [])
 
   const chatWsRef = useRef(null)
 
@@ -1317,8 +1329,8 @@ export default function RequestDetailPage() {
       */}
       <div className="flex flex-col h-[100dvh] overflow-hidden bg-[#fafafa]">
 
-        {/* ── 1. FIXED TOP CONTROL BAR ── */}
-        <div className="sticky top-0 border-b border-[#e8eae8] bg-white px-6 py-2.5 flex items-center justify-between shrink-0 h-14 z-30 shadow-[0_1px_0_0_#e8eae8]">
+        {/* ── 1. FIXED TOP CONTROL BAR (DESKTOP) ── */}
+        <div className="hidden lg:flex sticky top-0 border-b border-[#e8eae8] bg-white px-6 py-2.5 items-center justify-between shrink-0 h-14 z-30 shadow-[0_1px_0_0_#e8eae8]">
           {/* Breadcrumb */}
           <div className="flex items-center gap-2 text-[13px] text-[#9ea89e] min-w-0">
             <button onClick={() => navigate('/requests')} className="hover:text-[#141a14] transition-colors whitespace-nowrap">Requests</button>
@@ -1382,27 +1394,99 @@ export default function RequestDetailPage() {
                 Close request
               </button>
             )}
-            {/* <button className="h-8 w-8 flex items-center justify-center rounded-lg border border-[#e8eae8] text-[#9ea89e] hover:bg-[#f7f8f7] transition-colors">
-              <MoreHorizontal size={16} />
-            </button> */}
+          </div>
+        </div>
+
+        {/* ── 1. FIXED TOP CONTROL BAR (MOBILE) ── */}
+        <div className="flex lg:hidden sticky top-0 border-b border-[#e8eae8] bg-white px-4 py-2 items-center justify-between shrink-0 h-14 z-30 shadow-[0_1px_0_0_#e8eae8]">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <button
+              onClick={() => navigate('/requests')}
+              className="h-9 w-9 flex items-center justify-center rounded-xl border border-[#e8eae8] text-[#4a544a] active:bg-[#f7f8f7] shrink-0"
+            >
+              <ChevronRight size={18} className="rotate-180" />
+            </button>
+            <div className="min-w-0">
+              <p className="text-[13px] font-semibold text-[#141a14] truncate leading-tight">{req.title}</p>
+              <p className="text-[11px] text-[#9ea89e] mt-0.5 truncate">
+                {clientName} · <span className="font-mono">#REQ-{req.id.slice(0, 4).toUpperCase()}</span>
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 shrink-0 ml-2">
+            <select
+              value={req.status}
+              disabled={statusLoading}
+              onChange={(e) => handleStatusChange(e.target.value)}
+              className={`h-8 px-2.5 rounded-lg border text-[12px] font-semibold bg-white outline-none appearance-none pr-7 transition-all
+                ${req.status === 'closed' ? 'border-[#e8eae8] text-[#6b776c]' : 'border-[#0f6e56] text-[#0f6e56] bg-[#f0faf6]'}
+              `}
+              style={{
+                backgroundImage: `url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%230f6e56' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'></polyline></svg>")`,
+                backgroundRepeat: 'no-repeat',
+                backgroundPosition: 'right 6px center',
+                backgroundSize: '12px'
+              }}
+            >
+              {STATUS_ORDER.map(s => {
+                const scfg = statusConfig[s]
+                const isCurrent = req.status === s
+                const canTransition = allowedNext.includes(s) || isCurrent
+                return (
+                  <option key={s} value={s} disabled={!canTransition}>
+                    {scfg.label}
+                  </option>
+                )
+              })}
+            </select>
+
+            {['in_progress', 'delivered'].includes(req.status) && (
+              <button
+                onClick={() => setShowDeliver(true)}
+                className="h-8 px-3 rounded-lg bg-[#0f6e56] text-white text-[12px] font-bold hover:bg-[#085041] transition-all shadow-xs"
+              >
+                Deliver
+              </button>
+            )}
           </div>
         </div>
 
         {/* ── 2. OPTIONAL URGENT BANNER ── */}
         {req.is_urgent && (
-          <div className="bg-[#fff1f2] border-b border-[#fecdd3] px-6 py-2 flex items-center gap-2 shrink-0">
-            <AlertCircle size={14} className="text-[#e11d48]" />
+          <div className="bg-[#fff1f2] border-b border-[#fecdd3] px-4 lg:px-6 py-2 flex items-center gap-2 shrink-0">
+            <AlertCircle size={14} className="text-[#e11d48] shrink-0" />
             <span className="text-[12px] font-medium text-[#9f1239]">
               High Priority Track Active: Ensure critical attention constraints are managed immediately.
             </span>
           </div>
         )}
 
+        {/* Mobile View Switcher Tabs */}
+        <div className="flex lg:hidden bg-white border-b border-[#e8eae8] p-1 shrink-0">
+          <button
+            onClick={() => setMobileTab('details')}
+            className={`flex-1 py-2 text-center text-[12px] font-semibold rounded-lg transition-all
+              ${mobileTab === 'details' ? 'bg-[#f7f8f7] text-[#0f6e56]' : 'text-[#6b776c]'}
+            `}
+          >
+            Details
+          </button>
+          <button
+            onClick={() => setMobileTab('chat')}
+            className={`flex-1 py-2 text-center text-[12px] font-semibold rounded-lg transition-all
+              ${mobileTab === 'chat' ? 'bg-[#f7f8f7] text-[#0f6e56]' : 'text-[#6b776c]'}
+            `}
+          >
+            Chat
+          </button>
+        </div>
+
         {/* ── 3. MAIN CONTENT SPLIT (fills remaining height) ── */}
         <div className="flex flex-1 min-h-0 overflow-hidden h-full">
 
           {/* LEFT — scrollable detail panel */}
-          <div className="flex-1 overflow-y-auto overflow-x-hidden p-6 space-y-4 min-w-0 h-full no-scrollbar">
+          <div className={`flex-1 overflow-y-auto overflow-x-hidden p-4 lg:p-6 space-y-4 min-w-0 h-full no-scrollbar ${mobileTab === 'details' ? 'block' : 'hidden lg:block'}`}>
 
             {/* Header card */}
             <div className={`rounded-xl border bg-white p-4 transition-all duration-200
@@ -1648,7 +1732,7 @@ export default function RequestDetailPage() {
           {/* ── DRAG HANDLE ── */}
           <div
             onMouseDown={onMouseDown}
-            className="w-[5px] shrink-0 relative cursor-col-resize group flex items-center justify-center bg-transparent hover:bg-[#0f6e56]/10 transition-colors z-10"
+            className="hidden lg:flex w-[5px] shrink-0 relative cursor-col-resize group items-center justify-center bg-transparent hover:bg-[#0f6e56]/10 transition-colors z-10"
             title="Drag to resize"
           >
             {/* Visible divider line */}
@@ -1663,8 +1747,8 @@ export default function RequestDetailPage() {
 
           {/* ── RIGHT CHAT PANEL — fixed width, flex column ── */}
           <div
-            className="shrink-0 bg-white flex flex-col overflow-hidden h-full border-l border-[#e8eae8]"
-            style={{ width: chatWidth }}
+            className={`shrink-0 bg-white flex flex-col overflow-hidden h-full border-l border-[#e8eae8] w-full lg:w-auto ${mobileTab === 'chat' ? 'flex' : 'hidden lg:flex'}`}
+            style={{ width: isMobile ? '100%' : chatWidth }}
           >
             {/* Chat header — fixed */}
             <div className="sticky top-0 z-20 flex items-center justify-between px-5 py-4 border-b border-[#e8eae8] shrink-0 bg-white">
