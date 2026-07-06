@@ -601,11 +601,14 @@ export default function RequestsPage() {
         />
       }
     >
-      <div className="p-6">
+      <div className="px-6 pb-6">
         <style>{`
           .no-scrollbar::-webkit-scrollbar { display: none; }
           .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         `}</style>
+
+        {/* Sticky Header Container */}
+        <div className="sticky top-0 z-30 bg-[#f7f8f7] pt-6 pb-2">
 
         {/* Mobile Search and Filter Row */}
         <div className="flex md:hidden items-center gap-2 mb-4">
@@ -762,6 +765,7 @@ export default function RequestsPage() {
               </button>
             )
           })}
+        </div>
         </div>
 
         {/* ── Content ── */}
