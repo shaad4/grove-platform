@@ -322,23 +322,23 @@ export default function ClientDetailPage() {
           </div>
 
           {/* Mobile navigation tabs (overview vs requests) */}
-          <div className="md:hidden flex border-b border-[#e8eae8] bg-white px-4 shrink-0 z-20">
+          <div className="md:hidden flex border-b border-[#e8eae8] bg-white shrink-0 z-20">
             <button
               onClick={() => setMobileTab('overview')}
-              className={`flex-1 py-3 text-center text-[13px] font-semibold border-b-2 transition-all ${
+              className={`flex-1 py-3 text-center text-[13px] font-semibold border-b-2 border-t-0 border-x-0 border-t-transparent border-x-transparent bg-transparent outline-none focus:outline-none transition-all ${
                 mobileTab === 'overview'
-                  ? 'border-[#0f6e56] text-[#0f6e56]'
-                  : 'border-transparent text-[#9ea89e]'
+                  ? 'border-b-[#0f6e56] text-[#0f6e56]'
+                  : 'border-b-transparent text-[#9ea89e]'
               }`}
             >
               Overview
             </button>
             <button
               onClick={() => setMobileTab('requests')}
-              className={`flex-1 py-3 text-center text-[13px] font-semibold border-b-2 transition-all ${
+              className={`flex-1 py-3 text-center text-[13px] font-semibold border-b-2 border-t-0 border-x-0 border-t-transparent border-x-transparent bg-transparent outline-none focus:outline-none transition-all ${
                 mobileTab === 'requests'
-                  ? 'border-[#0f6e56] text-[#0f6e56]'
-                  : 'border-transparent text-[#9ea89e]'
+                  ? 'border-b-[#0f6e56] text-[#0f6e56]'
+                  : 'border-b-transparent text-[#9ea89e]'
               }`}
             >
               Requests ({allRequests.length})
