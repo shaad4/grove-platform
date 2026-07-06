@@ -1,7 +1,9 @@
-import { TenantBrandingProvider } from '../../context/TenantBrandingContext'
 import ClientSidebar from './ClientSidebar'
 
-function ClientLayoutInner({ children, fullBleed, badges }) {
+// TenantBrandingProvider is mounted once in App.jsx — no need to wrap here.
+// Colors are applied globally via document.documentElement.style.setProperty.
+
+export default function ClientLayout({ children, fullBleed = false, badges = {} }) {
   return (
     <div className="flex min-h-screen bg-layout-page text-text-main font-sans">
       <ClientSidebar badges={badges} />
@@ -20,15 +22,5 @@ function ClientLayoutInner({ children, fullBleed, badges }) {
         )}
       </div>
     </div>
-  )
-}
-
-export default function ClientLayout({ children, fullBleed = false, badges = {} }) {
-  return (
-    <TenantBrandingProvider>
-      <ClientLayoutInner fullBleed={fullBleed} badges={badges}>
-        {children}
-      </ClientLayoutInner>
-    </TenantBrandingProvider>
   )
 }

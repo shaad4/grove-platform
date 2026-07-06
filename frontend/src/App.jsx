@@ -5,6 +5,7 @@ import TenantRoute from './routes/TenantRoute'
 import TenantGuard from './routes/TenantGuard'
 import ErrorBoundary from './ErrorBoundary'
 import { useAuth } from './context/AuthContext'
+import { TenantBrandingProvider } from './context/TenantBrandingContext'
 
 // Admin routes (fully isolated — see routes/AdminProtectedRoute.jsx)
 import { AdminProtectedRoute, AdminGuestRoute } from './routes/AdminProtectedRoute'
@@ -83,7 +84,8 @@ export default function App() {
           {/* ── Everything else — the existing tenant/provider/client app ── */}
           <Route path="/*" element={
             <AuthProvider>
-              <TenantGuard>
+              <TenantBrandingProvider>
+                <TenantGuard>
                 <Routes>
 
                   {/* Public */}
@@ -181,7 +183,8 @@ export default function App() {
                 </Routes>
                 <UpgradeModal />
                 <UpgradeSuccessModal />
-              </TenantGuard>
+                </TenantGuard>
+              </TenantBrandingProvider>
             </AuthProvider>
           } />
 
