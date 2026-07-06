@@ -1284,7 +1284,7 @@ export default function RequestDetailPage() {
   }
 
   if (loading) return (
-    <ProviderLayout >
+    <ProviderLayout fullBleed>
       <div className="flex items-center justify-center h-full bg-[#fafafa]">
         <Loader2 size={24} className="animate-spin text-[#0f6e56]" />
       </div>
@@ -1292,7 +1292,7 @@ export default function RequestDetailPage() {
   )
 
   if (!req) return (
-    <ProviderLayout >
+    <ProviderLayout fullBleed>
       <div className="flex flex-col items-center justify-center h-full text-center bg-[#fafafa]">
         <AlertCircle size={32} className="text-[#9ea89e] mb-3" />
         <p className="text-[15px] font-medium text-[#141a14]">Request not found</p>
@@ -1308,7 +1308,7 @@ export default function RequestDetailPage() {
   const clientName = req.client_name || 'Client'
 
   return (
-    <ProviderLayout>
+    <ProviderLayout fullBleed>
       {/* Scrollbar hiding styles injected into layout container via string literal */}
       <style>{`
         .no-scrollbar::-webkit-scrollbar {
@@ -1327,7 +1327,7 @@ export default function RequestDetailPage() {
           2. Optional urgent banner (shrink-0)
           3. Content split (flex-1, min-h-0)
       */}
-      <div className="flex flex-col h-[100dvh] overflow-hidden bg-[#fafafa]">
+      <div className="flex flex-col h-[calc(100dvh-60px)] lg:h-[100dvh] overflow-hidden bg-[#fafafa]">
 
         {/* ── 1. FIXED TOP CONTROL BAR (DESKTOP) ── */}
         <div className="hidden lg:flex sticky top-0 border-b border-[#e8eae8] bg-white px-6 py-2.5 items-center justify-between shrink-0 h-14 z-30 shadow-[0_1px_0_0_#e8eae8]">
