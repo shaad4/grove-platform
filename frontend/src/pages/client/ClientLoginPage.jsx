@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { Eye, EyeOff, AlertCircle, ArrowRight, Loader2 } from 'lucide-react'
+import { Eye, EyeOff, AlertCircle, ArrowRight, Loader2, ChevronLeft, CheckCircle2 } from 'lucide-react'
 
 import groveLogoGreen from "../../assets/Grove_transparent_logo(Green).png"
 import groveLogoWhite from "../../assets/Grove_transparent_logo(White).png"
@@ -181,33 +181,47 @@ export default function ClientLoginPage() {
             bg3={bg3}
           />
           
-          {/* Top: Grove Branding */}
-          <a href={rootUrl('/')} className="relative z-10 block w-fit hover:opacity-80 transition-opacity">
-            <img src={groveLogoWhite} alt="Grove" className="h-8 w-auto object-contain" />
+          {/* Top: Back to home link */}
+          <a href={rootUrl('/')} className="relative z-10 flex items-center gap-1.5 text-xs text-white/60 hover:text-white transition-colors w-fit">
+            <ChevronLeft size={14} /> Back to home
           </a>
 
-          {/* Center: Tenant Branding */}
-          <div className="relative z-10 animate-in fade-in slide-in-from-bottom-8 duration-700">
-            <div className="mb-8">
-              <TenantAvatar 
-                name={workspaceName} 
-                logoUrl={tenant?.logo_url} 
-                size={80} 
-                className="bg-white/10 border border-white/20 text-white backdrop-blur-md" 
-              />
+          {/* Center: Tenant Branding Glass Card */}
+          <div className="relative z-10 animate-in fade-in slide-in-from-bottom-8 duration-700 my-auto">
+            <div className="bg-white/[0.04] backdrop-blur-xl rounded-[28px] border border-white/[0.08] p-8 shadow-2xl">
+              <div className="flex items-center gap-4 mb-6">
+                <TenantAvatar 
+                  name={workspaceName} 
+                  logoUrl={tenant?.logo_url} 
+                  size={64} 
+                  className="bg-white/10 border border-white/20 text-white" 
+                />
+                <div>
+                  <span className="text-[10px] font-bold text-white/50 uppercase tracking-widest">Client Portal</span>
+                  <h1 className="text-[26px] font-bold text-white leading-tight tracking-tight mt-0.5">
+                    {workspaceName}
+                  </h1>
+                </div>
+              </div>
+              <p className="text-white/70 text-[14px] leading-relaxed mb-6">
+                {tenant?.tagline || 'Collaborate seamlessly, submit requests, and stay updated with our team.'}
+              </p>
+              
+              <div className="space-y-3 pt-6 border-t border-white/[0.06] text-[13px] text-white/60">
+                <div className="flex items-center gap-2.5">
+                  <CheckCircle2 size={14} className="text-[#34d399] shrink-0" />
+                  <span>Submit & track service requests</span>
+                </div>
+                <div className="flex items-center gap-2.5">
+                  <CheckCircle2 size={14} className="text-[#34d399] shrink-0" />
+                  <span>Real-time collaboration & feedback</span>
+                </div>
+                <div className="flex items-center gap-2.5">
+                  <CheckCircle2 size={14} className="text-[#34d399] shrink-0" />
+                  <span>Access deliverables and reports</span>
+                </div>
+              </div>
             </div>
-            <h1 className="text-[40px] lg:text-[46px] leading-[1.05] font-bold text-white tracking-tight mb-4">
-              {workspaceName}
-              <br />
-              <span className="text-white/70 font-serif-italic font-normal">client portal</span>
-            </h1>
-            <p className="text-white/60 text-sm leading-relaxed max-w-[320px]">
-
-              {tenant?.tagline ||
-
-              'Sign in to manage requests, collaborate with your provider, and stay synced with your workflow.'}
-
-            </p>
           </div>
 
           {/* Bottom: Footer Links */}
