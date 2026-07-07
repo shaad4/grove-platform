@@ -37,3 +37,53 @@ class TenantPublicInfoView(APIView):
                 "white_label_enabled": tenant.white_label_enabled,
             }
         )
+
+class PWAManifestView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        tenant = getattr(request, "tenant", None)
+        
+        manifest = {
+            "name": "Groven",
+            "short_name": "Groven",
+            "start_url": "/",
+            "display": "standalone",
+            "background_color": "#ffffff",
+            "theme_color": "#0F6E56",
+            "icons": [
+                {
+                    "src": "/icons/icon-192x192.png",
+                    "sizes": "192x192",
+                    "type": "image/png"
+                },
+                {
+                    "src": "/icons/icon-512x512.png",
+                    "sizes": "512x512",
+                    "type": "image/png"
+                },
+                {
+                    "src": "/icons/maskable-icon-512x512.png",
+                    "sizes": "512x512",
+                    "type": "image/png",
+                    "purpose": "maskable"
+                }
+            ]
+        }
+        
+        if tenant:
+            manifest["name"] = tenant.name
+            manifest["short_name"] = tenant.name
+            manifest["theme_color"] = tenant.accent_color or "#0F6E56"
+            
+            if tenant.logo_url:
+                manifest["icons"] = [
+                    {
+                        "src": tenant.logo_url,
+                        "sizes": "192x192 512x512 any",
+                        "type": "image/png",
+                        "purpose": "any maskable"
+                    }
+                ]
+                
+        return Response(manifest)

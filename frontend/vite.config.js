@@ -25,6 +25,11 @@ export default defineConfig({
         changeOrigin: true,
         secure: false,  
       },
+      '/manifest.json': {
+        target: 'https://api.lvh.me:8443/api/tenants/manifest.json',
+        changeOrigin: false,
+        secure: false,
+      }
     },
   },
 })

@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
 import { X, Download, Share, PlusSquare } from 'lucide-react';
+import { useTenantBranding } from '../../context/TenantBrandingContext';
 
 export default function PwaInstallPrompt() {
+  const { tenant } = useTenantBranding();
   const [deferredPrompt, setDeferredPrompt] = useState(null);
   const [showPrompt, setShowPrompt] = useState(false);
   const [isIOS, setIsIOS] = useState(false);
@@ -55,15 +57,25 @@ export default function PwaInstallPrompt() {
 
   if (!showPrompt) return null;
 
+  const appName = tenant?.name || 'Groven';
+  const brandColor = tenant?.accent_color || '#0F6E56';
+
   return (
     <div className="fixed bottom-4 left-4 right-4 md:left-auto md:right-8 md:w-[380px] bg-white rounded-2xl shadow-2xl border border-gray-200 p-5 z-[9999] animate-in slide-in-from-bottom-5 fade-in duration-300">
       <div className="flex items-start justify-between">
         <div className="flex items-center gap-3">
-          <div className="bg-[#0F6E56]/10 p-2.5 rounded-xl shrink-0">
-            <Download className="w-6 h-6 text-[#0F6E56]" />
-          </div>
+          {tenant?.logo_url ? (
+            <img src={tenant.logo_url} alt={appName} className="w-10 h-10 object-contain shrink-0" />
+          ) : (
+            <div 
+              className="p-2.5 rounded-xl shrink-0" 
+              style={{ backgroundColor: `${brandColor}1A` }}
+            >
+              <Download className="w-6 h-6" style={{ color: brandColor }} />
+            </div>
+          )}
           <div>
-            <h3 className="text-base font-semibold text-gray-900">Install Groven App</h3>
+            <h3 className="text-base font-semibold text-gray-900">Install {appName} App</h3>
             <p className="text-sm text-gray-500 mt-1 leading-relaxed">
               Install our app on your home screen for quick and easy access.
             </p>
@@ -88,7 +100,8 @@ export default function PwaInstallPrompt() {
           <button
             onClick={handleInstallClick}
             disabled={!deferredPrompt}
-            className="w-full py-2.5 px-4 bg-[#0F6E56] hover:bg-[#0C5744] text-white text-sm font-medium rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
+            className="w-full py-2.5 px-4 text-white text-sm font-medium rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-sm hover:opacity-90"
+            style={{ backgroundColor: brandColor }}
           >
             {deferredPrompt ? 'Install App Now' : 'Open browser menu to install'}
           </button>
