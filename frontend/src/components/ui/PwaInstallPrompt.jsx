@@ -1,9 +1,13 @@
 import { useState, useEffect } from 'react';
 import { X, Download, Share, PlusSquare } from 'lucide-react';
 import { useTenantBranding } from '../../context/TenantBrandingContext';
+import { useAuth } from '../../context/AuthContext';
+import { getSubdomain } from '../../utils/domain';
 
 export default function PwaInstallPrompt() {
   const { tenant } = useTenantBranding();
+  const { isAuth, loading } = useAuth();
+  const subdomain = getSubdomain();
   const [deferredPrompt, setDeferredPrompt] = useState(null);
   const [showPrompt, setShowPrompt] = useState(false);
   const [isIOS, setIsIOS] = useState(false);
@@ -55,6 +59,8 @@ export default function PwaInstallPrompt() {
     setShowPrompt(false);
   };
 
+  if (loading) return null;
+  if (!isAuth || !subdomain) return null;
   if (!showPrompt) return null;
 
   const appName = tenant?.name || 'Groven';
