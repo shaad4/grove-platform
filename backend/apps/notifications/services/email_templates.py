@@ -25,213 +25,86 @@ def build_verification_email(display_name, verify_url):
     html_content = f"""
     <!DOCTYPE html>
     <html>
-
     <head>
-      <meta charset="UTF-8" />
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
       <title>Verify your Groven account</title>
     </head>
-
-    <body style="
-      margin:0;
-      padding:0;
-      background:#f4f7f5;
-      font-family:Arial,sans-serif;
-    ">
-
-      <table
-        width="100%"
-        cellpadding="0"
-        cellspacing="0"
-      >
+    <body style="margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;background-color:#F8FAF9;-webkit-font-smoothing:antialiased;">
+      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color:#F8FAF9;padding:40px 16px;">
         <tr>
-          <td
-            align="center"
-            style="padding:40px 20px;"
-          >
-
-            <table
-              width="100%"
-              cellpadding="0"
-              cellspacing="0"
-              style="
-                max-width:600px;
-                background:#ffffff;
-                border-radius:28px;
-                overflow:hidden;
-                box-shadow:
-                  0 20px 60px
-                  rgba(15,123,95,0.08);
-              "
-            >
-
-              <!-- HEADER -->
+          <td align="center">
+            <table role="presentation" width="100%" max-width="540px" cellspacing="0" cellpadding="0" border="0" style="max-width:540px;width:100%;background-color:#ffffff;border-radius:16px;border:1px solid #EAECEB;box-shadow:0 4px 12px rgba(0,0,0,0.02);overflow:hidden;">
+              
+              <!-- Brand Logo Container -->
               <tr>
-                <td
-                  style="
-                    background:#0f7b5f;
-                    padding:44px;
-                    text-align:center;
-                  "
-                >
-
-                  <h1 style="
-                    margin:0;
-                    color:white;
-                    font-size:38px;
-                    font-weight:700;
-                    letter-spacing:-1px;
-                  ">
-                    Groven 🌿
-                  </h1>
-
-                  <p style="
-                    margin-top:12px;
-                    color:rgba(255,255,255,0.82);
-                    font-size:15px;
-                  ">
-                    Modern workspace management platform
-                  </p>
-
+                <td style="padding:40px 40px 24px 40px;">
+                  <a href="https://groven.in" style="display:inline-block; text-decoration:none;">
+                    <img src="{LOGO_URL}" alt="Groven" height="70" style="display:block;height:28px;width:auto;border:0;outline:none;text-decoration:none;">
+                  </a>
                 </td>
               </tr>
 
-              <!-- BODY -->
+              <!-- Greeting & Header -->
               <tr>
-                <td style="padding:50px 42px;">
-
-                  <h2 style="
-                    margin:0;
-                    color:#17352c;
-                    font-size:30px;
-                    font-weight:700;
-                    letter-spacing:-0.5px;
-                  ">
+                <td style="padding:0 40px 20px 40px;">
+                  <h1 style="margin:0 0 6px 0;font-size:20px;font-weight:600;color:#1A1F1C;line-height:28px;">
                     Verify your email
-                  </h2>
-
-                  <p style="
-                    margin-top:20px;
-                    color:#5f6f69;
-                    font-size:16px;
-                    line-height:1.8;
-                  ">
-                    Hi {display_name},
-                    <br /><br />
-                    Welcome to Groven.
-                    You're one step away from launching
-                    your workspace.
+                  </h1>
+                  <p style="margin:0;font-size:14px;color:#606A64;line-height:20px;">
+                    Hi {display_name},<br/><br/>
+                    Welcome to Groven. You're one step away from launching your workspace.
                   </p>
+                </td>
+              </tr>
 
-                  <!-- CTA -->
-                  <table
-                    cellpadding="0"
-                    cellspacing="0"
-                    style="margin-top:34px;"
-                  >
+              <!-- Interactive Call to Action Button -->
+              <tr>
+                <td align="center" style="padding:10px 40px 30px 40px; text-align:left;">
+                  <table role="presentation" cellspacing="0" cellpadding="0" border="0">
                     <tr>
-                      <td align="center">
-
-                        <a
-                          href="{verify_url}"
-                          style="
-                            display:inline-block;
-                            background:#0f7b5f;
-                            color:white;
-                            text-decoration:none;
-                            padding:16px 36px;
-                            border-radius:16px;
-                            font-size:15px;
-                            font-weight:600;
-                          "
-                        >
-                          Verify Email
+                      <td align="center" style="border-radius:8px;background-color:#0F6E56;">
+                        <a href="{verify_url}" target="_blank" style="border:1px solid #0F6E56;border-radius:8px;color:#ffffff;display:inline-block;font-size:14px;font-weight:600;padding:14px 28px;text-decoration:none;">
+                          Verify Email Address
                         </a>
-
                       </td>
                     </tr>
                   </table>
-
-                  <!-- INFO BOX -->
-                  <div style="
-                    margin-top:42px;
-                    padding:24px;
-                    background:#f7faf8;
-                    border-radius:20px;
-                  ">
-
-                    <p style="
-                      margin:0;
-                      color:#17352c;
-                      font-size:15px;
-                      font-weight:600;
-                    ">
-                      After verification you'll be able to:
-                    </p>
-
-                    <ul style="
-                      margin-top:16px;
-                      padding-left:20px;
-                      color:#5f6f69;
-                      font-size:14px;
-                      line-height:2;
-                    ">
-                      <li>Create your branded workspace</li>
-                      <li>Manage clients and projects</li>
-                      <li>Automate workflows</li>
-                      <li>Collaborate in real-time</li>
-                    </ul>
-
-                  </div>
-
-                  <!-- EXPIRE -->
-                  <p style="
-                    margin-top:32px;
-                    color:#74837d;
-                    font-size:13px;
-                    line-height:1.8;
-                  ">
-                    This verification link expires
-                    in 24 hours for security reasons.
-                  </p>
-
                 </td>
               </tr>
 
-              <!-- FOOTER -->
+              <!-- Context Contextual Callout -->
               <tr>
-                <td style="
-                  border-top:1px solid #edf2ef;
-                  padding:28px 42px;
-                  text-align:center;
-                ">
+                <td style="padding:0 40px 32px 40px;">
+                  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color:#EBF5F1;border-radius:8px;padding:12px 16px;">
+                    <tr>
+                      <td style="font-size:13px;color:#0C5744;font-weight:500;text-align:left;line-height:1.6;">
+                        🚀 <strong>After verification you'll be able to:</strong><br/>
+                        • Create your branded workspace<br/>
+                        • Manage clients and projects<br/>
+                        • Automate workflows
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
 
-                  <p style="
-                    margin:0;
-                    color:#97a39e;
-                    font-size:13px;
-                    line-height:1.8;
-                  ">
-                    If you didn’t create a Groven account,
-                    you can safely ignore this email.
-                  </p>
-
-                  <p style="
-                    margin-top:14px;
-                    color:#97a39e;
-                    font-size:12px;
-                  ">
+              <!-- Standard Clean Footer Footer -->
+              <tr>
+                <td style="padding:32px 40px;background-color:#F8FAF9;border-top:1px solid #EAECEB;text-align:center;">
+                  <p style="margin:0 0 6px 0;font-size:12px;color:#7A857F;line-height:16px;">
                     © 2026 Groven. All rights reserved.
                   </p>
-
+                  <p style="margin:0;font-size:11px;color:#A3AEA8;line-height:16px;">
+                    This link expires in 24 hours. If you didn't sign up for Groven, please ignore this email.
+                  </p>
                 </td>
               </tr>
 
             </table>
-
           </td>
         </tr>
       </table>
-
     </body>
     </html>
     """
@@ -265,84 +138,70 @@ def build_password_reset_email(display_name, reset_url):
     <!DOCTYPE html>
     <html>
     <head>
-      <meta charset="UTF-8" />
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
       <title>Reset your Groven password</title>
     </head>
-    <body style="
-      margin:0; padding:0;
-      background:#f4f7f5;
-      font-family:Arial,sans-serif;
-    ">
-      <table width="100%" cellpadding="0" cellspacing="0">
+    <body style="margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;background-color:#F8FAF9;-webkit-font-smoothing:antialiased;">
+      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color:#F8FAF9;padding:40px 16px;">
         <tr>
-          <td align="center" style="padding:40px 20px;">
-            <table width="100%" cellpadding="0" cellspacing="0" style="
-              max-width:600px;
-              background:#ffffff;
-              border-radius:28px;
-              overflow:hidden;
-              box-shadow:0 20px 60px rgba(15,123,95,0.08);
-            ">
-
-              <!-- HEADER -->
+          <td align="center">
+            <table role="presentation" width="100%" max-width="540px" cellspacing="0" cellpadding="0" border="0" style="max-width:540px;width:100%;background-color:#ffffff;border-radius:16px;border:1px solid #EAECEB;box-shadow:0 4px 12px rgba(0,0,0,0.02);overflow:hidden;">
+              
+              <!-- Brand Logo Container -->
               <tr>
-                <td style="background:#0f7b5f; padding:44px; text-align:center;">
-                  <h1 style="margin:0; color:white; font-size:38px; font-weight:700; letter-spacing:-1px;">
-                    Groven 🌿
+                <td style="padding:40px 40px 24px 40px;">
+                  <a href="https://groven.in" style="display:inline-block; text-decoration:none;">
+                    <img src="{LOGO_URL}" alt="Groven" height="70" style="display:block;height:28px;width:auto;border:0;outline:none;text-decoration:none;">
+                  </a>
+                </td>
+              </tr>
+
+              <!-- Greeting & Header -->
+              <tr>
+                <td style="padding:0 40px 20px 40px;">
+                  <h1 style="margin:0 0 6px 0;font-size:20px;font-weight:600;color:#1A1F1C;line-height:28px;">
+                    Reset your password
                   </h1>
-                  <p style="margin-top:12px; color:rgba(255,255,255,0.82); font-size:15px;">
-                    Modern workspace management platform
+                  <p style="margin:0;font-size:14px;color:#606A64;line-height:20px;">
+                    Hi {display_name},<br/><br/>
+                    We received a request to reset your Groven password. Click the button below to choose a new one.
                   </p>
                 </td>
               </tr>
 
-              <!-- BODY -->
+              <!-- Interactive Call to Action Button -->
               <tr>
-                <td style="padding:50px 42px;">
-                  <h2 style="margin:0; color:#17352c; font-size:30px; font-weight:700; letter-spacing:-0.5px;">
-                    Reset your password
-                  </h2>
-                  <p style="margin-top:20px; color:#5f6f69; font-size:16px; line-height:1.8;">
-                    Hi {display_name},<br /><br />
-                    We received a request to reset your Groven password.
-                    Click the button below — this link expires in 30 minutes.
-                  </p>
-
-                  <!-- CTA -->
-                  <table cellpadding="0" cellspacing="0" style="margin-top:34px;">
+                <td align="center" style="padding:10px 40px 30px 40px; text-align:left;">
+                  <table role="presentation" cellspacing="0" cellpadding="0" border="0">
                     <tr>
-                      <td align="center">
-                        <a href="{reset_url}" style="
-                          display:inline-block;
-                          background:#0f7b5f;
-                          color:white;
-                          text-decoration:none;
-                          padding:16px 36px;
-                          border-radius:16px;
-                          font-size:15px;
-                          font-weight:600;
-                        ">
+                      <td align="center" style="border-radius:8px;background-color:#0F6E56;">
+                        <a href="{reset_url}" target="_blank" style="border:1px solid #0F6E56;border-radius:8px;color:#ffffff;display:inline-block;font-size:14px;font-weight:600;padding:14px 28px;text-decoration:none;">
                           Reset Password
                         </a>
                       </td>
                     </tr>
                   </table>
-
-                  <!-- EXPIRE -->
-                  <p style="margin-top:32px; color:#74837d; font-size:13px; line-height:1.8;">
-                    This link expires in 30 minutes for security reasons.<br />
-                    If you didn't request a password reset, you can safely ignore this email.
-                  </p>
                 </td>
               </tr>
 
-              <!-- FOOTER -->
+              <!-- Context Contextual Callout -->
               <tr>
-                <td style="border-top:1px solid #edf2ef; padding:28px 42px; text-align:center;">
-                  <p style="margin:0; color:#97a39e; font-size:13px; line-height:1.8;">
-                    If you didn't request this, no action is needed.
-                  </p>
-                  <p style="margin-top:14px; color:#97a39e; font-size:12px;">
+                <td style="padding:0 40px 32px 40px;">
+                  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color:#FFF3EB;border-radius:8px;padding:12px 16px;">
+                    <tr>
+                      <td style="font-size:13px;color:#854308;font-weight:500;text-align:left;line-height:1.6;">
+                        ⚠️ This link will expire in 30 minutes for security reasons. If you did not request a password reset, no action is needed.
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+
+              <!-- Standard Clean Footer Footer -->
+              <tr>
+                <td style="padding:32px 40px;background-color:#F8FAF9;border-top:1px solid #EAECEB;text-align:center;">
+                  <p style="margin:0 0 6px 0;font-size:12px;color:#7A857F;line-height:16px;">
                     © 2026 Groven. All rights reserved.
                   </p>
                 </td>

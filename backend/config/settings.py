@@ -379,7 +379,7 @@ EMAIL_FALLBACK_DELAY_MINUTES = (
 )
 
 LOGO_URL_BRANDING = (
-    "https://grove-uploads.s3.ap-south-1.amazonaws.com/branding/grove-logo-green.png"
+    "https://grove-upload.s3.ap-south-2.amazonaws.com/branding/grove-logo-green.png"
 )
 
 CACHE_TTL = 120  # Dashboard stats cash timeout (Dashboard - views)

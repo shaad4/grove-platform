@@ -44,40 +44,90 @@ If you weren't expecting this invite, you can ignore this email.
 — The Groven Team
 """
 
+    LOGO_URL = settings.LOGO_URL_BRANDING
     html_message = f"""
-<!DOCTYPE html>
-<html>
-<body style="font-family: Inter, sans-serif; background: #F7F8F7; padding: 40px 0;">
-  <div style="max-width: 520px; margin: 0 auto; background: #ffffff; border-radius: 12px; padding: 40px; border: 1px solid #E8EAE8;">
-    
-    <div style="margin-bottom: 32px;">
-      <span style="font-size: 20px; font-weight: 600; color: #0F6E56;">Groven</span>
-    </div>
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>You're invited</title>
+    </head>
+    <body style="margin:0;padding:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;background-color:#F8FAF9;-webkit-font-smoothing:antialiased;">
+      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color:#F8FAF9;padding:40px 16px;">
+        <tr>
+          <td align="center">
+            <table role="presentation" width="100%" max-width="540px" cellspacing="0" cellpadding="0" border="0" style="max-width:540px;width:100%;background-color:#ffffff;border-radius:16px;border:1px solid #EAECEB;box-shadow:0 4px 12px rgba(0,0,0,0.02);overflow:hidden;">
+              
+              <!-- Brand Logo Container -->
+              <tr>
+                <td style="padding:40px 40px 24px 40px;">
+                  <a href="https://groven.in" style="display:inline-block; text-decoration:none;">
+                    <img src="{LOGO_URL}" alt="Groven" height="70" style="display:block;height:28px;width:auto;border:0;outline:none;text-decoration:none;">
+                  </a>
+                </td>
+              </tr>
 
-    <h1 style="font-size: 22px; font-weight: 500; color: #141A14; margin: 0 0 8px;">
-      You're invited
-    </h1>
-    <p style="font-size: 14px; color: #4A544A; margin: 0 0 32px;">
-      <strong>{provider_name}</strong> has invited you to their workspace on Groven.
-    </p>
+              <!-- Greeting & Header -->
+              <tr>
+                <td style="padding:0 40px 20px 40px;">
+                  <h1 style="margin:0 0 6px 0;font-size:20px;font-weight:600;color:#1A1F1C;line-height:28px;">
+                    You've been invited
+                  </h1>
+                  <p style="margin:0;font-size:14px;color:#606A64;line-height:20px;">
+                    Hi {client_name},<br/><br/>
+                    <strong>{provider_name}</strong> has invited you to their workspace on Groven. Click the link below to set your password and get started.
+                  </p>
+                </td>
+              </tr>
 
-    <a href="{accept_url}"
-       style="display: inline-block; background: #0F6E56; color: #ffffff;
-              text-decoration: none; padding: 12px 24px; border-radius: 8px;
-              font-size: 14px; font-weight: 500;">
-      Accept Invite &amp; Set Password
-    </a>
+              <!-- Interactive Call to Action Button -->
+              <tr>
+                <td align="center" style="padding:10px 40px 30px 40px; text-align:left;">
+                  <table role="presentation" cellspacing="0" cellpadding="0" border="0">
+                    <tr>
+                      <td align="center" style="border-radius:8px;background-color:#0F6E56;">
+                        <a href="{accept_url}" target="_blank" style="border:1px solid #0F6E56;border-radius:8px;color:#ffffff;display:inline-block;font-size:14px;font-weight:600;padding:14px 28px;text-decoration:none;">
+                          Accept Invite & Set Password
+                        </a>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
 
-    <p style="font-size: 13px; color: #9EA89E; margin: 32px 0 0;">
-      This link expires in 48 hours. If you weren't expecting this, ignore this email.
-    </p>
+              <!-- Context Contextual Callout -->
+              <tr>
+                <td style="padding:0 40px 32px 40px;">
+                  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color:#EBF5F1;border-radius:8px;padding:12px 16px;">
+                    <tr>
+                      <td style="font-size:13px;color:#0C5744;font-weight:500;text-align:left;line-height:1.6;">
+                        ⏳ <strong>Note:</strong> This link expires in 48 hours. If you weren't expecting this invite, you can safely ignore this email.
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
 
-    <hr style="border: none; border-top: 1px solid #E8EAE8; margin: 32px 0;" />
-    <p style="font-size: 12px; color: #9EA89E; margin: 0;">Groven — Client Portal</p>
-  </div>
-</body>
-</html>
-"""
+              <!-- Standard Clean Footer Footer -->
+              <tr>
+                <td style="padding:32px 40px;background-color:#F8FAF9;border-top:1px solid #EAECEB;text-align:center;">
+                  <p style="margin:0 0 6px 0;font-size:12px;color:#7A857F;line-height:16px;">
+                    © 2026 Groven. All rights reserved.
+                  </p>
+                  <p style="margin:0;font-size:11px;color:#A3AEA8;line-height:16px;">
+                    Groven — Client Portal
+                  </p>
+                </td>
+              </tr>
+
+            </table>
+          </td>
+        </tr>
+      </table>
+    </body>
+    </html>
+    """
 
     try:
         send_mail(
