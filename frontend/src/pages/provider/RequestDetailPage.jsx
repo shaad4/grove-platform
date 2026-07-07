@@ -21,6 +21,7 @@ import { useWebSocket } from '../../hooks/useWebSocket'
 import { usePanelResize } from '../../hooks/usePanelResize'
 import { useWebRTC } from '../../hooks/useWebRTC'
 import VideoCall from '../../components/chat/VideoCall'
+import { useWalkthrough } from '../../context/WalkthroughContext'
 
 // ── Status config ─────────────────────────────────────────────
 const STATUS_ORDER = ['received', 'in_review', 'in_progress', 'delivered', 'closed']
@@ -1170,6 +1171,14 @@ export default function RequestDetailPage() {
     return () => window.removeEventListener('resize', handleResize)
   }, [])
 
+  const { startWalkthrough } = useWalkthrough()
+
+  useEffect(() => {
+    if (!loading && req && localStorage.getItem('grove_walkthrough_provider_request_detail') !== 'completed') {
+      startWalkthrough('provider_request_detail')
+    }
+  }, [startWalkthrough, loading, req])
+
   const chatWsRef = useRef(null)
 
   const sendSignal = useCallback((payload) => {
@@ -1344,7 +1353,7 @@ export default function RequestDetailPage() {
           </div>
 
           {/* Inline status pipeline */}
-          <div className="flex items-center gap-2 shrink-0 ml-4">
+          <div className="flex items-center gap-2 shrink-0 ml-4" data-tour={!isMobile ? "provider-request-status" : undefined}>
             <div className="flex items-center bg-[#f7f8f7] p-0.5 rounded-lg border border-[#e8eae8]">
               {STATUS_ORDER.filter(s => s !== 'closed').map((s, i) => {
                 const scfg = statusConfig[s]
@@ -1377,6 +1386,7 @@ export default function RequestDetailPage() {
 
             {['in_progress', 'delivered'].includes(req.status) && (
               <button
+                data-tour="provider-request-deliver"
                 onClick={() => setShowDeliver(true)}
                 className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#0f6e56] text-white text-[12px] font-semibold hover:bg-[#085041] transition-colors shadow-xs"
               >
@@ -1414,7 +1424,7 @@ export default function RequestDetailPage() {
             </div>
           </div>
 
-          <div className="flex items-center gap-2 shrink-0 ml-2">
+          <div className="flex items-center gap-2 shrink-0 ml-2" data-tour={isMobile ? "provider-request-status" : undefined}>
             <select
               value={req.status}
               disabled={statusLoading}
@@ -1474,6 +1484,7 @@ export default function RequestDetailPage() {
           </button>
           <button
             onClick={() => setMobileTab('chat')}
+            data-tour={isMobile ? "provider-request-chat" : undefined}
             className={`flex-1 py-2 text-center text-[12px] font-semibold rounded-lg transition-all
               ${mobileTab === 'chat' ? 'bg-[#f7f8f7] text-[#0f6e56]' : 'text-[#6b776c]'}
             `}
@@ -1501,6 +1512,7 @@ export default function RequestDetailPage() {
                   <h1 className="text-[20px] font-semibold text-[#141a14] leading-snug truncate">{req.title}</h1>
                 </div>
                 <button
+                  data-tour="provider-request-urgent"
                   onClick={handleUrgentToggle}
                   disabled={urgentLoading}
                   className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[12px] font-semibold border transition-all shrink-0
@@ -1527,7 +1539,7 @@ export default function RequestDetailPage() {
                     <span className="font-medium text-[#4a544a] truncate">{clientName}</span>
                   </div>
                 </div>
-                <div>
+                <div data-tour="provider-request-due-date">
                   <span className="text-[#9ea89e] block text-[11px] font-medium uppercase tracking-wider mb-1">Due Date</span>
                   <DueDateEditor dueDate={req.due_date} requestId={requestId} onUpdate={handleDueDateUpdate} />
                 </div>
@@ -1551,7 +1563,7 @@ export default function RequestDetailPage() {
 
             {/* Details + history */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-              <div className="lg:col-span-2 rounded-xl border border-[#e8eae8] bg-white p-5 space-y-4">
+              <div data-tour="provider-request-details" className="lg:col-span-2 rounded-xl border border-[#e8eae8] bg-white p-5 space-y-4">
                 <div>
                   <p className="text-[11px] font-semibold uppercase tracking-wide text-[#9ea89e] mb-2">Request Details</p>
                   <p className="text-[14px] text-[#4a544a] leading-relaxed whitespace-pre-wrap bg-[#f7f8f7]/40 p-4 rounded-xl border border-[#e8eae8]/50">
@@ -1673,7 +1685,7 @@ export default function RequestDetailPage() {
             </div>
 
             {/* Internal notes */}
-            <div className="rounded-xl border border-[#e8eae8] bg-white p-5">
+            <div data-tour="provider-request-internal-notes" className="rounded-xl border border-[#e8eae8] bg-white p-5">
               <div className="flex items-center gap-2 mb-3 pb-2 border-b border-[#e8eae8]/60">
                 <Lock size={14} className="text-[#9ea89e]" />
                 <p className="text-[14px] font-semibold text-[#141a14]">Internal notes</p>
@@ -1747,6 +1759,7 @@ export default function RequestDetailPage() {
 
           {/* ── RIGHT CHAT PANEL — fixed width, flex column ── */}
           <div
+            data-tour={!isMobile ? "provider-request-chat" : undefined}
             className={`shrink-0 bg-white flex flex-col overflow-hidden h-full border-l border-[#e8eae8] w-full lg:w-auto ${mobileTab === 'chat' ? 'flex' : 'hidden lg:flex'}`}
             style={{ width: isMobile ? '100%' : chatWidth }}
           >

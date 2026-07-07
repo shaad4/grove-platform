@@ -32,7 +32,7 @@ import { useTenantBranding } from '../../context/TenantBrandingContext'
 import { useWebRTC } from '../../hooks/useWebRTC'
 import VideoCall from '../../components/chat/VideoCall'
 
-
+import { useWalkthrough } from '../../context/WalkthroughContext'
 // ─── Status config (Upgraded to Tailwind Tokens) ──────────────────────────────
 
 const STATUS_CONFIG = {
@@ -244,11 +244,27 @@ export default function ClientRequestDetailPage() {
   const { accent, accentSoft, accentDark } = colors
   const { requestId } = useParams()
   const navigate = useNavigate()
+  const { startWalkthrough } = useWalkthrough()
 
   const [req, setReq]               = useState(null)
   const [deliveries, setDeliveries] = useState([])
   const [loading, setLoading]       = useState(true)
   const [showChat, setShowChat]     = useState(false)
+  const [isMobile, setIsMobile] = useState(
+    typeof window !== 'undefined' ? window.innerWidth < 1024 : false
+  )
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 1024)
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [])
+
+  useEffect(() => {
+    if (!loading && req && localStorage.getItem('grove_walkthrough_client_request_detail') !== 'completed') {
+      startWalkthrough('client_request_detail')
+    }
+  }, [startWalkthrough, loading, req])
 
   // ── Mobile Navigation State ──
   // 'details' | 'deliveries'
@@ -550,7 +566,7 @@ export default function ClientRequestDetailPage() {
             <div className="p-5 lg:p-6 space-y-6 pb-24 lg:pb-6"> {/* Added pb-24 for mobile FAB clearance */}
 
               {/* Progress */}
-              <div>
+              <div data-tour="client-request-progress">
                 <div className="flex items-center justify-between mb-4">
                   <h2 className="text-sm font-semibold text-text-main">Progress</h2>
                   <span className="text-xs font-semibold" style={{ color: accent }}>{cfg.label}</span>
@@ -1019,6 +1035,7 @@ export default function ClientRequestDetailPage() {
 
           {/* ── DESKTOP CHAT COLUMN ────────────────────────────────────────── */}
           <div
+            data-tour={!isMobile ? "client-request-chat" : undefined}
             style={{ width: `${chatWidth}px` }}
             className="hidden lg:flex border-l border-border/50 bg-white flex-col shrink-0 h-full overflow-hidden shadow-[-4px_0_24px_-8px_rgba(0,0,0,0.02)]"
           >
@@ -1061,7 +1078,7 @@ export default function ClientRequestDetailPage() {
 
       {/* ── MOBILE CHAT FAB ───────────────────────────────────────────────── */}
       {!showChat && (
-        <div className="lg:hidden fixed bottom-[90px] right-4 z-40">
+        <div className="lg:hidden fixed bottom-[90px] right-4 z-40" data-tour={isMobile ? "client-request-chat" : undefined}>
           <button
             onClick={() => setShowChat(true)}
             onMouseEnter={() => setHoveredChatFAB(true)}
