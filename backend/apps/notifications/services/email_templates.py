@@ -418,17 +418,19 @@ def build_notification_email(notif):
             <!-- Logo -->
             <tr>
               <td style="padding:32px 40px 24px 40px;">
-                <img
-                  src="{LOGO_URL}"
-                  alt="Groven"
-                  width="180"
-                  style="
-                    display:block;
-                    width:180px;
-                    height:auto;
-                    border:0;
-                  "
-                >
+                <a href="https://groven.in" style="display:inline-block; text-decoration:none;">
+                  <img
+                    src="{LOGO_URL}"
+                    alt="Groven"
+                    width="180"
+                    style="
+                      display:block;
+                      width:180px;
+                      height:auto;
+                      border:0;
+                    "
+                  >
+                </a>
               </td>
             </tr>
 
@@ -622,7 +624,9 @@ def build_weekly_summary_email(
               <!-- Brand Logo Container -->
               <tr>
                 <td style="padding:40px 40px 24px 40px;">
-                  <img src="{LOGO_URL}" alt="Groven" height="70" style="display:block;height:28px;width:auto;border:0;outline:none;text-decoration:none;">
+                  <a href="https://groven.in" style="display:inline-block; text-decoration:none;">
+                    <img src="{LOGO_URL}" alt="Groven" height="70" style="display:block;height:28px;width:auto;border:0;outline:none;text-decoration:none;">
+                  </a>
                 </td>
               </tr>
 

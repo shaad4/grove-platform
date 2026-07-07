@@ -3,6 +3,7 @@ import { Link, useSearchParams } from 'react-router-dom'
 import { authApi } from '../api/auth.api'
 import groveLogo from '../assets/Grove_transparent_logo(Green).png'
 import { getSubdomain } from '../utils/domain'
+import { appUrl } from '../utils/urls'
 
 export default function ResetPasswordPage() {
   const [searchParams] = useSearchParams()
@@ -148,11 +149,13 @@ export default function ResetPasswordPage() {
         <div className="w-full max-w-[520px] bg-white border border-[#e8eae8] rounded-[24px] shadow-[0px_8px_20px_rgba(0,0,0,0.07)] p-11">
 
           {/* Logo */}
-          <img
-            src={groveLogo}
-            alt="Groven"
-            className="h-9 w-auto"
-          />
+          <a href={appUrl(null, '/')} className="inline-block cursor-pointer outline-none">
+            <img
+              src={groveLogo}
+              alt="Groven"
+              className="h-9 w-auto"
+            />
+          </a>
 
           {/* Success Icon */}
           <div className="pt-10 flex flex-col items-center text-center">
@@ -201,11 +204,13 @@ export default function ResetPasswordPage() {
       <div className="w-full max-w-[520px] bg-white border border-[#e8eae8] rounded-[24px] shadow-[0px_8px_20px_rgba(0,0,0,0.07)] p-11">
 
         {/* Logo */}
-        <img
-          src={groveLogo}
-          alt="Groven"
-          className="h-9 w-auto"
-        />
+        <a href={appUrl(null, '/')} className="inline-block cursor-pointer outline-none">
+          <img
+            src={groveLogo}
+            alt="Groven"
+            className="h-9 w-auto"
+          />
+        </a>
 
         {/* Heading */}
         <div className="pt-10">

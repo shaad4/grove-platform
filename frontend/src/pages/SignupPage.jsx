@@ -163,7 +163,9 @@ export default function SignupPage() {
 
             {/* LOGO */}
             <div className="mb-10">
-              <img src={groveLogo} alt="Groven" className="h-14 w-auto object-contain" />
+              <a href={appUrl(null, '/')} className="inline-block cursor-pointer outline-none">
+                <img src={groveLogo} alt="Groven" className="h-14 w-auto object-contain" />
+              </a>
             </div>
 
             {/* HEADER */}

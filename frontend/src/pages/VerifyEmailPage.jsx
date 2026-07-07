@@ -192,11 +192,13 @@ export default function VerifyEmailPage() {
         <div className="
           mb-10 flex justify-center
         ">
-          <img
-            src={groveLogo}
-            alt="Groven"
-            className="h-14 w-auto"
-          />
+          <a href={appUrl(null, '/')} className="inline-block cursor-pointer outline-none">
+            <img
+              src={groveLogo}
+              alt="Groven"
+              className="h-14 w-auto"
+            />
+          </a>
         </div>
 
         {/* VERIFYING */}

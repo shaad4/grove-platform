@@ -828,10 +828,12 @@ export default function PortalsPage() {
 
             <div className="card-logo">
 
-              <img
-                src={groveLogo}
-                alt="Groven"
-              />
+              <a href={appUrl(null, '/')} className="inline-block cursor-pointer outline-none">
+                <img
+                  src={groveLogo}
+                  alt="Groven"
+                />
+              </a>
 
             </div>
 

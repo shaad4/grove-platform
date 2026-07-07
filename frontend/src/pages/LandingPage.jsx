@@ -577,11 +577,13 @@ export default function LandingPage() {
       <footer className="border-t border-white/20 bg-white/30 backdrop-blur-2xl">
         <div className="max-w-6xl mx-auto px-5 py-10 flex flex-col md:flex-row md:items-center md:justify-between gap-6">
           <div>
-            <img
-              src={groveLogo}
-              alt="Groven"
-              className="h-12 object-contain"
-            />
+            <Link to="/" className="inline-block cursor-pointer outline-none">
+              <img
+                src={groveLogo}
+                alt="Groven"
+                className="h-12 object-contain"
+              />
+            </Link>
 
             <p className="mt-4 text-neutral-500 text-sm">
               Modern client onboarding and request

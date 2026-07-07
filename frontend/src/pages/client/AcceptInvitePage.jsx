@@ -220,11 +220,13 @@ export default function AcceptInvitePage() {
 
           {/* Top */}
           <div className="flex w-full items-center justify-start">
-            <img
-              src={groveLogo}
-              alt="Groven"
-              className="h-8 w-auto object-contain opacity-95"
-            />
+            <a href={appUrl(null, '/')} className="inline-block cursor-pointer outline-none">
+              <img
+                src={groveLogo}
+                alt="Groven"
+                className="h-8 w-auto object-contain opacity-95"
+              />
+            </a>
           </div>
 
           {/* Center */}
