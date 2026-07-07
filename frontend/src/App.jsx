@@ -48,6 +48,7 @@ import UpgradeModal from './components/modals/UpgradeModal'
 import UpgradeSuccessModal from './components/modals/UpgradeSuccessModal'
 import AdminBootstrap from './context/AdminBootstrap'
 import { WalkthroughProvider } from './context/WalkthroughContext'
+import PwaInstallPrompt from './components/ui/PwaInstallPrompt'
 
 
 function RoleDashboard() {
@@ -185,6 +186,7 @@ export default function App() {
                 </Routes>
                 <UpgradeModal />
                 <UpgradeSuccessModal />
+                <PwaInstallPrompt />
                 </TenantGuard>
               </TenantBrandingProvider>
             </AuthProvider>
