@@ -78,6 +78,13 @@ const CustomTooltip = ({
 const predefinedTours = {
   provider: [
     {
+      target: 'body',
+      placement: 'center',
+      title: 'Welcome to Grove',
+      content: 'Let\'s take a quick tour of your new workspace and see how to manage your clients and requests.',
+      disableBeacon: true,
+    },
+    {
       target: '[data-tour="provider-stats"]',
       title: 'Track Performance',
       content: 'Get a bird\'s-eye view of your client activity, open requests, and completed work this week.',
@@ -103,6 +110,13 @@ const predefinedTours = {
     },
   ],
   client: [
+    {
+      target: 'body',
+      placement: 'center',
+      title: 'Welcome to your Portal',
+      content: 'Let\'s take a quick tour to see how you can request work, track progress, and communicate with your provider.',
+      disableBeacon: true,
+    },
     {
       target: '[data-tour="client-stats"]',
       title: 'Your Overview',
