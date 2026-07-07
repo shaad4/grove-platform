@@ -2,7 +2,7 @@ import groveLogo from '../../assets/Grove_transparent_logo(Green).png'
 import { appUrl } from '../../utils/urls'
 
 export default function GroveLogo({ size = 'md', variant = 'full', dark = false }) {
-  const heights = { sm: 'h-5', md: 'h-7', lg: 'h-9' }
+  const heights = { sm: 'h-4', md: 'h-6', lg: 'h-8' }
 
   if (variant === 'icon') {
     return (
@@ -21,7 +21,7 @@ export default function GroveLogo({ size = 'md', variant = 'full', dark = false 
       <a href={appUrl(null, '/')} className="cursor-pointer shrink-0 outline-none">
         <span
           className={`font-semibold tracking-tight ${
-            size === 'sm' ? 'text-[15px]' : size === 'lg' ? 'text-[22px]' : 'text-[18px]'
+            size === 'sm' ? 'text-[14px]' : size === 'lg' ? 'text-[20px]' : 'text-[16px]'
           } ${dark ? 'text-white' : 'text-[#0a2e24]'}`}
         >
           Groven
@@ -39,7 +39,7 @@ export default function GroveLogo({ size = 'md', variant = 'full', dark = false 
       />
       <span
         className={`font-semibold tracking-tight ${
-          size === 'sm' ? 'text-[15px]' : size === 'lg' ? 'text-[22px]' : 'text-[17px]'
+          size === 'sm' ? 'text-[14px]' : size === 'lg' ? 'text-[20px]' : 'text-[16px]'
         } ${dark ? 'text-white' : 'text-[#0a2e24]'}`}
       >
         Groven

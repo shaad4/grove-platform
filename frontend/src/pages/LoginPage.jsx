@@ -147,7 +147,7 @@ export default function LoginPage() {
 
           <div className="mb-10">
             <a href={appUrl(null, '/')} className="inline-block cursor-pointer outline-none">
-              <img src={groveLogo} alt="Groven" className="h-10 object-contain" />
+              <img src={groveLogo} alt="Groven" className="h-8 object-contain" />
             </a>
           </div>
 

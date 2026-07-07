@@ -196,7 +196,7 @@ export default function VerifyEmailPage() {
             <img
               src={groveLogo}
               alt="Groven"
-              className="h-14 w-auto"
+              className="h-8 w-auto"
             />
           </a>
         </div>

@@ -81,7 +81,7 @@ export default function LandingPage() {
             <img
               src={groveLogo}
               alt="Groven"
-              className="h-12 object-contain"
+              className="h-8 object-contain"
             />
           </Link>
 
@@ -581,7 +581,7 @@ export default function LandingPage() {
               <img
                 src={groveLogo}
                 alt="Groven"
-                className="h-12 object-contain"
+                className="h-8 object-contain"
               />
             </Link>
 

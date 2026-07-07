@@ -142,7 +142,7 @@ export default function WorkspaceSetupPage() {
         {/* Header Branding Row */}
         <div className="flex items-center justify-between w-full mb-12 lg:mb-0">
           <a href={appUrl(null, '/')} className="inline-block cursor-pointer outline-none">
-            <img src={groveLogo} alt="Groven" className="h-9 w-auto object-contain" />
+            <img src={groveLogo} alt="Groven" className="h-8 w-auto object-contain" />
           </a>
         </div>
 
