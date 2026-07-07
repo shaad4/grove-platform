@@ -2,9 +2,9 @@ from rest_framework.permissions import BasePermission
 
 
 class IsGroveSuperuser(BasePermission):
-    """Grove Admin endpoints are restricted to the single provisioned superuser."""
+    """Groven Admin endpoints are restricted to the single provisioned superuser."""
 
-    message = "Grove admin access required."
+    message = "Groven admin access required."
 
     def has_permission(self, request, view):
         return bool(

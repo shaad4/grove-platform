@@ -47,7 +47,7 @@ export default function UserDetailPanel({ open, onClose, user, onChanged }) {
           <div className="mt-6">
             <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-[#9BA39B]">User info</p>
             <div className="space-y-2.5 rounded-lg border border-[#EEF1EE] p-4 text-[13px]">
-              <Row label="Workspace" value={user.tenant_slug ? `${user.tenant_slug}.grove.co` : '—'} link />
+              <Row label="Workspace" value={user.tenant_slug ? `${user.tenant_slug}.groven.in` : '—'} link />
               <Row label="Joined" value={joinedLabel(user.joined_at)} />
               <Row label="Last login" value={relativeTimeLabel(user.last_login) || 'Never'} />
               <Row label="User ID" value={user.id} mono />

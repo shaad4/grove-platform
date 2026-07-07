@@ -1120,7 +1120,7 @@ function ActivityLogModal({ requestId, statusConfig, onClose }) {
                             )}
                             {act.actor_name && (
                               <p className="text-[11px] text-[#9ea89e] mt-1">
-                                {act.actor_source === 'ai' ? '🤖 Grove AI' : `by ${act.actor_name}`}
+                                {act.actor_source === 'ai' ? '🤖 Groven AI' : `by ${act.actor_name}`}
                               </p>
                             )}
                           </div>
@@ -1703,7 +1703,7 @@ export default function RequestDetailPage() {
                           {note.is_ai_generated ? (
                             <span className="flex items-center gap-1 text-[11px] font-semibold text-[#0f6e56]">
                               <Sparkles size={11} />
-                              Grove AI · Triage note
+                              Groven AI · Triage note
                             </span>
                           ) : (
                             <span className="text-[11px] font-semibold text-[#141a14]">{note.author_name}</span>

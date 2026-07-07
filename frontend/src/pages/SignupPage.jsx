@@ -163,7 +163,7 @@ export default function SignupPage() {
 
             {/* LOGO */}
             <div className="mb-10">
-              <img src={groveLogo} alt="Grove" className="h-14 w-auto object-contain" />
+              <img src={groveLogo} alt="Groven" className="h-14 w-auto object-contain" />
             </div>
 
             {/* HEADER */}
@@ -173,7 +173,7 @@ export default function SignupPage() {
                 AI powered client workspace
               </div>
               <h1 className="mt-5 text-[42px] font-semibold leading-[1.05] tracking-tight text-[#17352c]">
-                Create your Grove account
+                Create your Groven account
               </h1>
               <p className="mt-4 text-[16px] leading-relaxed text-[#74837d]">
                 Verify your email and launch your private workspace in minutes.
@@ -369,7 +369,7 @@ export default function SignupPage() {
           <div className="relative z-10 w-full max-w-[430px]">
 
             <p className="mb-8 text-xs font-semibold uppercase tracking-[0.24em] text-[#98a49f]">
-              What you get with Grove
+              What you get with Groven
             </p>
 
             <div className="space-y-7">
@@ -420,7 +420,7 @@ export default function SignupPage() {
                 <div className="h-2.5 w-2.5 rounded-full bg-[#febc2e]" />
                 <div className="h-2.5 w-2.5 rounded-full bg-[#28c840]" />
                 <div className="ml-4 flex-1 rounded-full bg-[#f4f7f5] px-4 py-1 text-center text-[11px] text-[#97a39e]">
-                  grove.co/arjundev
+                  groven.in/arjundev
                 </div>
               </div>
 

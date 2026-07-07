@@ -80,7 +80,7 @@ export default function LandingPage() {
           >
             <img
               src={groveLogo}
-              alt="Grove"
+              alt="Groven"
               className="h-12 object-contain"
             />
           </Link>
@@ -197,7 +197,7 @@ export default function LandingPage() {
 
             {/* SUBTEXT */}
             <p className="mt-7 text-neutral-600 text-lg md:text-xl max-w-2xl mx-auto leading-8">
-              Grove helps agencies and service teams
+              Groven helps agencies and service teams
               manage onboarding, requests, approvals
               and clients in one beautiful workspace.
             </p>
@@ -255,7 +255,7 @@ export default function LandingPage() {
 
                     <div>
                       <h3 className="font-semibold">
-                        Grove Workspace
+                        Groven Workspace
                       </h3>
 
                       <p className="text-sm text-neutral-500">
@@ -559,7 +559,7 @@ export default function LandingPage() {
 
             <p className="mt-6 text-neutral-600 text-lg max-w-2xl mx-auto leading-8">
               Streamline onboarding, requests and
-              collaboration with Grove.
+              collaboration with Groven.
             </p>
 
             <Link
@@ -579,7 +579,7 @@ export default function LandingPage() {
           <div>
             <img
               src={groveLogo}
-              alt="Grove"
+              alt="Groven"
               className="h-12 object-contain"
             />
 

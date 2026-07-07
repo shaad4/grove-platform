@@ -306,7 +306,7 @@ class AcceptInviteView(APIView):
         response = Response(
             {
                 "success": True,
-                "message": "Account activated. Welcome to Grove!",
+                "message": "Account activated. Welcome to Groven!",
                 "data": {
                     "access": str(refresh.access_token),
                     "user": {

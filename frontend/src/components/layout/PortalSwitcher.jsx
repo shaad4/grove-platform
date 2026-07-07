@@ -167,7 +167,7 @@ export default function PortalSwitcher() {
               text-white
             "
           >
-            {tenant?.name ?? 'Grove'}
+            {tenant?.name ?? 'Groven'}
           </p>
         </div>
 

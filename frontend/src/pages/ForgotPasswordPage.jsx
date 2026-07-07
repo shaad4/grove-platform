@@ -45,7 +45,7 @@ export default function ForgotPasswordPage() {
           {/* Logo */}
             <img
             src={groveLogo}
-            alt="Grove"
+            alt="Groven"
             className="h-9 w-auto"
             />
 
@@ -135,7 +135,7 @@ export default function ForgotPasswordPage() {
         {/* Logo */}
         <img
         src={groveLogo}
-        alt="Grove"
+        alt="Groven"
         className="h-9 w-auto"
         />
 

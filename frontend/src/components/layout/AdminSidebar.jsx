@@ -44,7 +44,7 @@ export default function AdminSidebar() {
       <aside className="hidden lg:flex h-screen w-[260px] shrink-0 flex-col bg-[#0A140F] border-r border-white/[0.06]">
         {/* Header */}
         <div className="flex items-center gap-2.5 px-6 py-6">
-          <span className="text-[16px] font-semibold text-white">Grove Admin</span>
+          <span className="text-[16px] font-semibold text-white">Groven Admin</span>
           <span className="rounded-full bg-white/[0.08] px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-white/50">
             Internal
           </span>
@@ -86,7 +86,7 @@ export default function AdminSidebar() {
       {/* Mobile Top Bar */}
       <div className="lg:hidden fixed top-0 left-0 right-0 h-[60px] z-40 border-b border-white/[0.06] bg-[#0A140F]/95 backdrop-blur-xl flex items-center justify-between px-4">
         <div className="flex items-center gap-2">
-          <span className="text-[15px] font-semibold text-white">Grove Admin</span>
+          <span className="text-[15px] font-semibold text-white">Groven Admin</span>
           <span className="rounded-full bg-white/[0.08] px-2 py-0.5 text-[9px] font-medium uppercase tracking-wide text-white/50">
             Internal
           </span>

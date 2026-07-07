@@ -138,7 +138,7 @@ export default function AdminDashboardPage() {
                 >
                   <div>
                     <p className="text-[14px] font-medium text-[#10241C]">{t.name}</p>
-                    <p className="text-[12px] text-[#9BA39B]">{t.slug}.grove.co</p>
+                    <p className="text-[12px] text-[#9BA39B]">{t.slug}.groven.in</p>
                   </div>
                 </div>
               ))}
@@ -184,7 +184,7 @@ export default function AdminDashboardPage() {
                         </div>
                         <div>
                           <p className="text-[13px] font-medium text-[#10241C]">{t.name}</p>
-                          <p className="text-[12px] text-[#9BA39B]">{t.slug}.grove.co</p>
+                          <p className="text-[12px] text-[#9BA39B]">{t.slug}.groven.in</p>
                         </div>
                       </div>
                     </td>

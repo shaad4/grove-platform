@@ -494,7 +494,7 @@ const validate = () => {
                   </p>
 
                   <p className="mt-1 break-all text-[13px] font-medium text-[#0f6e56]">
-                    {tenant?.slug}.grove.co/portal
+                    {tenant?.slug}.groven.in/portal
                   </p>
                 </div>
 
@@ -546,7 +546,7 @@ const validate = () => {
                     Workspace URL
                   </span>
                   <p className="mt-0.5 break-all font-medium text-[#0f6e56]">
-                    {tenant?.slug}.grove.co/portal
+                    {tenant?.slug}.groven.in/portal
                   </p>
                 </div>
               </div>
@@ -760,8 +760,8 @@ const validate = () => {
           </p>
           <div className="mt-4 flex items-center gap-2 text-[13px]">
             <span className="text-[#9ea89e]">Portal:</span>
-            <span className="font-medium text-[#0f6e56]">{tenant?.slug}.grove.co/portal</span>
-            <button onClick={() => navigator.clipboard.writeText(`https://${tenant?.slug}.grove.co/portal`)}>
+            <span className="font-medium text-[#0f6e56]">{tenant?.slug}.groven.in/portal</span>
+            <button onClick={() => navigator.clipboard.writeText(`https://${tenant?.slug}.groven.in/portal`)}>
               <Copy size={13} className="text-[#9ea89e] hover:text-[#0f6e56] transition-colors" />
             </button>
           </div>

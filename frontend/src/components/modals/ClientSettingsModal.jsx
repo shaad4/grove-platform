@@ -473,7 +473,7 @@ function NotificationsSection({ tenant }) {
 
       <div className="mt-6">
         <InfoBox>
-          Emails are sent from {providerName} via Grove. You can unsubscribe at any time from within any email.
+          Emails are sent from {providerName} via Groven. You can unsubscribe at any time from within any email.
         </InfoBox>
       </div>
 
@@ -523,7 +523,7 @@ function DangerZoneSection({ tenant }) {
             <div>
               <p className="text-[13px] font-medium text-[#141A14]">Leave workspace</p>
               <p className="text-[12px] text-[#9EA89E] mt-0.5 max-w-xs">
-                Removes your access to {providerName}. Your Grove account stays active and you can still access any other workspaces you're a part of.
+                Removes your access to {providerName}. Your Groven account stays active and you can still access any other workspaces you're a part of.
               </p>
             </div>
             <Btn variant="danger-ghost" size="sm" onClick={handleOpenModal} className="flex-shrink-0 mt-0.5">

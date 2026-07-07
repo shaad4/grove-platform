@@ -44,7 +44,7 @@ def _wants_email(user, event_type: str) -> bool:
 @shared_task(bind=True, max_retries=3, default_retry_delay=60)
 def send_verification_email(self, user_email, display_name, token):
     """
-    Sends Grove verification email with HTML UI.
+    Sends Groven verification email with HTML UI.
     Retries automatically on failure.
     """
 
@@ -69,7 +69,7 @@ def send_verification_email(self, user_email, display_name, token):
 @shared_task(bind=True, max_retries=3, default_retry=60)
 def send_password_reset_email(self, user_email, display_name, token, tenant_slug=None):
     """
-    Sends Grove password reset email with HTML UI.
+    Sends Groven password reset email with HTML UI.
     Retries automatically on failure.
     """
 

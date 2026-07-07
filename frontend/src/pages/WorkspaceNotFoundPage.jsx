@@ -25,11 +25,11 @@ export default function WorkspaceNotFoundPage() {
         
           <a href={appUrl(null, '')}
           className="mt-6 inline-block rounded-xl bg-[#0f6e56] px-6 py-2.5 text-[13px] font-medium text-white hover:bg-[#0c5b47]">
-          Go to Grove homepage
+          Go to Groven homepage
         </a>
         <div className="mt-8 flex items-center justify-center gap-1.5">
           <GroveLogo size="sm" variant="icon" />
-          <span className="text-[11px] text-[#9ea89e]">Powered by Grove</span>
+          <span className="text-[11px] text-[#9ea89e]">Powered by Groven</span>
         </div>
       </div>
     </div>

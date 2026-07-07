@@ -70,7 +70,7 @@ export default function AdminLoginPage() {
           <div className="mb-5 flex h-11 w-11 items-center justify-center rounded-xl bg-white/[0.06] border border-white/[0.08]">
             <ShieldCheck size={20} className="text-[#1D9E75]" />
           </div>
-          <h1 className="text-[20px] font-semibold text-white">Grove Admin</h1>
+          <h1 className="text-[20px] font-semibold text-white">Groven Admin</h1>
           <p className="mt-1.5 text-[13px] text-white/40">
             Restricted internal access only.
           </p>
@@ -103,7 +103,7 @@ export default function AdminLoginPage() {
                   setEmail(e.target.value)
                   if (fieldErrors.email) setFieldErrors((p) => ({ ...p, email: '' }))
                 }}
-                placeholder="admin@grove.co"
+                placeholder="admin@groven.in"
                 autoComplete="email"
                 autoFocus
                 className={`h-11 w-full rounded-lg border bg-white/[0.04] px-3.5 text-[13px] text-white outline-none transition-all placeholder:text-white/25 ${

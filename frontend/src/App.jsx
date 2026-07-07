@@ -63,7 +63,7 @@ export default function App() {
     <ErrorBoundary>
       <BrowserRouter>
 
-        {/* Grove Admin */}
+        {/* Groven Admin */}
         <Routes>
           <Route path="/grove-admin/*" element={
             <AdminBootstrap>

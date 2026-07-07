@@ -621,7 +621,7 @@ class MembershipsView(APIView):
     GET /auth/memberships/
 
     Returns all portals the logged-in user belongs to,
-    split by role. Used by grove.co/portals picker screen
+    split by role. Used by groven.in/portals picker screen
     and the portal switcher component.
     """
 

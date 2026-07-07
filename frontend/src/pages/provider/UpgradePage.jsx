@@ -59,7 +59,7 @@ const FAQ_ITEMS = [
   },
   {
     q: 'How do I pay, and is it secure?',
-    a: 'Checkout and billing are handled entirely by Stripe. Grove never sees or stores your card details.',
+    a: 'Checkout and billing are handled entirely by Stripe. Groven never sees or stores your card details.',
   },
 ]
 
@@ -283,7 +283,7 @@ export default function UpgradePage() {
           <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-500 to-emerald-500 shadow-[0_0_20px_rgba(99,102,241,0.25)]">
             <Sparkles size={22} className="text-white" />
           </div>
-          <h1 className="text-[22px] font-semibold text-[#141A14] mb-2">You're already on Grove Pro</h1>
+          <h1 className="text-[22px] font-semibold text-[#141A14] mb-2">You're already on Groven Pro</h1>
           <p className="text-[14px] text-[#6B756B] mb-7 leading-relaxed">
             Unlimited clients, unlimited requests, and every AI feature are unlocked on your workspace.
           </p>
@@ -326,7 +326,7 @@ export default function UpgradePage() {
         {/* Hero */}
         <div className="text-center mb-12">
           <div className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-[#0F6E56] bg-[#F0FAF5] px-2.5 py-1 rounded-full border border-[#B3DDD1] mb-4">
-            <Sparkles size={11} /> Grove Pro
+            <Sparkles size={11} /> Groven Pro
           </div>
           <h1 className="text-[32px] sm:text-[40px] font-semibold text-[#141A14] leading-tight mb-3">
             Run your studio without limits

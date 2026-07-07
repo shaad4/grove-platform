@@ -26,7 +26,7 @@ class Plan(models.Model):
 class Tenant(models.Model):
     """
     One tenant = one service provider's workspace.
-    Identified on every request by subdomain slug (e.g. arjundev.grove.co).
+    Identified on every request by subdomain slug (e.g. arjundev.groven.in).
     """
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)

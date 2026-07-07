@@ -93,7 +93,7 @@ export default function WorkspaceSetupPage() {
   }, [slug])
 
   const workspaceUrl = useMemo(
-    () => (slug ? `${slug}.grove.co` : 'your-slug.grove.co'),
+    () => (slug ? `${slug}.groven.in` : 'your-slug.groven.in'),
     [slug]
   )
 
@@ -141,7 +141,7 @@ export default function WorkspaceSetupPage() {
         
         {/* Header Branding Row */}
         <div className="flex items-center justify-between w-full mb-12 lg:mb-0">
-          <img src={groveLogo} alt="Grove" className="h-9 w-auto object-contain" />
+          <img src={groveLogo} alt="Groven" className="h-9 w-auto object-contain" />
         </div>
 
         {/* Form Body Structure */}
@@ -220,7 +220,7 @@ export default function WorkspaceSetupPage() {
                 }`}
               >
                 <Globe size={16} className="text-[#9ea89e] shrink-0" />
-                <span className="text-[14px] text-[#9ea89e] select-none">grove.co/</span>
+                <span className="text-[14px] text-[#9ea89e] select-none">groven.in/</span>
                 
                 <input
                   type="text"
@@ -284,7 +284,7 @@ export default function WorkspaceSetupPage() {
 
         {/* Footer Policy Layout Element */}
         <div className="text-[11px] text-[#9ea89e] mt-12 lg:mt-0">
-          By proceeding, you agree to Grove's System Framework Terms of Service.
+          By proceeding, you agree to Groven's System Framework Terms of Service.
         </div>
       </div>
 

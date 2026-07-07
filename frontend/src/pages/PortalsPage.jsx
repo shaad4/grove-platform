@@ -204,7 +204,7 @@ function PortalCard({
           <p className="portal-slug">
             {suspended
               ? 'Access paused by the provider'
-              : `${portal.tenant_slug}.grove.co`}
+              : `${portal.tenant_slug}.groven.in`}
           </p>
 
         </div>
@@ -830,7 +830,7 @@ export default function PortalsPage() {
 
               <img
                 src={groveLogo}
-                alt="Grove"
+                alt="Groven"
               />
 
             </div>
@@ -848,7 +848,7 @@ export default function PortalsPage() {
               ? 'Choose a portal to open.'
               : hasClient && !hasProvider
               ? 'Your portals and workspace options.'
-              : 'Get started with Grove.'}
+              : 'Get started with Groven.'}
           </p>
 
           </div>
@@ -942,7 +942,7 @@ export default function PortalsPage() {
               <div className="workspace-prompt-text">
                 <p className="workspace-prompt-title">Start your own workspace</p>
                 <p className="workspace-prompt-sub">
-                  Manage clients and requests with your own Grove portal.
+                  Manage clients and requests with your own Groven portal.
                 </p>
               </div>
               <button

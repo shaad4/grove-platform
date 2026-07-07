@@ -18,7 +18,7 @@ export const authApi = {
     api.get(`/auth/check-slug/?slug=${slug}`),
 
 
-  //Global login (grove.co)
+  //Global login (groven.in)
   login: (data) =>
     api.post('/auth/login/', data),
 

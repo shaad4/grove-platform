@@ -186,9 +186,9 @@ export default function ClientLoginPage() {
             bg3={bg3}
           />
 
-          {/* Top: Grove Branding */}
+          {/* Top: Groven Branding */}
           <a href={rootUrl('/')} className="relative z-10 block w-fit hover:opacity-80 transition-opacity">
-            <img src={groveLogoWhite} alt="Grove" className="h-8 w-auto object-contain" />
+            <img src={groveLogoWhite} alt="Groven" className="h-8 w-auto object-contain" />
           </a>
 
           {/* Center: Tenant Branding */}
@@ -217,7 +217,7 @@ export default function ClientLoginPage() {
 
           {/* Bottom: Footer Links */}
           <div className="relative z-10 flex items-center gap-3 text-xs text-white/40 font-medium">
-            <span>Powered by Grove</span>
+            <span>Powered by Groven</span>
             <div className="w-1 h-1 rounded-full bg-white/20" />
             <a href={rootUrl('/login')} className="text-white/70 hover:text-white transition-colors">
               Provider sign in
@@ -373,7 +373,7 @@ export default function ClientLoginPage() {
                   <div className="flex items-center justify-center gap-2 text-xs font-medium text-text-dim">
                     <span>Powered by</span>
                     <a href={rootUrl('/')} className="hover:opacity-80 transition-opacity">
-                      <img src={groveLogoGreen} alt="Grove" className="h-[14px] w-auto opacity-80 grayscale" />
+                      <img src={groveLogoGreen} alt="Groven" className="h-[14px] w-auto opacity-80 grayscale" />
                     </a>
                   </div>
                 </div>

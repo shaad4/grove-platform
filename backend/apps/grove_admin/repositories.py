@@ -154,7 +154,7 @@ class UserAdminRepository:
     @staticmethod
     def get_or_create_admin_user(email):
         """
-        Provisions the single Grove Admin identity as a real superuser row so
+        Provisions the single Groven Admin identity as a real superuser row so
         existing JWTAuthentication / BelongsToTenant / TenantMiddleware keep
         working unchanged. Credential truth lives in env vars, not this row —
         password is intentionally unusable.
@@ -162,7 +162,7 @@ class UserAdminRepository:
         user, created = User.objects.get_or_create(
             email=email.lower().strip(),
             defaults={
-                "display_name": "Grove Admin",
+                "display_name": "Groven Admin",
                 "is_active": True,
                 "is_staff": True,
                 "is_superuser": True,

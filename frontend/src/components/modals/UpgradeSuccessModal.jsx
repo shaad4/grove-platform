@@ -31,7 +31,7 @@ function UpgradeSuccessModalInner({ onClose }) {
           </div>
 
           <h2 className="text-[17px] font-semibold text-[#141A14] mb-1.5">
-            Welcome to Grove Pro
+            Welcome to Groven Pro
           </h2>
           <p className="text-[13px] text-[#9EA89E] mb-5">
             Your upgrade is complete. Here's what's unlocked:

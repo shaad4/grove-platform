@@ -54,7 +54,7 @@ INSTALLED_APPS = [
     "corsheaders",
     "storages",
     "log_request_id",
-    # Grove apps
+    # Groven apps
     "apps.users",
     "apps.clients",
     "apps.plans",

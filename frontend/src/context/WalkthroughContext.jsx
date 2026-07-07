@@ -80,7 +80,7 @@ const predefinedTours = {
     {
       target: 'body',
       placement: 'center',
-      title: 'Welcome to Grove',
+      title: 'Welcome to Groven',
       content: 'Let\'s take a quick tour of your new workspace and see how to manage your clients and requests.',
       disableBeacon: true,
     },

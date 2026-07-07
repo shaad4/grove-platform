@@ -243,7 +243,7 @@ export default function AdminUsersPage() {
                       </div>
                     </td>
                     <td className="px-4 sm:px-5 py-3.5"><RoleBadge role={u.role} /></td>
-                    <td className="px-5 py-3.5 text-[13px] text-[#0F6E56] hidden md:table-cell">{u.tenant_slug}.grove.co</td>
+                    <td className="px-5 py-3.5 text-[13px] text-[#0F6E56] hidden md:table-cell">{u.tenant_slug}.groven.in</td>
                     <td className="px-5 py-3.5 text-[13px] text-[#7C867D] hidden lg:table-cell">{joinedLabel(u.joined_at)}</td>
                     <td className="px-5 py-3.5 text-[13px] text-[#7C867D] hidden lg:table-cell">{relativeTimeLabel(u.last_login) || 'Never'}</td>
                     <td className="px-4 sm:px-5 py-3.5">

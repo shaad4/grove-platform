@@ -15,7 +15,7 @@ export default function SlugInput({ value, onChange, error }) {
         error && 'border-red-400'
       )}>
         <span className="px-3 py-2.5 bg-surface text-text-dim text-sm border-r border-border select-none">
-          grove.co/
+          groven.in/
         </span>
         <input
           value={value}
@@ -32,7 +32,7 @@ export default function SlugInput({ value, onChange, error }) {
         ? <p className="text-xs text-red-500 mt-1">{error}</p>
         : value && (
           <p className="text-xs text-text-dim mt-1">
-            Clients visit: <span className="text-primary">grove.co/{value}</span>
+            Clients visit: <span className="text-primary">groven.in/{value}</span>
           </p>
         )
       }

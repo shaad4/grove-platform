@@ -34,8 +34,8 @@ class Command(BaseCommand):
             return
 
         product = stripe.Product.create(
-            name="Grove Pro",
-            description="Grove Pro plan — unlimited clients and requests.",
+            name="Groven Pro",
+            description="Groven Pro plan — unlimited clients and requests.",
         )
 
         price = stripe.Price.create(

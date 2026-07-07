@@ -1,8 +1,8 @@
 <div align="center">
 
-<img src="https://img.shields.io/badge/Grove-Client%20Management-0F6E56?style=for-the-badge&logo=leaf&logoColor=white" alt="Grove" />
+<img src="https://img.shields.io/badge/Groven-Client%20Management-0F6E56?style=for-the-badge&logo=leaf&logoColor=white" alt="Groven" />
 
-# 🌿 Grove
+# 🌿 Groven
 ### Multi-Tenant Client Management SaaS
 
 *One workspace per client. Every request tracked. Zero chaos.*
@@ -18,9 +18,9 @@
 
 ---
 
-## What is Grove?
+## What is Groven?
 
-Grove gives freelancers and agencies a branded subdomain workspace (`agency.groven.in`). Clients get an isolated portal to submit requests, track progress, and communicate — without ever seeing another client's data.
+Groven gives freelancers and agencies a branded subdomain workspace (`agency.groven.in`). Clients get an isolated portal to submit requests, track progress, and communicate — without ever seeing another client's data.
 
 ```
 Provider Dashboard          Client Portal
@@ -100,7 +100,7 @@ docker compose exec backend python manage.py migrate
 cd frontend && npm install && npm run dev
 ```
 
-> Grove uses `lvh.me` for local subdomain routing — `tenant.lvh.me:5173` resolves to `127.0.0.1` with no hosts file changes needed.
+> Groven uses `lvh.me` for local subdomain routing — `tenant.lvh.me:5173` resolves to `127.0.0.1` with no hosts file changes needed.
 
 ---
 
@@ -149,6 +149,6 @@ CI/CD via GitHub Actions — every push to `develop` auto-deploys to EC2.
 
 <div align="center">
 
-Built with 🌿 by the Grove team · [groven.in](https://groven.in)
+Built with 🌿 by the Groven team · [groven.in](https://groven.in)
 
 </div>

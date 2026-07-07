@@ -125,7 +125,7 @@ function ActivityRow({ activity, onNavigate }) {
   const [expanded, setExpanded] = useState(false)
   const isAI = activity.actor_source === 'ai'
   const isSystem = activity.actor_source === 'system'
-  const actorName = activity.actor || (isAI ? 'Grove AI' : isSystem ? 'System' : 'Unknown')
+  const actorName = activity.actor || (isAI ? 'Groven AI' : isSystem ? 'System' : 'Unknown')
   const isYou = activity.is_current_user === true
 
   const cfg = EVENT_CONFIG[activity.event_type] || EVENT_CONFIG.request_created

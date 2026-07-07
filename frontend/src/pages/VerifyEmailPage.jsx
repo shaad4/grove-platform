@@ -194,7 +194,7 @@ export default function VerifyEmailPage() {
         ">
           <img
             src={groveLogo}
-            alt="Grove"
+            alt="Groven"
             className="h-14 w-auto"
           />
         </div>
@@ -232,7 +232,7 @@ export default function VerifyEmailPage() {
               text-[#74837d]
             ">
               Please wait while we securely
-              verify your Grove account.
+              verify your Groven account.
             </p>
 
             <div className="

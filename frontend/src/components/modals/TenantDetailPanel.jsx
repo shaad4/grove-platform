@@ -57,7 +57,7 @@ export default function TenantDetailPanel({ open, onClose, tenant, onChanged }) 
         <PanelHeader
           eyebrow="Tenant"
           title={tenant.name}
-          subtitle={`${tenant.slug}.grove.co`}
+          subtitle={`${tenant.slug}.groven.in`}
           onClose={onClose}
         />
         <PanelBody>

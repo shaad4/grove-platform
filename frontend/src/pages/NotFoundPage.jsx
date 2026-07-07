@@ -93,8 +93,8 @@ export default function NotFoundPage() {
           <button
             onClick={() => navigate('/')}
             className="w-full sm:w-auto px-6 py-3 rounded-lg font-medium transition-colors text-white shadow-sm"
-            style={{ backgroundColor: '#0F6E56' }} // Grove 500
-            onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#085041'} // Grove 700
+            style={{ backgroundColor: '#0F6E56' }} // Groven 500
+            onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#085041'} // Groven 700
             onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#0F6E56'}
           >
             Return Home

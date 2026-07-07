@@ -27,11 +27,11 @@ def send_client_invite_email(
     base = frontend_base.replace("https://", "").replace("http://", "")
     accept_url = f"https://{tenant_slug}.{base}/accept-invite?token={invite_token}"
 
-    subject = f"You've been invited to {provider_name}'s workspace on Grove"
+    subject = f"You've been invited to {provider_name}'s workspace on Groven"
 
     message = f"""Hi {client_name},
 
-{provider_name} has invited you to their client workspace on Grove.
+{provider_name} has invited you to their client workspace on Groven.
 
 Click the link below to set your password and get started:
 
@@ -41,7 +41,7 @@ This link expires in 48 hours.
 
 If you weren't expecting this invite, you can ignore this email.
 
-— The Grove Team
+— The Groven Team
 """
 
     html_message = f"""
@@ -51,14 +51,14 @@ If you weren't expecting this invite, you can ignore this email.
   <div style="max-width: 520px; margin: 0 auto; background: #ffffff; border-radius: 12px; padding: 40px; border: 1px solid #E8EAE8;">
     
     <div style="margin-bottom: 32px;">
-      <span style="font-size: 20px; font-weight: 600; color: #0F6E56;">Grove</span>
+      <span style="font-size: 20px; font-weight: 600; color: #0F6E56;">Groven</span>
     </div>
 
     <h1 style="font-size: 22px; font-weight: 500; color: #141A14; margin: 0 0 8px;">
       You're invited
     </h1>
     <p style="font-size: 14px; color: #4A544A; margin: 0 0 32px;">
-      <strong>{provider_name}</strong> has invited you to their workspace on Grove.
+      <strong>{provider_name}</strong> has invited you to their workspace on Groven.
     </p>
 
     <a href="{accept_url}"
@@ -73,7 +73,7 @@ If you weren't expecting this invite, you can ignore this email.
     </p>
 
     <hr style="border: none; border-top: 1px solid #E8EAE8; margin: 32px 0;" />
-    <p style="font-size: 12px; color: #9EA89E; margin: 0;">Grove — Client Portal</p>
+    <p style="font-size: 12px; color: #9EA89E; margin: 0;">Groven — Client Portal</p>
   </div>
 </body>
 </html>

@@ -4,13 +4,13 @@ LOGO_URL = settings.LOGO_URL_BRANDING
 
 
 def build_verification_email(display_name, verify_url):
-    subject = "Verify your Grove account"
+    subject = "Verify your Groven account"
 
     # fallback plain text email
     text_content = f"""
     Hi {display_name},
 
-    Welcome to Grove 🌿
+    Welcome to Groven 🌿
 
     Verify your email address:
 
@@ -18,7 +18,7 @@ def build_verification_email(display_name, verify_url):
 
     This verification link expires in 24 hours.
 
-    — The Grove Team
+    — The Groven Team
     """
 
     # beautiful HTML email
@@ -28,7 +28,7 @@ def build_verification_email(display_name, verify_url):
 
     <head>
       <meta charset="UTF-8" />
-      <title>Verify your Grove account</title>
+      <title>Verify your Groven account</title>
     </head>
 
     <body style="
@@ -81,7 +81,7 @@ def build_verification_email(display_name, verify_url):
                     font-weight:700;
                     letter-spacing:-1px;
                   ">
-                    Grove 🌿
+                    Groven 🌿
                   </h1>
 
                   <p style="
@@ -117,7 +117,7 @@ def build_verification_email(display_name, verify_url):
                   ">
                     Hi {display_name},
                     <br /><br />
-                    Welcome to Grove.
+                    Welcome to Groven.
                     You're one step away from launching
                     your workspace.
                   </p>
@@ -211,7 +211,7 @@ def build_verification_email(display_name, verify_url):
                     font-size:13px;
                     line-height:1.8;
                   ">
-                    If you didn’t create a Grove account,
+                    If you didn’t create a Groven account,
                     you can safely ignore this email.
                   </p>
 
@@ -220,7 +220,7 @@ def build_verification_email(display_name, verify_url):
                     color:#97a39e;
                     font-size:12px;
                   ">
-                    © 2026 Grove. All rights reserved.
+                    © 2026 Groven. All rights reserved.
                   </p>
 
                 </td>
@@ -244,12 +244,12 @@ def build_verification_email(display_name, verify_url):
 
 
 def build_password_reset_email(display_name, reset_url):
-    subject = "Reset your Grove password"
+    subject = "Reset your Groven password"
 
     text_content = f"""
     Hi {display_name},
 
-    You requested a password reset for your Grove account.
+    You requested a password reset for your Groven account.
 
     Reset your password here:
     {reset_url}
@@ -258,7 +258,7 @@ def build_password_reset_email(display_name, reset_url):
 
     If you didn't request this, ignore this email — your password won't change.
 
-    — The Grove Team
+    — The Groven Team
     """
 
     html_content = f"""
@@ -266,7 +266,7 @@ def build_password_reset_email(display_name, reset_url):
     <html>
     <head>
       <meta charset="UTF-8" />
-      <title>Reset your Grove password</title>
+      <title>Reset your Groven password</title>
     </head>
     <body style="
       margin:0; padding:0;
@@ -288,7 +288,7 @@ def build_password_reset_email(display_name, reset_url):
               <tr>
                 <td style="background:#0f7b5f; padding:44px; text-align:center;">
                   <h1 style="margin:0; color:white; font-size:38px; font-weight:700; letter-spacing:-1px;">
-                    Grove 🌿
+                    Groven 🌿
                   </h1>
                   <p style="margin-top:12px; color:rgba(255,255,255,0.82); font-size:15px;">
                     Modern workspace management platform
@@ -304,7 +304,7 @@ def build_password_reset_email(display_name, reset_url):
                   </h2>
                   <p style="margin-top:20px; color:#5f6f69; font-size:16px; line-height:1.8;">
                     Hi {display_name},<br /><br />
-                    We received a request to reset your Grove password.
+                    We received a request to reset your Groven password.
                     Click the button below — this link expires in 30 minutes.
                   </p>
 
@@ -343,7 +343,7 @@ def build_password_reset_email(display_name, reset_url):
                     If you didn't request this, no action is needed.
                   </p>
                   <p style="margin-top:14px; color:#97a39e; font-size:12px;">
-                    © 2026 Grove. All rights reserved.
+                    © 2026 Groven. All rights reserved.
                   </p>
                 </td>
               </tr>
@@ -369,8 +369,8 @@ def build_notification_email(notif):
     text_content = (
         f"Hi {notif.recipient.display_name},\n\n"
         f"{notif.body}\n\n"
-        f"Log in to Grove to view more details.\n\n"
-        f"— Grove"
+        f"Log in to Groven to view more details.\n\n"
+        f"— Groven"
     )
 
     html_content = f"""
@@ -420,7 +420,7 @@ def build_notification_email(notif):
               <td style="padding:32px 40px 24px 40px;">
                 <img
                   src="{LOGO_URL}"
-                  alt="Grove"
+                  alt="Groven"
                   width="180"
                   style="
                     display:block;
@@ -490,7 +490,7 @@ def build_notification_email(notif):
                       color:#0C5744;
                       line-height:1.6;
                     ">
-                      🔔 This notification was delivered by Grove to keep your workspace activity up to date.
+                      🔔 This notification was delivered by Groven to keep your workspace activity up to date.
                     </td>
                   </tr>
                 </table>
@@ -516,7 +516,7 @@ def build_notification_email(notif):
                       "
                     >
                       <a
-                        href="https://grove.site/login"
+                        href="https://groven.in/login"
                         style="
                           display:inline-block;
                           padding:14px 28px;
@@ -526,7 +526,7 @@ def build_notification_email(notif):
                           font-weight:600;
                         "
                       >
-                        Open Grove
+                        Open Groven
                       </a>
                     </td>
                   </tr>
@@ -558,7 +558,7 @@ def build_notification_email(notif):
                   font-size:11px;
                   color:#A3AEA8;
                 ">
-                  © 2026 Grove. All rights reserved.
+                  © 2026 Groven. All rights reserved.
                 </p>
 
               </td>
@@ -590,7 +590,7 @@ def build_weekly_summary_email(
     active_clients,
     completion_rate,
 ):
-    subject = f"Your Grove week — {tenant_name}"
+    subject = f"Your Groven week — {tenant_name}"
 
     # Clean, comprehensive plain-text fallback
     text_content = (
@@ -601,7 +601,7 @@ def build_weekly_summary_email(
         f"  • Completion rate: {completion_rate}%\n"
         f"  • Pending requests: {pending_requests}\n"
         f"  • Active clients: {active_clients}\n\n"
-        f"Log in to your workspace dashboard to see the full picture.\n\n— Grove"
+        f"Log in to your workspace dashboard to see the full picture.\n\n— Groven"
     )
 
     # Bulletproof, modern SaaS layout styled with standard cross-client HTML practices
@@ -622,7 +622,7 @@ def build_weekly_summary_email(
               <!-- Brand Logo Container -->
               <tr>
                 <td style="padding:40px 40px 24px 40px;">
-                  <img src="{LOGO_URL}" alt="Grove" height="70" style="display:block;height:28px;width:auto;border:0;outline:none;text-decoration:none;">
+                  <img src="{LOGO_URL}" alt="Groven" height="70" style="display:block;height:28px;width:auto;border:0;outline:none;text-decoration:none;">
                 </td>
               </tr>
 
@@ -695,7 +695,7 @@ def build_weekly_summary_email(
                   <table role="presentation" cellspacing="0" cellpadding="0" border="0">
                     <tr>
                       <td align="center" style="border-radius:8px;background-color:#0F6E56;">
-                        <a href="https://grove.site/login" target="_blank" style="border:1px solid #0F6E56;border-radius:8px;color:#ffffff;display:inline-block;font-size:14px;font-weight:600;padding:14px 28px;text-decoration:none;">
+                        <a href="https://groven.in/login" target="_blank" style="border:1px solid #0F6E56;border-radius:8px;color:#ffffff;display:inline-block;font-size:14px;font-weight:600;padding:14px 28px;text-decoration:none;">
                           Open Dashboard
                         </a>
                       </td>
@@ -708,7 +708,7 @@ def build_weekly_summary_email(
               <tr>
                 <td style="padding:32px 40px;background-color:#F8FAF9;border-top:1px solid #EAECEB;text-align:center;">
                   <p style="margin:0 0 6px 0;font-size:12px;color:#7A857F;line-height:16px;">
-                    © 2026 Grove. All rights reserved.
+                    © 2026 Groven. All rights reserved.
                   </p>
                   <p style="margin:0;font-size:11px;color:#A3AEA8;line-height:16px;">
                     You are receiving this digest summary as an active workspace administrator.

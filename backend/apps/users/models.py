@@ -30,7 +30,7 @@ class UserManager(BaseUserManager):
 
 class User(AbstractBaseUser, PermissionsMixin):
     """
-    Global identity model — one account per email address across all of Grove.
+    Global identity model — one account per email address across all of Groven.
 
     Role is NOT stored here. A user's role is resolved from TenantMembership
     at login time for a specific tenant. This is the core of the v2 architecture.

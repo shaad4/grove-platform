@@ -6,7 +6,7 @@ from apps.users.models import User
 
 
 class AdminAction(models.Model):
-    """Audit log every mutating Grove Admin action writes one row here."""
+    """Audit log every mutating Groven Admin action writes one row here."""
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     admin = models.ForeignKey(

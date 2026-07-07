@@ -222,7 +222,7 @@ export default function AcceptInvitePage() {
           <div className="flex w-full items-center justify-start">
             <img
               src={groveLogo}
-              alt="Grove"
+              alt="Groven"
               className="h-8 w-auto object-contain opacity-95"
             />
           </div>
@@ -418,7 +418,7 @@ export default function AcceptInvitePage() {
             <Lock size={12} />
 
             <span>
-              Private workspace · Secure access · Powered by Grove
+              Private workspace · Secure access · Powered by Groven
             </span>
           </div>
         </div>
@@ -437,7 +437,7 @@ export default function AcceptInvitePage() {
             </h1>
             <p className="mt-2 text-[16px] leading-7 text-[#6b7a6b]">
               {isExistingUser
-                ? 'Your existing Grove account will be connected to this portal.'
+                ? 'Your existing Groven account will be connected to this portal.'
                 : 'Set a password to access your private project portal.'}
             </p>
           </div>
@@ -458,7 +458,7 @@ export default function AcceptInvitePage() {
               </div>
               <p className="mt-2 text-[12px] text-[#9ea89e]">
                 {isExistingUser
-                  ? 'This is your existing Grove account.'
+                  ? 'This is your existing Groven account.'
                   : 'This cannot be changed.'}
               </p>
             </div>
@@ -538,7 +538,7 @@ export default function AcceptInvitePage() {
             {isExistingUser && (
               <div className="rounded-[12px] border border-[#b3e0d1] bg-[#e6f5f0] px-5 py-4">
                 <p className="text-[13px] leading-6 text-[#0f6e56]">
-                  You already have a Grove account. Clicking below will add{' '}
+                  You already have a Groven account. Clicking below will add{' '}
                   <span className="font-semibold">{inviteData?.workspace_name}</span> to
                   your portals — no new password needed.
                 </p>
@@ -579,12 +579,12 @@ export default function AcceptInvitePage() {
           {/* Footer */}
           <div className="mt-7 flex items-center justify-center gap-2">
 
-            <span className="text-[12px] text-[#9ea89e]">Powered by Grove</span>
+            <span className="text-[12px] text-[#9ea89e]">Powered by Groven</span>
           </div>
           <p className="mt-4 text-center text-[12px] text-[#9ea89e]">
             Wrong invite?{' '}
-            <a href="mailto:support@grove.co" className="cursor-pointer text-[#0f6e56] underline">
-              Contact support@grove.co
+            <a href="mailto:support@groven.in" className="cursor-pointer text-[#0f6e56] underline">
+              Contact support@groven.in
             </a>
           </p>
         </div>

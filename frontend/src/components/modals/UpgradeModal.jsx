@@ -19,7 +19,7 @@ const REASON_COPY = {
   },
   pro_feature_required: {
     eyebrow: 'Pro feature',
-    headline: 'This feature is part of Grove Pro',
+    headline: 'This feature is part of Groven Pro',
   },
 }
 

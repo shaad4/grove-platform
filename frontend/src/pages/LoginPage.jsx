@@ -146,7 +146,7 @@ export default function LoginPage() {
         <div className="w-full max-w-md">
 
           <div className="mb-10">
-            <img src={groveLogo} alt="Grove" className="h-10 object-contain" />
+            <img src={groveLogo} alt="Groven" className="h-10 object-contain" />
           </div>
 
           <div className="mb-8">
@@ -278,7 +278,7 @@ export default function LoginPage() {
               {[...Array(5)].map((_, i) => <Star key={i} size={16} fill="currentColor" />)}
             </div>
             <p className="text-lg italic leading-9 text-[#141A14]">
-              Grove changed how I handle client relationships entirely. Every project has
+              Groven changed how I handle client relationships entirely. Every project has
               a home now. My clients send me thank-you notes instead of chasing messages —
               that's never happened before.
             </p>
@@ -288,7 +288,7 @@ export default function LoginPage() {
               </div>
               <div>
                 <h4 className="font-medium text-[#141A14]">Nisha Kreations</h4>
-                <p className="text-sm text-[#9EA89E]">UI/UX Freelancer · Grove Pro</p>
+                <p className="text-sm text-[#9EA89E]">UI/UX Freelancer · Groven Pro</p>
               </div>
             </div>
           </div>

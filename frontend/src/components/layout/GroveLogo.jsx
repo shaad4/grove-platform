@@ -7,7 +7,7 @@ export default function GroveLogo({ size = 'md', variant = 'full', dark = false 
     return (
       <img
         src={groveLogo}
-        alt="Grove"
+        alt="Groven"
         className={`${heights[size]} w-auto object-contain`}
       />
     )
@@ -20,7 +20,7 @@ export default function GroveLogo({ size = 'md', variant = 'full', dark = false 
           size === 'sm' ? 'text-[15px]' : size === 'lg' ? 'text-[22px]' : 'text-[18px]'
         } ${dark ? 'text-white' : 'text-[#0a2e24]'}`}
       >
-        Grove
+        Groven
       </span>
     )
   }
@@ -29,7 +29,7 @@ export default function GroveLogo({ size = 'md', variant = 'full', dark = false 
     <div className="flex items-center gap-2.5">
       <img
         src={groveLogo}
-        alt="Grove"
+        alt="Groven"
         className={`${heights[size]} w-auto object-contain`}
       />
       <span
@@ -37,7 +37,7 @@ export default function GroveLogo({ size = 'md', variant = 'full', dark = false 
           size === 'sm' ? 'text-[15px]' : size === 'lg' ? 'text-[22px]' : 'text-[17px]'
         } ${dark ? 'text-white' : 'text-[#0a2e24]'}`}
       >
-        Grove
+        Groven
       </span>
     </div>
   )

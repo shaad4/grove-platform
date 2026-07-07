@@ -352,7 +352,7 @@ function PortalBrandingSection({ ws, setWs }) {
 
         <FormRow label="Portal URL">
           <div className="flex items-stretch h-9 rounded-lg border border-[#E0E4E0] bg-white overflow-hidden focus-within:border-[#0F6E56] focus-within:ring-2 focus-within:ring-[#0F6E56]/10 transition-all">
-            <span className="px-2.5 text-[11px] text-[#9EA89E] bg-[#F7F8F7] border-r border-[#E0E4E0] flex items-center select-none font-mono whitespace-nowrap">grove.co/</span>
+            <span className="px-2.5 text-[11px] text-[#9EA89E] bg-[#F7F8F7] border-r border-[#E0E4E0] flex items-center select-none font-mono whitespace-nowrap">groven.in/</span>
             <input
               type="text"
               value={ws.slug}
@@ -885,7 +885,7 @@ function DangerZoneSection({ workspaceName }) {
     {
       id: 'delete-workspace',
       title: 'Delete workspace',
-      desc: `Permanently removes "${workspaceName || 'this workspace'}" for everyone. Every client loses access and all client data is removed. Your Grove account stays active — you can create a new workspace later.`,
+      desc: `Permanently removes "${workspaceName || 'this workspace'}" for everyone. Every client loses access and all client data is removed. Your Groven account stays active — you can create a new workspace later.`,
       action: 'Delete workspace',
       confirmPhrase: 'delete workspace',
       variant: 'danger',
