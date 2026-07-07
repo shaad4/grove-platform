@@ -16,10 +16,10 @@ import { appUrl } from '../utils/urls'
 function GoogleIcon() {
   return (
     <svg width="18" height="18" viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg">
-      <path d="M17.64 9.20455C17.64 8.56636 17.5827 7.95273 17.4764 7.36364H9V10.845H13.8436C13.635 11.97 13.0009 12.9232 12.0477 13.5614V15.8195H14.9564C16.6582 14.2527 17.64 11.9455 17.64 9.20455Z" fill="#4285F4"/>
-      <path d="M9 18C11.43 18 13.4673 17.1941 14.9564 15.8195L12.0477 13.5614C11.2418 14.1014 10.2109 14.4204 9 14.4204C6.65591 14.4204 4.67182 12.8373 3.96409 10.71H0.957275V13.0418C2.43818 15.9832 5.48182 18 9 18Z" fill="#34A853"/>
-      <path d="M3.96409 10.71C3.78409 10.17 3.68182 9.59318 3.68182 9C3.68182 8.40682 3.78409 7.83 3.96409 7.29V4.95818H0.957275C0.347727 6.17318 0 7.54773 0 9C0 10.4523 0.347727 11.8268 0.957275 13.0418L3.96409 10.71Z" fill="#FBBC05"/>
-      <path d="M9 3.57955C10.3214 3.57955 11.5077 4.03364 12.4405 4.92545L15.0218 2.34409C13.4632 0.891818 11.4259 0 9 0C5.48182 0 2.43818 2.01682 0.957275 4.95818L3.96409 7.29C4.67182 5.16273 6.65591 3.57955 9 3.57955Z" fill="#EA4335"/>
+      <path d="M17.64 9.20455C17.64 8.56636 17.5827 7.95273 17.4764 7.36364H9V10.845H13.8436C13.635 11.97 13.0009 12.9232 12.0477 13.5614V15.8195H14.9564C16.6582 14.2527 17.64 11.9455 17.64 9.20455Z" fill="#4285F4" />
+      <path d="M9 18C11.43 18 13.4673 17.1941 14.9564 15.8195L12.0477 13.5614C11.2418 14.1014 10.2109 14.4204 9 14.4204C6.65591 14.4204 4.67182 12.8373 3.96409 10.71H0.957275V13.0418C2.43818 15.9832 5.48182 18 9 18Z" fill="#34A853" />
+      <path d="M3.96409 10.71C3.78409 10.17 3.68182 9.59318 3.68182 9C3.68182 8.40682 3.78409 7.83 3.96409 7.29V4.95818H0.957275C0.347727 6.17318 0 7.54773 0 9C0 10.4523 0.347727 11.8268 0.957275 13.0418L3.96409 10.71Z" fill="#FBBC05" />
+      <path d="M9 3.57955C10.3214 3.57955 11.5077 4.03364 12.4405 4.92545L15.0218 2.34409C13.4632 0.891818 11.4259 0 9 0C5.48182 0 2.43818 2.01682 0.957275 4.95818L3.96409 7.29C4.67182 5.16273 6.65591 3.57955 9 3.57955Z" fill="#EA4335" />
     </svg>
   )
 }
@@ -27,7 +27,7 @@ function GoogleIcon() {
 async function redirectAfterLogin(data, dispatch, saveSession) {
   const { access, user, tenant, membership_count } = data
 
-  saveSession({ accessToken: access, user, tenant })
+  saveSession({ accessToken: access, user, tenant, membership_count })
 
   if (membership_count === 1 && user.role == 'provider' && tenant?.slug) {
     window.location.replace(
@@ -36,7 +36,7 @@ async function redirectAfterLogin(data, dispatch, saveSession) {
     return
   }
 
- 
+
   try {
     const res = await authApi.getMemberships(access)
     dispatch(setMemberships(res.data))
@@ -49,14 +49,14 @@ async function redirectAfterLogin(data, dispatch, saveSession) {
 
 export default function LoginPage() {
   const { saveSession } = useAuth()
-  const dispatch        = useDispatch()
+  const dispatch = useDispatch()
 
-  const [email, setEmail]             = useState('')
-  const [password, setPassword]       = useState('')
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [fieldErrors, setFieldErrors] = useState({})
-  const [error, setError]             = useState('')
-  const [loading, setLoading]         = useState(false)
+  const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
   const [googleLoading, setGoogleLoading] = useState(false)
 
   //Google OAuth
@@ -71,8 +71,8 @@ export default function LoginPage() {
 
         setLoggingOut(false)
 
-        if (data.needs_workspace) {
-          saveSession({ accessToken: data.access, user: data.user, tenant: null })
+        if (data.needs_workspace && data.membership_count === 0) {
+          saveSession({ accessToken: data.access, user: data.user, tenant: null, membership_count: 0 })
           window.location.replace(
             appUrl(null, '/setup-workspace')
           )
@@ -117,8 +117,8 @@ export default function LoginPage() {
 
       setLoggingOut(false)
 
-      if (data.needs_workspace) {
-        saveSession({ accessToken: data.access, user: data.user, tenant: null })
+      if (data.needs_workspace && data.membership_count === 0) {
+        saveSession({ accessToken: data.access, user: data.user, tenant: null, membership_count: 0 })
         window.location.replace(
           appUrl(null, '/setup-workspace')
         )
@@ -183,11 +183,10 @@ export default function LoginPage() {
                 placeholder="you@example.com"
                 autoComplete="email"
                 autoFocus
-                className={`h-12 w-full rounded-xl border bg-white px-4 text-sm outline-none transition-all ${
-                  fieldErrors.email
-                    ? 'border-red-400'
-                    : 'border-[#E5E7EB] focus:border-[#0F6E56] focus:ring-4 focus:ring-[#0F6E56]/10'
-                }`}
+                className={`h-12 w-full rounded-xl border bg-white px-4 text-sm outline-none transition-all ${fieldErrors.email
+                  ? 'border-red-400'
+                  : 'border-[#E5E7EB] focus:border-[#0F6E56] focus:ring-4 focus:ring-[#0F6E56]/10'
+                  }`}
               />
               {fieldErrors.email && (
                 <p className="mt-1 text-xs text-red-500">{fieldErrors.email}</p>
@@ -212,11 +211,10 @@ export default function LoginPage() {
                   }}
                   placeholder="Enter your password"
                   autoComplete="current-password"
-                  className={`h-12 w-full rounded-xl border bg-white px-4 pr-12 text-sm outline-none transition-all ${
-                    fieldErrors.password
-                      ? 'border-red-400'
-                      : 'border-[#E5E7EB] focus:border-[#0F6E56] focus:ring-4 focus:ring-[#0F6E56]/10'
-                  }`}
+                  className={`h-12 w-full rounded-xl border bg-white px-4 pr-12 text-sm outline-none transition-all ${fieldErrors.password
+                    ? 'border-red-400'
+                    : 'border-[#E5E7EB] focus:border-[#0F6E56] focus:ring-4 focus:ring-[#0F6E56]/10'
+                    }`}
                 />
                 <button
                   type="button"
@@ -255,7 +253,7 @@ export default function LoginPage() {
               className="flex h-12 w-full items-center justify-center gap-3 rounded-xl border border-[#E5E7EB] bg-white text-sm font-medium text-[#141A14] shadow-sm transition-all hover:bg-[#F7F8F7] disabled:cursor-not-allowed disabled:opacity-60"
             >
               {googleLoading
-                ? <svg className="h-4 w-4 animate-spin text-[#9EA89E]" viewBox="0 0 24 24" fill="none"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/></svg>
+                ? <svg className="h-4 w-4 animate-spin text-[#9EA89E]" viewBox="0 0 24 24" fill="none"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" /></svg>
                 : <GoogleIcon />
               }
               {googleLoading ? 'Connecting…' : 'Continue with Google'}
@@ -298,9 +296,9 @@ export default function LoginPage() {
 
         <div className="grid grid-cols-3 gap-6 border-t border-[#E5E7EB] pt-10">
           {[
-            ['500+',   'Portals created'],
+            ['500+', 'Portals created'],
             ['3,200+', 'Clients onboarded'],
-            ['98%',    'Provider retention'],
+            ['98%', 'Provider retention'],
           ].map(([stat, label]) => (
             <div key={label} className="text-center">
               <h3 className="text-3xl font-semibold text-[#0A2E24]">{stat}</h3>

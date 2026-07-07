@@ -1,4 +1,5 @@
 import { Navigate, Outlet } from 'react-router-dom'
+import { useSelector } from 'react-redux'
 import { getSubdomain } from '../utils/domain'
 import { useAuth } from '../context/AuthContext'
 import { appUrl } from '../utils/urls'
@@ -43,6 +44,8 @@ export function ProtectedRoute() {
 
 export function GuestRoute() {
   const { isAuth, user, tenant, loading } = useAuth()
+  const membership_count = useSelector(s => s.auth.membership_count)
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#F7F8F7]">
@@ -56,6 +59,9 @@ export function GuestRoute() {
     if (tenant?.slug) {
       window.location.replace(appUrl(tenant.slug, '/dashboard'))
       return null
+    }
+    if (membership_count > 1) {
+      return <Navigate to="/portals" replace />
     }
     return <Navigate to="/setup-workspace" replace />
   }

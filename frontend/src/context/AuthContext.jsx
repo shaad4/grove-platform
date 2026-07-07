@@ -27,8 +27,8 @@ export function AuthProvider({ children }) {
 
   const [loading, setLoading] = useState(true)
 
-  const saveSession = ({ accessToken, user, tenant }) => {
-    dispatch(setCredentials({ accessToken, user, tenant }))
+  const saveSession = ({ accessToken, user, tenant, membership_count }) => {
+    dispatch(setCredentials({ accessToken, user, tenant, membership_count }))
   }
 
   const logout = async () => {
