@@ -5,12 +5,23 @@ import { useAuth } from '../../context/AuthContext';
 import { getSubdomain } from '../../utils/domain';
 
 export default function PwaInstallPrompt() {
-  const { tenant } = useTenantBranding();
-  const { isAuth, loading } = useAuth();
+  const { tenantInfo } = useTenantBranding();
+  const { isAuth, loading, user } = useAuth();
   const subdomain = getSubdomain();
   const [deferredPrompt, setDeferredPrompt] = useState(null);
   const [showPrompt, setShowPrompt] = useState(false);
   const [isIOS, setIsIOS] = useState(false);
+
+  useEffect(() => {
+    const manifestLink = document.querySelector('link[rel="manifest"]');
+    if (manifestLink) {
+      if (user?.role === 'provider') {
+        manifestLink.href = '/manifest.json?force_groven=true';
+      } else {
+        manifestLink.href = '/manifest.json';
+      }
+    }
+  }, [user?.role]);
 
   useEffect(() => {
     if (localStorage.getItem('pwaPromptDismissed') === 'true') {
@@ -63,15 +74,18 @@ export default function PwaInstallPrompt() {
   if (!isAuth || !subdomain) return null;
   if (!showPrompt) return null;
 
-  const appName = tenant?.name || 'Groven';
-  const brandColor = tenant?.accent_color || '#0F6E56';
+  const isClient = user?.role === 'client';
+  
+  const appName = isClient ? (tenantInfo?.name || 'Groven') : 'Groven';
+  const brandColor = isClient ? (tenantInfo?.accent_color || '#0F6E56') : '#0F6E56';
+  const logoUrl = isClient ? tenantInfo?.logo_url : null;
 
   return (
     <div className="fixed bottom-4 left-4 right-4 md:left-auto md:right-8 md:w-[380px] bg-white rounded-2xl shadow-2xl border border-gray-200 p-5 z-[9999] animate-in slide-in-from-bottom-5 fade-in duration-300">
       <div className="flex items-start justify-between">
         <div className="flex items-center gap-3">
-          {tenant?.logo_url ? (
-            <img src={tenant.logo_url} alt={appName} className="w-10 h-10 object-contain shrink-0" />
+          {logoUrl ? (
+            <img src={logoUrl} alt={appName} className="w-10 h-10 object-contain shrink-0" />
           ) : (
             <div 
               className="p-2.5 rounded-xl shrink-0" 

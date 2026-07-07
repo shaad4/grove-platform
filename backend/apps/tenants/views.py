@@ -43,6 +43,7 @@ class PWAManifestView(APIView):
 
     def get(self, request):
         tenant = getattr(request, "tenant", None)
+        force_groven = request.query_params.get("force_groven") == "true"
         
         manifest = {
             "name": "Groven",
@@ -71,7 +72,7 @@ class PWAManifestView(APIView):
             ]
         }
         
-        if tenant:
+        if tenant and not force_groven:
             manifest["name"] = tenant.name
             manifest["short_name"] = tenant.name
             manifest["theme_color"] = tenant.accent_color or "#0F6E56"
