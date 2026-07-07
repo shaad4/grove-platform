@@ -7,42 +7,44 @@ import ErrorBoundary from './ErrorBoundary'
 import { useAuth } from './context/AuthContext'
 import { TenantBrandingProvider } from './context/TenantBrandingContext'
 
+import { Suspense, lazy } from 'react'
+
 // Admin routes (fully isolated — see routes/AdminProtectedRoute.jsx)
 import { AdminProtectedRoute, AdminGuestRoute } from './routes/AdminProtectedRoute'
-import AdminLoginPage from './pages/admin/AdminLoginPage'
-import AdminDashboardPage from './pages/admin/AdminDashboardPage'
-import AdminTenantsPage from './pages/admin/AdminTenantsPage'
-import AdminUsersPage from './pages/admin/AdminUsersPage'
-import AdminPlansPage from './pages/admin/AdminPlansPage'
+const AdminLoginPage = lazy(() => import('./pages/admin/AdminLoginPage'))
+const AdminDashboardPage = lazy(() => import('./pages/admin/AdminDashboardPage'))
+const AdminTenantsPage = lazy(() => import('./pages/admin/AdminTenantsPage'))
+const AdminUsersPage = lazy(() => import('./pages/admin/AdminUsersPage'))
+const AdminPlansPage = lazy(() => import('./pages/admin/AdminPlansPage'))
 
 // Auth pages
-import LandingPage        from './pages/LandingPage'
-import SignupPage         from './pages/SignupPage'
-import VerifyEmailPage    from './pages/VerifyEmailPage'
-import WorkspaceSetupPage from './pages/WorkspaceSetupPage'
-import LoginPage          from './pages/LoginPage'
-import PortalsPage        from './pages/PortalsPage'
-import ForgotPasswordPage from './pages/ForgotPasswordPage'
-import ResetPasswordPage  from './pages/ResetPasswordPage'
-import WorkspaceNotFoundPage from './pages/WorkspaceNotFoundPage'
-import NotFoundPage from './pages/NotFoundPage'
+const LandingPage        = lazy(() => import('./pages/LandingPage'))
+const SignupPage         = lazy(() => import('./pages/SignupPage'))
+const VerifyEmailPage    = lazy(() => import('./pages/VerifyEmailPage'))
+const WorkspaceSetupPage = lazy(() => import('./pages/WorkspaceSetupPage'))
+const LoginPage          = lazy(() => import('./pages/LoginPage'))
+const PortalsPage        = lazy(() => import('./pages/PortalsPage'))
+const ForgotPasswordPage = lazy(() => import('./pages/ForgotPasswordPage'))
+const ResetPasswordPage  = lazy(() => import('./pages/ResetPasswordPage'))
+const WorkspaceNotFoundPage = lazy(() => import('./pages/WorkspaceNotFoundPage'))
+const NotFoundPage = lazy(() => import('./pages/NotFoundPage'))
 
 // Client pages
-import AcceptInvitePage   from './pages/client/AcceptInvitePage'
-import ClientLoginPage    from './pages/client/ClientLoginPage'
-import ClientDashboard    from './pages/client/ClientDashboard'
-import ClientRequestsPage from './pages/client/ClientRequestsPage'
-import ClientRequestDetailPage  from './pages/client/ClientRequestDetailPage'
-
+const AcceptInvitePage   = lazy(() => import('./pages/client/AcceptInvitePage'))
+const ClientLoginPage    = lazy(() => import('./pages/client/ClientLoginPage'))
+const ClientDashboard    = lazy(() => import('./pages/client/ClientDashboard'))
+const ClientRequestsPage = lazy(() => import('./pages/client/ClientRequestsPage'))
+const ClientRequestDetailPage  = lazy(() => import('./pages/client/ClientRequestDetailPage'))
 
 // Provider pages
-import ProviderDashboard  from './pages/provider/ProviderDashboard'
-import ClientsPage        from './pages/provider/ClientsPage'
-import ClientDetailPage   from './pages/provider/ClientDetailPage'
-import RequestsPage       from './pages/provider/RequestsPage'
-import RequestDetailPage  from './pages/provider/RequestDetailPage'
-import ActivityPage       from './pages/provider/ActivityPage'
-import UpgradePage        from './pages/provider/UpgradePage'
+const ProviderDashboard  = lazy(() => import('./pages/provider/ProviderDashboard'))
+const ClientsPage        = lazy(() => import('./pages/provider/ClientsPage'))
+const ClientDetailPage   = lazy(() => import('./pages/provider/ClientDetailPage'))
+const RequestsPage       = lazy(() => import('./pages/provider/RequestsPage'))
+const RequestDetailPage  = lazy(() => import('./pages/provider/RequestDetailPage'))
+const ActivityPage       = lazy(() => import('./pages/provider/ActivityPage'))
+const UpgradePage        = lazy(() => import('./pages/provider/UpgradePage'))
+
 import { BadgeProvider } from './context/BadgeContext'
 import UpgradeModal from './components/modals/UpgradeModal'
 import UpgradeSuccessModal from './components/modals/UpgradeSuccessModal'
@@ -63,7 +65,11 @@ export default function App() {
   return (
     <ErrorBoundary>
       <BrowserRouter>
-
+        <Suspense fallback={
+          <div className="flex items-center justify-center min-h-screen bg-[#F7F8F7]">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#0F6E56]"></div>
+          </div>
+        }>
         {/* Groven Admin */}
         <Routes>
           <Route path="/grove-admin/*" element={
@@ -193,6 +199,7 @@ export default function App() {
           } />
 
         </Routes>
+        </Suspense>
       </BrowserRouter>
     </ErrorBoundary>
   )
