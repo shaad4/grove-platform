@@ -14,7 +14,7 @@ import dashboardApi from '../../api/dashboard.api'
 import { getWorkspace } from '../../api/settings.api'
 import { openUpgradeModal } from '../../features/billing/billingSlice'
 import LiveFeed from '../../components/chat/LiveFeed'
-
+import { useWalkthrough } from '../../context/WalkthroughContext'
 
 //  Constants 
 
@@ -439,6 +439,14 @@ export default function ProviderDashboard() {
       .catch(() => {})
   }, [])
 
+  const { startWalkthrough } = useWalkthrough()
+
+  useEffect(() => {
+    if (localStorage.getItem('grove_walkthrough_provider') !== 'completed') {
+      startWalkthrough('provider')
+    }
+  }, [startWalkthrough])
+
   const s = stats?.stats ?? {}
   const clientCount = s.total_clients ?? clients.length
   const clientLimit = 3
@@ -466,7 +474,7 @@ export default function ProviderDashboard() {
 
 
             {/* Stat strip */}
-            <div className="grid gap-3.5 grid-cols-2 md:grid-cols-4">
+            <div className="grid gap-3.5 grid-cols-2 md:grid-cols-4" data-tour="provider-stats">
               <StatCard
                 icon={Users}
                 title="Total Clients"
@@ -505,7 +513,7 @@ export default function ProviderDashboard() {
 
 
             {/* Clients */}
-            <div className="rounded-2xl border border-[#e8eae8] bg-white p-5">
+            <div className="rounded-2xl border border-[#e8eae8] bg-white p-5" data-tour="provider-clients">
               <div className="flex items-center justify-between mb-1">
                 <h3 className="text-[15px] font-semibold text-[#141a14]">Clients</h3>
                 <button onClick={() => navigate('/clients')} className="text-[12px] font-medium text-[#0f6e56] hover:underline">
@@ -529,7 +537,7 @@ export default function ProviderDashboard() {
             </div>
 
             {/* Recent Requests */}
-            <div>
+            <div data-tour="provider-requests">
               <div className="flex items-center justify-between mb-3">
                 <h3 className="text-[15px] font-semibold text-[#141a14]">Recent requests</h3>
                 <button onClick={() => navigate('/requests')} className="text-[12px] font-medium text-[#0f6e56] hover:underline">
@@ -560,7 +568,9 @@ export default function ProviderDashboard() {
 
           {/* RIGHT */}
           <div className="space-y-5">
-            <LiveFeed />
+            <div data-tour="provider-feed">
+              <LiveFeed />
+            </div>
             <div className="rounded-2xl border border-[#e8eae8] bg-white p-5">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">

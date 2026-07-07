@@ -47,6 +47,7 @@ import { BadgeProvider } from './context/BadgeContext'
 import UpgradeModal from './components/modals/UpgradeModal'
 import UpgradeSuccessModal from './components/modals/UpgradeSuccessModal'
 import AdminBootstrap from './context/AdminBootstrap'
+import { WalkthroughProvider } from './context/WalkthroughContext'
 
 
 function RoleDashboard() {
@@ -123,13 +124,14 @@ export default function App() {
 
                   {/* Protected tenant routes — BadgeProvider only mounts here, inside a real tenant subdomain */}
                   <Route element={<ProtectedRoute />}>
-                    <Route element={<BadgeProvider />}>
+                      <Route element={<BadgeProvider />}>
+                        <Route element={<WalkthroughProvider />}>
 
-                      {/* Dashboard */}
-                      <Route
-                        path="/dashboard"
-                        element={<TenantRoute><RoleDashboard /></TenantRoute>}
-                      />
+                          {/* Dashboard */}
+                          <Route
+                            path="/dashboard"
+                            element={<TenantRoute><RoleDashboard /></TenantRoute>}
+                          />
 
                       {/* Client portal */}
                       <Route
@@ -172,7 +174,7 @@ export default function App() {
                         path="/my-requests/:requestId"
                         element={<TenantRoute><ClientRequestDetailPage /></TenantRoute>}
                       />
-
+                        </Route>
                     </Route>
                   </Route>
 

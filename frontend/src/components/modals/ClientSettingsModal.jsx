@@ -11,6 +11,8 @@ import {
 
 import { deleteAccount } from '../../api/settings.api'
 import { useTenantBranding } from '../../context/TenantBrandingContext'
+import { useWalkthrough } from '../../context/WalkthroughContext'
+import { RotateCcw } from 'lucide-react'
 
 // Nav 
 
@@ -254,6 +256,7 @@ function ProfileSection({ user, tenant }) {
   const { accent, accentSoft, accentDark } = colors
   const [displayName, setDisplayName] = useState('')
   const [avatarPreview, setAvatarPreview] = useState(null)
+  const { startWalkthrough } = useWalkthrough()
   const [profileLoading, setProfileLoading] = useState(false)
   const [profileStatus, setProfileStatus] = useState(null)
   const [currentPw, setCurrentPw] = useState('')
@@ -400,6 +403,15 @@ function ProfileSection({ user, tenant }) {
           <Toast type={pwStatus?.type} message={pwStatus?.message} />
           <Btn onClick={handleChangePassword} loading={pwLoading} disabled={!passwordsMatch || !currentPw}>Update password</Btn>
         </div>
+      </div>
+
+      {/* Replay Walkthrough */}
+      <div className="mt-8 border-t border-[#F0F2F0] pt-6">
+        <p className="text-[13px] font-semibold text-[#141A14] mb-1">Onboarding walkthrough</p>
+        <p className="text-[11px] text-[#9EA89E] mb-3">Re-take the interactive tour to get familiar with your portal.</p>
+        <Btn variant="ghost" size="sm" onClick={() => { startWalkthrough('client'); onClose(); }}>
+          <RotateCcw size={14} className="mr-1" /> Replay Walkthrough
+        </Btn>
       </div>
     </div>
   )
@@ -568,7 +580,7 @@ function ClientSettingsModalInner({ onClose }) {
   }, [])
 
   const SECTIONS = {
-    'profile': <ProfileSection user={user} tenant={tenant} />,
+    'profile': <ProfileSection user={user} tenant={tenant} onClose={onClose} />,
     'notifications': <NotificationsSection tenant={tenant} />,
     'danger-zone': <DangerZoneSection tenant={tenant} />,
   }

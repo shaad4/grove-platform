@@ -17,6 +17,8 @@ import {
 } from 'lucide-react'
 
 import { authApi } from '../../api/auth.api'
+import { useWalkthrough } from '../../context/WalkthroughContext'
+import { RotateCcw } from 'lucide-react'
 
 
 // Nav config 
@@ -547,9 +549,10 @@ function NotificationsSection() {
   )
 }
 
-function AccountSecuritySection({ user }) {
+function AccountSecuritySection({ user, onClose }) {
   const [displayName, setDisplayName] = useState(user?.display_name || '')
   const [avatarPreview, setAvatarPreview] = useState(null)
+  const { startWalkthrough } = useWalkthrough()
   const [profileLoading, setProfileLoading] = useState(false)
   const [profileStatus, setProfileStatus] = useState(null)
   const [currentPw, setCurrentPw] = useState('')
@@ -642,6 +645,15 @@ function AccountSecuritySection({ user }) {
           <Toast type={pwStatus?.type} message={pwStatus?.message} />
           <Btn onClick={handleChangePassword} loading={pwLoading} disabled={!passwordsMatch || !currentPw}>Update password</Btn>
         </div>
+      </div>
+
+      {/* Replay Walkthrough */}
+      <div className="mt-8 border-t border-[#F0F2F0] pt-6">
+        <p className="text-[13px] font-semibold text-[#141A14] mb-1">Onboarding walkthrough</p>
+        <p className="text-[12px] text-[#9EA89E] mb-3">Re-take the interactive tour to get familiar with your dashboard.</p>
+        <Btn variant="ghost" size="sm" onClick={() => { startWalkthrough('provider'); onClose(); }}>
+          <RotateCcw size={14} className="mr-1" /> Replay Walkthrough
+        </Btn>
       </div>
     </div>
   )
@@ -969,7 +981,7 @@ function ProviderSettingsModalInner({ onClose }) {
     'business-profile': <BusinessProfileSection ws={ws} setWs={setWs} logoPreview={logoPreview} handleLogoSelect={handleLogoSelect} />,
     'portal-branding':  <PortalBrandingSection ws={ws} setWs={setWs} />,
     'notifications':    <NotificationsSection />,
-    'account-security': <AccountSecuritySection user={user} />,
+    'account-security': <AccountSecuritySection user={user} onClose={onClose} />,
     'plan-billing':     <PlanBillingSection ws={ws} />,
     'workflow':         <WorkflowSection ws={ws} />,
     'danger-zone':      <DangerZoneSection workspaceName={ws?.name} />,

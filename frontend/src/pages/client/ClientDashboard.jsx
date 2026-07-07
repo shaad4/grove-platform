@@ -21,6 +21,7 @@ import { useBadges } from '../../hooks/useBadges'
 import ClientLayout from '../../components/layout/ClientLayout'
 import NewRequestModal from '../../components/modals/NewRequestModal'
 import { useTenantBranding } from '../../context/TenantBrandingContext'
+import { useWalkthrough } from '../../context/WalkthroughContext'
 
 // ─── Status config (Updated to Tailwind Semantic Tokens) ──────
 const STATUS_CONFIG = {
@@ -133,6 +134,7 @@ function WelcomeBar({ firstName, providerName, logoUrl, onNew }) {
       </div>
 
       <button
+        data-tour="client-new-request"
         onClick={onNew}
         className="hidden sm:flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold text-white active:scale-[0.98] transition-all shadow-sm"
         style={{ backgroundColor: hovered ? accentDark : accent }}
@@ -525,6 +527,14 @@ export default function ClientDashboard() {
 
   useEffect(() => { fetchRequests() }, [fetchRequests])
 
+  const { startWalkthrough } = useWalkthrough()
+
+  useEffect(() => {
+    if (localStorage.getItem('grove_walkthrough_client') !== 'completed') {
+      startWalkthrough('client')
+    }
+  }, [startWalkthrough])
+
   // Reset pagination when filter changes
   useEffect(() => {
     setCurrentPage(1)
@@ -639,12 +649,14 @@ export default function ClientDashboard() {
           onNew={() => setShowNew(true)}
         />
 
-        <SummaryCards
-          active={activeCount}
-          needsReview={reviewCount}
-          completed={completedCount}
-          loading={loading}
-        />
+        <div data-tour="client-stats">
+          <SummaryCards
+            active={activeCount}
+            needsReview={reviewCount}
+            completed={completedCount}
+            loading={loading}
+          />
+        </div>
 
         <div className="flex flex-col lg:flex-row gap-8 items-start">
           
@@ -709,7 +721,7 @@ export default function ClientDashboard() {
             )}
 
             {/* List Container */}
-            <div className="space-y-3 min-h-[400px]">
+            <div className="space-y-3 min-h-[400px]" data-tour="client-requests">
               {loading ? (
                 Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-[76px] w-full" />)
               ) : filtered.length === 0 ? (
