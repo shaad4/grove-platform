@@ -1172,6 +1172,7 @@ export default function RequestDetailPage() {
   }, [])
 
   const { startWalkthrough } = useWalkthrough()
+  const { registerPortalListener } = useBadges()
 
   useEffect(() => {
     if (!loading && req && localStorage.getItem('grove_walkthrough_provider_request_detail') !== 'completed') {
@@ -1221,6 +1222,30 @@ export default function RequestDetailPage() {
   }, [requestId])
 
   useEffect(() => { fetchAll() }, [fetchAll])
+
+  useEffect(() => {
+    return registerPortalListener((msg) => {
+      if (msg.request_id !== requestId) return
+
+      if (msg.type === 'files_delivered' || msg.type === 'status_change') {
+        const newStatus = msg.new_status
+        if (newStatus) {
+          setReq((prev) =>
+            prev ? { ...prev, status: newStatus, updated_at: msg.updated_at || new Date().toISOString() } : prev
+          )
+        }
+        if (msg.type === 'files_delivered') {
+          setTimeout(() => fetchAll(), 1500)  
+        } else {
+          fetchAll()
+        }
+      }
+
+      if (msg.type === 'new_message') {
+        fetchAll()
+      }
+    })
+  }, [registerPortalListener, requestId, fetchAll])
 
   useEffect(() => {
     getWorkspace()
